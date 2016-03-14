@@ -155,4 +155,5 @@ INT APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	HMODULE hRichEd = LoadLibrary( TEXT( "riched20.dll" ) );
 	( new MainDialog( ) )->RunDlg( );
 	FreeLibrary( hRichEd );
+	return 0;
 }
