@@ -153,6 +153,6 @@ INT APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 {
 	InitCommonControls( );
 	HMODULE hRichEd = LoadLibrary( TEXT( "riched20.dll" ) );
-	return ( new MainDialog( ) )->RunDlg( );
+	( new MainDialog( ) )->RunDlg( );
 	FreeLibrary( hRichEd );
 }
