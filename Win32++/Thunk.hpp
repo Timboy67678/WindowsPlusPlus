@@ -1,3 +1,10 @@
+/*
+This header was coppied from BlackBone memory hacking library
+License:
+Blackbone is licensed under the MIT License. Dependencies are under their respective licenses.
+https://github.com/DarthTon/Blackbone/blob/master/src/BlackBone/Misc/Thunk.hpp
+*/
+
 #include <stdint.h>
 #include <winnt.h>
 
