@@ -22,7 +22,7 @@
     <ProjectGuid>{D4AD1664-FF9C-4269-94F6-600C96C695A6}</ProjectGuid>
     <RootNamespace>Win32</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>Win32++</ProjectName>
+    <ProjectName>Windows++</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -70,11 +70,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)HackLoader\lib\x86\</OutDir>
     <TargetName>winplusplus_$(PlatformTarget)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetName>winplusplus_$(PlatformTarget)</TargetName>
+    <OutDir>$(SolutionDir)HackLoader\lib\x86\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
