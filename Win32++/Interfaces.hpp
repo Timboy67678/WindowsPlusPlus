@@ -41,7 +41,7 @@ namespace WPP
 
 		virtual int GetTextLength( )
 		{
-			return static_cast<int>( GetText( ).length( ) );
+			return GetWindowTextLength( m_hWnd );
 		}
 
 		virtual BOOL SetText( const std::tstring &text )
