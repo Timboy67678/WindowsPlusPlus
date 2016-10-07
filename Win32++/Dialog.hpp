@@ -3,7 +3,7 @@
 
 #include "winplusplus.h"
 
-#define MESSAGE_HANDLER( X ) virtual INT_PTR CALLBACK X ( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+#define MESSAGE_HANDLER( X ) virtual INT_PTR CALLBACK X ( HWND hWnd, WPARAM wParam, LPARAM lParam )
 
 #define MESSAGE_ONCREATE( ) MESSAGE_HANDLER( OnCreate )
 #define MESSAGE_ONCLOSE( ) MESSAGE_HANDLER( OnClose )
@@ -24,7 +24,7 @@ namespace WPP
 	class Dialog : public Base
 	{
 	public:
-		typedef INT_PTR( CALLBACK Dialog::*DIALOG_MESSAGE_CALLBACK )( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam );
+		typedef INT_PTR( CALLBACK Dialog::*DIALOG_MESSAGE_CALLBACK )( HWND hWnd, WPARAM wParam, LPARAM lParam );
 
 		Dialog( int resource_id );
 		virtual ~Dialog( ) { Close( ); }

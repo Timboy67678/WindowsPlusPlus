@@ -36,59 +36,59 @@ namespace WPP
 	}
 
 #pragma region Overidables
-	INT_PTR CALLBACK Dialog::OnCreate( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		m_hWnd = hWnd;
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnClose( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnClose( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		Close( );
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnPaint( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnPaint( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnTimer( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnTimer( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnSize( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnKeyDown( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnKeyDown( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnKeyUp( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnKeyUp( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnNotify( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnHScroll( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnHScroll( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnVScroll( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnVScroll( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnCommand( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
+	INT_PTR CALLBACK Dialog::OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		if ( m_CommandEvents.count( LOWORD( wParam ) ) > 0 )
 			return ( this->*m_CommandEvents[ LOWORD( wParam ) ] )( hWnd, wParam, lParam );
@@ -98,7 +98,7 @@ namespace WPP
 	INT_PTR Dialog::DialogProc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
 	{
 		if ( m_MessageEvents.count( Msg ) > 0 )
-			return ( this->*m_MessageEvents[ Msg ] )( hWnd, Msg, wParam, lParam );
+			return ( this->*m_MessageEvents[ Msg ] )( hWnd, wParam, lParam );
 		return FALSE;
 	}
 #pragma endregion
