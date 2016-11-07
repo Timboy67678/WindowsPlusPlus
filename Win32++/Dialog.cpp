@@ -3,19 +3,23 @@
 namespace WPP
 {
 	Dialog::Dialog( int resource_id )
-		: Base( resource_id, NULL )
+		: Base( resource_id, NULL ), m_InternalTimerID( 0 )
 	{
 		m_MessageEvents[ WM_INITDIALOG ] = &Dialog::OnCreate;
 		m_MessageEvents[ WM_COMMAND ] = &Dialog::OnCommand;
 		m_MessageEvents[ WM_CLOSE ] = &Dialog::OnClose;
 		m_MessageEvents[ WM_PAINT ] = &Dialog::OnPaint;
-		m_MessageEvents[ WM_TIMER ] = &Dialog::OnTimer;
 		m_MessageEvents[ WM_SIZE ] = &Dialog::OnSize;
 		m_MessageEvents[ WM_KEYDOWN ] = &Dialog::OnKeyDown;
 		m_MessageEvents[ WM_KEYUP ] = &Dialog::OnKeyUp;
 		m_MessageEvents[ WM_NOTIFY ] = &Dialog::OnNotify;
 		m_MessageEvents[ WM_HSCROLL ] = &Dialog::OnHScroll;
 		m_MessageEvents[ WM_VSCROLL ] = &Dialog::OnVScroll;
+	}
+
+	Dialog::~Dialog( )
+	{
+		
 	}
 
 	void Dialog::Show( int show )
@@ -25,6 +29,8 @@ namespace WPP
 
 	void Dialog::Close( )
 	{
+		for ( auto timer : m_TimerEvents )
+			::KillTimer( m_hWnd, timer.first );
 		EndDialog( m_hWnd, 0 );
 	}
 
@@ -38,7 +44,6 @@ namespace WPP
 #pragma region Overidables
 	INT_PTR CALLBACK Dialog::OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
-		m_hWnd = hWnd;
 		return FALSE;
 	}
 
@@ -49,11 +54,6 @@ namespace WPP
 	}
 
 	INT_PTR CALLBACK Dialog::OnPaint( HWND hWnd, WPARAM wParam, LPARAM lParam )
-	{
-		return FALSE;
-	}
-
-	INT_PTR CALLBACK Dialog::OnTimer( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		return FALSE;
 	}
@@ -97,8 +97,14 @@ namespace WPP
 
 	INT_PTR Dialog::DialogProc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
 	{
-		if ( m_MessageEvents.count( Msg ) > 0 )
-			return ( this->*m_MessageEvents[ Msg ] )( hWnd, wParam, lParam );
+		m_hWnd = hWnd;
+		if ( Msg == WM_TIMER ) {
+			if ( m_TimerEvents.count( (UINT_PTR) wParam ) > 0 )
+				( this->*m_TimerEvents[ (UINT_PTR) wParam ] )( );
+		} else {
+			if ( m_MessageEvents.count( Msg ) > 0 )
+				return ( this->*m_MessageEvents[ Msg ] )( hWnd, wParam, lParam );
+		}
 		return FALSE;
 	}
 #pragma endregion
