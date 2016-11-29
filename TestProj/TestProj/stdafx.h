@@ -18,11 +18,7 @@
 #include <thread>
 
 #include <winplusplus.h>
-#ifdef _WIN64
-#pragma comment(lib, "winplusplus_x64.lib")
-#else
-#pragma comment(lib, "winplusplus_x86.lib")
-#endif
+#pragma comment(lib, "winplusplus.lib")
 
 using namespace WPP;
 

@@ -92,7 +92,7 @@ public:
 				break;
 			}
 		}
-		return Dialog::OnNotify( hWnd, Msg, wParam, lParam );
+		return Dialog::OnNotify( hWnd, wParam, lParam );
 	}
 
 	MESSAGE_ONCREATE( )
@@ -128,7 +128,7 @@ public:
 		m_spin->SetRange( nMin, nMax );
 		m_scroll->SetScrollRange( nMin, nMax );
 
-		return Dialog::OnCreate( hWnd, Msg, wParam, lParam );
+		return Dialog::OnCreate( hWnd, wParam, lParam );
 	}
 
 private:
@@ -149,7 +149,7 @@ private:
 	TabControl *m_tab = nullptr;
 };
 
-INT APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ INT nCmdShow )
+INT APIENTRY _tWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPTSTR lpCmdLine, _In_ INT nCmdShow )
 {
 	InitCommonControls( );
 	HMODULE hRichEd = LoadLibrary( TEXT( "riched20.dll" ) );
