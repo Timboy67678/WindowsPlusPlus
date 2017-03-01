@@ -12,20 +12,21 @@
 #include "winplusplus.h"
 
 #define COMMAND_HANDLER( X ) virtual INT_PTR CALLBACK X ( HWND hWnd, WPARAM wParam, LPARAM lParam )
-#define COMMAND_REF( X ) static_cast<WPP::Base::COMMAND_MESSAGE_CALLBACK>( X )
+#define COMMAND_REF( X ) static_cast<WPP::Wnd::COMMAND_MESSAGE_CALLBACK>( X )
 
 namespace WPP
 {
-	class Base
+	class Wnd
 	{
 	public:
-		typedef INT_PTR( CALLBACK Base::*COMMAND_MESSAGE_CALLBACK )( HWND, WPARAM, LPARAM );
+		typedef INT_PTR( CALLBACK Wnd::*COMMAND_MESSAGE_CALLBACK )( HWND, WPARAM, LPARAM );
 
-		Base( int resource_id, HWND parent = NULL )
+		Wnd( int resource_id, HWND parent = NULL )
 			: m_ItemID( resource_id ), m_Parent( parent ), m_hWnd( NULL )
 		{ }
 
-		Base( HWND handle ) : m_hWnd( handle )
+		Wnd( HWND handle ) 
+			: m_hWnd( handle ), m_ItemID( -1 )
 		{ }
 		
 		virtual HWND GetHandle( ) const { return m_hWnd; }
@@ -35,33 +36,33 @@ namespace WPP
 		virtual std::tstring GetText( )
 		{
 			TCHAR title_buffer[ 1024 ] = { 0 };
-			int text_length = GetWindowText( m_hWnd, title_buffer, ARRAYSIZE( title_buffer ) );
+			int text_length = ::GetWindowText( m_hWnd, title_buffer, ARRAYSIZE( title_buffer ) );
 			return std::tstring( title_buffer, text_length );
 		}
 
 		virtual int GetTextLength( )
 		{
-			return GetWindowTextLength( m_hWnd );
+			return ::GetWindowTextLength( m_hWnd );
 		}
 
 		virtual BOOL SetText( const std::tstring &text )
 		{
-			return SetWindowText( m_hWnd, text.c_str( ) );
+			return ::SetWindowText( m_hWnd, text.c_str( ) );
 		}
 
 		virtual BOOL SetShowing( int state = SW_NORMAL )
 		{
-			return ShowWindow( m_hWnd, state );
+			return ::ShowWindow( m_hWnd, state );
 		}
 
 		virtual BOOL SetEnabled( BOOL enabled = TRUE )
 		{
-			return EnableWindow( m_hWnd, enabled );
+			return ::EnableWindow( m_hWnd, enabled );
 		}
 
 		virtual HWND Focus( )
 		{
-			return SetFocus( m_hWnd );
+			return ::SetFocus( m_hWnd );
 		}
 
 		virtual BOOL IsFocused( )
@@ -71,24 +72,24 @@ namespace WPP
 
 		UINT GetStyle( ) const
 		{
-			return (UINT) GetWindowLong( m_hWnd, GWL_STYLE ) & 0xFFFF;
+			return (UINT) ::GetWindowLong( m_hWnd, GWL_STYLE ) & 0xFFFF;
 		}
 
 		LONG AddStyle( DWORD dwStyle )
 		{
-			DWORD new_style = GetWindowLong( m_hWnd, GWL_STYLE ) | dwStyle;
-			return SetWindowLong( m_hWnd, GWL_STYLE, new_style );
+			DWORD new_style = ::GetWindowLong( m_hWnd, GWL_STYLE ) | dwStyle;
+			return ::SetWindowLong( m_hWnd, GWL_STYLE, new_style );
 		}
 
 		//Stolen From ATL
 		BOOL ModifyStyle( DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0 )
 		{
-			DWORD dwStyle = GetWindowLong( m_hWnd, GWL_STYLE );
+			DWORD dwStyle = ::GetWindowLong( m_hWnd, GWL_STYLE );
 			DWORD dwNewStyle = ( dwStyle & ~dwRemove ) | dwAdd;
 			if ( dwStyle == dwNewStyle ) return FALSE;
-			SetWindowLong( m_hWnd, GWL_STYLE, dwNewStyle );
+			::SetWindowLong( m_hWnd, GWL_STYLE, dwNewStyle );
 			if ( nFlags != 0 )
-				SetWindowPos( m_hWnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags );
+				::SetWindowPos( m_hWnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags );
 			return TRUE;
 		}
 
@@ -97,17 +98,17 @@ namespace WPP
 		HWND m_hWnd, m_Parent;
 	};
 
-	class Control : public Base
+	class Control : public Wnd
 	{
 	public:
 		Control( int resource_id, HWND parent = NULL )
-			: Base( resource_id, parent )
+			: Wnd( resource_id, parent )
 		{
 			if ( parent != NULL )
 				m_hWnd = GetDlgItem( m_Parent, resource_id );
 		}
 
-		Control( HWND handle ) : Base( handle )
+		Control( HWND handle ) : Wnd( handle )
 		{ }
 
 		void SetItem( HWND parent, int item_id )
@@ -832,6 +833,14 @@ namespace WPP
 		int GetLBTextLen( int index )
 		{
 			return (int) SendMessage( m_hWnd, CB_GETLBTEXTLEN, index, 0L );
+		}
+
+		std::tstring GetSelectedText( )
+		{
+			TCHAR text[ 1024 ] = { 0 };
+			if ( GetLBText( GetCurSel( ), text ) != LB_ERR )
+				return text;
+			return L"";
 		}
 
 		int GetItemHeight( int index )

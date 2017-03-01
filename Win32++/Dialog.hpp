@@ -9,12 +9,14 @@
 #define MESSAGE_ONCLOSE( ) virtual INT_PTR CALLBACK OnClose( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONCOMMAND( ) virtual INT_PTR CALLBACK OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONPAINT( ) virtual INT_PTR CALLBACK OnPaint( HWND hWnd, WPARAM wParam, LPARAM lParam )
+#define MESSAGE_ONTIMER( ) virtual INT_PTR CALLBACK OnTimer( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONSIZE( ) virtual INT_PTR CALLBACK OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONKEYDOWN( ) virtual INT_PTR CALLBACK OnKeyDown( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONKEYUP( ) virtual INT_PTR CALLBACK OnKeyUp( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONNOTIFY( ) virtual INT_PTR CALLBACK OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONHSCROLL( ) virtual INT_PTR CALLBACK OnHScroll( HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define MESSAGE_ONVSCROLL( ) virtual INT_PTR CALLBACK OnVScroll( HWND hWnd, WPARAM wParam, LPARAM lParam )
+#define MESSAGE_ONDROPFILES( ) virtual INT_PTR CALLBACK OnDropFiles( HWND hWnd, WPARAM wParam, LPARAM lParam )
 
 #define MESSAGE_REF( X ) static_cast<WPP::Dialog::DIALOG_MESSAGE_CALLBACK>( X )
 #define TIMER_REF( X ) static_cast<WPP::Dialog::TIMER_CALLBACK>( X )
@@ -23,7 +25,7 @@
 
 namespace WPP
 {
-	class Dialog : public Base
+	class Dialog : public Wnd
 	{
 	public:
 		typedef INT_PTR( CALLBACK Dialog::*DIALOG_MESSAGE_CALLBACK )( HWND hWnd, WPARAM wParam, LPARAM lParam );
@@ -36,21 +38,24 @@ namespace WPP
 		MESSAGE_ONCLOSE( );
 		MESSAGE_ONCOMMAND( );
 		MESSAGE_ONPAINT( );
+		MESSAGE_ONTIMER( );
 		MESSAGE_ONSIZE( );
 		MESSAGE_ONKEYDOWN( );
 		MESSAGE_ONKEYUP( );
 		MESSAGE_ONNOTIFY( );
 		MESSAGE_ONHSCROLL( );
 		MESSAGE_ONVSCROLL( );
+		MESSAGE_ONDROPFILES( );
 
 		BOOL CenterWindow( HWND hWndCenter = NULL );
 
-		virtual INT_PTR RunDlg( HWND parent = NULL, LPVOID param = NULL );
+		virtual INT_PTR CALLBACK RunDlg( HWND parent = NULL, LPVOID param = NULL );
 		virtual INT_PTR DialogProc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam );
 
-		void Show( int show = SW_NORMAL );
-		void Close( );
-		
+		void Show( INT show = SW_NORMAL );
+		void EndDialog( );
+		void EnableDragDrop( BOOL state = TRUE );
+
 		template < typename DC > 
 		void AddTimer( UINT timer_elapse, DC callback )
 		{
@@ -65,22 +70,76 @@ namespace WPP
 			m_CommandEvents[ id ] = COMMAND_REF( pfn ); 
 		}
 
+		template <typename CtrlType = Control>
+		bool RegisterControl( UINT control_id, CtrlType** control_out = nullptr )
+		{
+			CtrlType* ctrl = new ( std::nothrow ) CtrlType( control_id, m_hWnd );
+
+			if ( ctrl != nullptr )
+				m_MappedControls.emplace( control_id, ctrl );
+
+			if ( control_out != nullptr )
+				*control_out = ctrl;
+
+			return ctrl != nullptr;
+		}
+
+		template< typename CtrlType = Control> 
+		CtrlType* GetControl( UINT control_id )
+		{
+			return m_MappedControls[ control_id ];
+		}
+
 		virtual int MsgBox( LPCTSTR message, LPCTSTR title, UINT type )
 		{ return ::MessageBox( m_hWnd, message, title, type ); }
 
-		virtual int MsgBoxInfo( LPCTSTR message, LPCTSTR title )
-		{ return MsgBox( message, title, MB_OK | MB_ICONINFORMATION ); }
+		virtual int MsgBoxInfo( LPCTSTR title, LPCTSTR fmt, ... )
+		{
+			TCHAR buffer[ 1024 * 6 ] = { 0 };
+			va_list va;
+			va_start( va, fmt );
+#ifdef _UNICODE
+			_vsnwprintf_s( buffer, ARRAYSIZE( buffer ), fmt, va );
+#else
+			_vsnprintf_s( buffer, ARRAYSIZE( buffer ), fmt, va );
+#endif
+			va_end( va );
+			return MsgBox( buffer, title, MB_OK | MB_ICONINFORMATION );
+		}
 
-		virtual int MsgBoxError( LPCTSTR message, LPCTSTR title )
-		{ return MsgBox( message, title, MB_OK | MB_ICONERROR ); }
+		virtual int MsgBoxError( LPCTSTR title, LPCTSTR fmt, ... )
+		{ 
+			TCHAR buffer[ 1024 * 6 ] = { 0 };
+			va_list va;
+			va_start( va, fmt );
+#ifdef _UNICODE
+			_vsnwprintf_s( buffer, ARRAYSIZE( buffer ), fmt, va );
+#else
+			_vsnprintf_s( buffer, ARRAYSIZE( buffer ), fmt, va );
+#endif
+			va_end( va );
+			return MsgBox( buffer, title, MB_OK | MB_ICONERROR ); 
+		}
 
-		virtual int MsgBoxWarn( LPCTSTR message, LPCTSTR title )
-		{ return MsgBox( message, title, MB_OK | MB_ICONWARNING ); }
+		virtual int MsgBoxWarn( LPCTSTR title, LPCTSTR fmt, ... )
+		{
+			TCHAR buffer[ 1024 * 6 ] = { 0 };
+			va_list va;
+			va_start( va, fmt );
+#ifdef _UNICODE
+			_vsnwprintf_s( buffer, ARRAYSIZE( buffer ), fmt, va );
+#else
+			_vsnprintf_s( buffer, ARRAYSIZE( buffer ), fmt, va );
+#endif
+			va_end( va );
+			return MsgBox( buffer, title, MB_OK | MB_ICONWARNING ); 
+		}
 
 	protected:
 		std::map< UINT, DIALOG_MESSAGE_CALLBACK > m_MessageEvents;
 		std::map< WORD, COMMAND_MESSAGE_CALLBACK > m_CommandEvents;
 		std::map< UINT_PTR, TIMER_CALLBACK > m_TimerEvents;
+		std::map< UINT, Control*> m_MappedControls;
 		UINT_PTR m_InternalTimerID;
 	};
 }

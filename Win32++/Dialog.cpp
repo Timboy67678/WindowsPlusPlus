@@ -3,18 +3,20 @@
 namespace WPP
 {
 	Dialog::Dialog( int resource_id )
-		: Base( resource_id, NULL ), m_InternalTimerID( 0 )
+		: Wnd( resource_id, NULL ), m_InternalTimerID( 0 )
 	{
 		m_MessageEvents[ WM_INITDIALOG ] = &Dialog::OnCreate;
 		m_MessageEvents[ WM_COMMAND ] = &Dialog::OnCommand;
 		m_MessageEvents[ WM_CLOSE ] = &Dialog::OnClose;
 		m_MessageEvents[ WM_PAINT ] = &Dialog::OnPaint;
+		m_MessageEvents[ WM_TIMER ] = &Dialog::OnTimer;
 		m_MessageEvents[ WM_SIZE ] = &Dialog::OnSize;
 		m_MessageEvents[ WM_KEYDOWN ] = &Dialog::OnKeyDown;
 		m_MessageEvents[ WM_KEYUP ] = &Dialog::OnKeyUp;
 		m_MessageEvents[ WM_NOTIFY ] = &Dialog::OnNotify;
 		m_MessageEvents[ WM_HSCROLL ] = &Dialog::OnHScroll;
 		m_MessageEvents[ WM_VSCROLL ] = &Dialog::OnVScroll;
+		m_MessageEvents[ WM_DROPFILES ] = &Dialog::OnDropFiles;
 	}
 
 	Dialog::~Dialog( )
@@ -22,23 +24,35 @@ namespace WPP
 		
 	}
 
-	void Dialog::Show( int show )
+	void Dialog::Show( INT show )
 	{
-		ShowWindow( m_hWnd, show );
+		::ShowWindow( m_hWnd, show );
 	}
 
-	void Dialog::Close( )
+	void Dialog::EndDialog( )
 	{
 		for ( auto timer : m_TimerEvents )
 			::KillTimer( m_hWnd, timer.first );
-		EndDialog( m_hWnd, 0 );
+
+		for ( auto ctrl : m_MappedControls )
+			delete ctrl.second;
+
+		::EndDialog( m_hWnd, 0 );
 	}
 
-	INT_PTR Dialog::RunDlg( HWND parent, LPVOID param )
+	void Dialog::EnableDragDrop( BOOL state )
+	{
+		::ChangeWindowMessageFilterEx( m_hWnd, WM_DROPFILES, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL );
+		::ChangeWindowMessageFilterEx( m_hWnd, WM_COPYDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL );
+		::ChangeWindowMessageFilterEx( m_hWnd, WM_COPYGLOBALDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL );
+		::DragAcceptFiles( m_hWnd, state );
+	}
+
+	INT_PTR CALLBACK Dialog::RunDlg( HWND parent, LPVOID param )
 	{
 		m_Parent = parent;
 		Win32Thunk<DLGPROC, Dialog> thunk( &Dialog::DialogProc, this );
-		return DialogBoxParam( NULL, MAKEINTRESOURCE( m_ItemID ), parent, thunk.GetThunk( ), (LPARAM) param );
+		return ::DialogBoxParam( NULL, MAKEINTRESOURCE( m_ItemID ), parent, thunk.GetThunk( ), (LPARAM) param );
 	}
 
 #pragma region Overidables
@@ -49,12 +63,19 @@ namespace WPP
 
 	INT_PTR CALLBACK Dialog::OnClose( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
-		Close( );
+		EndDialog( );
 		return FALSE;
 	}
 
 	INT_PTR CALLBACK Dialog::OnPaint( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
+		return FALSE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnTimer( HWND hWnd, WPARAM wParam, LPARAM lParam )
+	{
+		if ( m_TimerEvents.count( (UINT_PTR) wParam ) > 0 )
+			( this->*m_TimerEvents[ (UINT_PTR) wParam ] )( );
 		return FALSE;
 	}
 
@@ -88,23 +109,23 @@ namespace WPP
 		return FALSE;
 	}
 
+	INT_PTR CALLBACK Dialog::OnDropFiles( HWND hWnd, WPARAM wParam, LPARAM lParam )
+	{
+		return FALSE;
+	}
+
 	INT_PTR CALLBACK Dialog::OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam )
 	{
 		if ( m_CommandEvents.count( LOWORD( wParam ) ) > 0 )
 			return ( this->*m_CommandEvents[ LOWORD( wParam ) ] )( hWnd, wParam, lParam );
-		return FALSE;
+		return TRUE;
 	}
-
+	
 	INT_PTR Dialog::DialogProc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
 	{
 		m_hWnd = hWnd;
-		if ( Msg == WM_TIMER ) {
-			if ( m_TimerEvents.count( (UINT_PTR) wParam ) > 0 )
-				( this->*m_TimerEvents[ (UINT_PTR) wParam ] )( );
-		} else {
-			if ( m_MessageEvents.count( Msg ) > 0 )
-				return ( this->*m_MessageEvents[ Msg ] )( hWnd, wParam, lParam );
-		}
+		if ( m_MessageEvents.count( Msg ) > 0 )
+			return ( this->*m_MessageEvents[ Msg ] )( hWnd, wParam, lParam );
 		return FALSE;
 	}
 #pragma endregion
