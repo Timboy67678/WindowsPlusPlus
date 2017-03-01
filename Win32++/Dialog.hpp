@@ -76,7 +76,7 @@ namespace WPP
 			CtrlType* ctrl = new ( std::nothrow ) CtrlType( control_id, m_hWnd );
 
 			if ( ctrl != nullptr )
-				m_MappedControls.emplace( control_id, ctrl );
+				m_MappedControls.emplace( control_id, static_cast<Control*>( ctrl ) );
 
 			if ( control_out != nullptr )
 				*control_out = ctrl;
@@ -87,7 +87,7 @@ namespace WPP
 		template< typename CtrlType = Control> 
 		CtrlType* GetControl( UINT control_id )
 		{
-			return m_MappedControls[ control_id ];
+			return static_cast<CtrlType*>( m_MappedControls[ control_id ] );
 		}
 
 		virtual int MsgBox( LPCTSTR message, LPCTSTR title, UINT type )
@@ -139,7 +139,7 @@ namespace WPP
 		std::map< UINT, DIALOG_MESSAGE_CALLBACK > m_MessageEvents;
 		std::map< WORD, COMMAND_MESSAGE_CALLBACK > m_CommandEvents;
 		std::map< UINT_PTR, TIMER_CALLBACK > m_TimerEvents;
-		std::map< UINT, Control*> m_MappedControls;
+		std::map< UINT, Control* > m_MappedControls;
 		UINT_PTR m_InternalTimerID;
 	};
 }

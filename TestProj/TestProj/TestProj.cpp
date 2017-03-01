@@ -97,19 +97,19 @@ public:
 
 	MESSAGE_ONCREATE( )
 	{
-		m_check = new CheckBox( IDC_TEST_CHECK, hWnd );
-		m_list = new ListBox( IDC_LISTBOX_TEST, hWnd );
-		m_dostuff = new Button( IDC_OK_BTN, hWnd );
-		m_combo = new ComboBox( IDC_COMB_TEST, hWnd );
-		m_richedit = new RichEdit( IDC_RICHEDIT_TEST, hWnd );
-		m_spinedit = new EditText( IDC_EDIT_SPIN, hWnd );
-		m_scroll = new ScrollBar( IDC_SCROLLBAR_TEST, hWnd );
-		m_view = new ListView( IDC_LISTVIEW_TEST, hWnd );
-		m_tree = new TreeView( IDC_TREE_TEST, hWnd );
-		m_track = new TrackBar( IDC_SLIDER_TEST, hWnd );
-		m_spin = new SpinControl( IDC_SPIN_TEST, hWnd );
-		m_progress = new ProgressBar( IDC_PROGRESS_TEST, hWnd );
-		m_tab = new TabControl( IDC_TAB_TEST, hWnd );
+		RegisterControl( IDC_TEST_CHECK, &m_check );
+		RegisterControl( IDC_LISTBOX_TEST, &m_list );
+		RegisterControl( IDC_OK_BTN, &m_dostuff );
+		RegisterControl( IDC_COMB_TEST, &m_combo );
+		RegisterControl( IDC_RICHEDIT_TEST, &m_richedit );
+		RegisterControl( IDC_EDIT_SPIN, &m_spinedit );
+		RegisterControl( IDC_SCROLLBAR_TEST, &m_scroll );
+		RegisterControl( IDC_LISTVIEW_TEST, &m_view );
+		RegisterControl( IDC_TREE_TEST, &m_tree );
+		RegisterControl( IDC_SLIDER_TEST, &m_track );
+		RegisterControl( IDC_SPIN_TEST, &m_spin );
+		RegisterControl( IDC_PROGRESS_TEST, &m_progress );
+		RegisterControl( IDC_TAB_TEST, &m_tab );
 
 		m_combo->SetCueBannerText( L"ComboBox control item test" );
 

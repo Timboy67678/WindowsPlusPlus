@@ -513,7 +513,7 @@ namespace WPP
 		using Button::Button;
 	};
 
-	class ListBox : Control
+	class ListBox : public Control
 	{
 	public:
 		using Control::Control;
@@ -840,7 +840,7 @@ namespace WPP
 			TCHAR text[ 1024 ] = { 0 };
 			if ( GetLBText( GetCurSel( ), text ) != LB_ERR )
 				return text;
-			return L"";
+			return std::tstring( );
 		}
 
 		int GetItemHeight( int index )
@@ -4221,7 +4221,7 @@ namespace WPP
 		}
 	};
 
-	class SpinControl : Control
+	class SpinControl : public Control
 	{
 	public:
 		using Control::Control;
