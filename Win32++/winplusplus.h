@@ -146,7 +146,6 @@ namespace COM
 using FileDialogHandler = ATL::CComObjectNoLock<COM::FileDialogEventsHandler>;
 using StackFileDialogHandler = ATL::CComObjectStackEx<COM::FileDialogEventsHandler>;
 
-#include "Thunk.hpp"
 #include "Interfaces.hpp"
 #include "Dialog.hpp"
 

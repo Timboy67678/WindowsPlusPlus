@@ -11,7 +11,7 @@
 
 #include "winplusplus.h"
 
-#define COMMAND_HANDLER( X ) virtual INT_PTR CALLBACK X ( HWND hWnd, WPARAM wParam, LPARAM lParam )
+#define COMMAND_HANDLER( X ) virtual INT_PTR CALLBACK X ( WORD wControlID, HWND hWnd, WPARAM wParam, LPARAM lParam )
 #define COMMAND_REF( X ) static_cast<WPP::Wnd::COMMAND_MESSAGE_CALLBACK>( X )
 
 namespace WPP
@@ -19,77 +19,77 @@ namespace WPP
 	class Wnd
 	{
 	public:
-		typedef INT_PTR( CALLBACK Wnd::*COMMAND_MESSAGE_CALLBACK )( HWND, WPARAM, LPARAM );
+		typedef INT_PTR(CALLBACK Wnd::*COMMAND_MESSAGE_CALLBACK)(WORD, HWND, WPARAM, LPARAM);
 
-		Wnd( int resource_id, HWND parent = NULL )
-			: m_ItemID( resource_id ), m_Parent( parent ), m_hWnd( NULL )
-		{ }
+		Wnd(int resource_id, HWND parent = NULL)
+			: m_ItemID(resource_id), m_Parent(parent), m_hWnd(NULL)
+		{}
 
-		Wnd( HWND handle ) 
-			: m_hWnd( handle ), m_ItemID( -1 )
-		{ }
-		
-		virtual HWND GetHandle( ) const { return m_hWnd; }
-		virtual HWND GetParent( ) const { return m_Parent; }
-		virtual int GetID( ) const { return m_ItemID; }
+		Wnd(HWND handle)
+			: m_hWnd(handle), m_ItemID(-1)
+		{}
 
-		virtual std::tstring GetText( )
+		virtual HWND GetHandle() const { return m_hWnd; }
+		virtual HWND GetParent() const { return m_Parent; }
+		virtual int GetID() const { return m_ItemID; }
+
+		virtual std::tstring GetText()
 		{
-			TCHAR title_buffer[ 1024 ] = { 0 };
-			int text_length = ::GetWindowText( m_hWnd, title_buffer, ARRAYSIZE( title_buffer ) );
-			return std::tstring( title_buffer, text_length );
+			TCHAR title_buffer[1024] = {0};
+			int text_length = ::GetWindowText(m_hWnd, title_buffer, ARRAYSIZE(title_buffer));
+			return std::tstring(title_buffer, text_length);
 		}
 
-		virtual int GetTextLength( )
+		virtual int GetTextLength()
 		{
-			return ::GetWindowTextLength( m_hWnd );
+			return ::GetWindowTextLength(m_hWnd);
 		}
 
-		virtual BOOL SetText( const std::tstring &text )
+		virtual BOOL SetText(const std::tstring &text)
 		{
-			return ::SetWindowText( m_hWnd, text.c_str( ) );
+			return ::SetWindowText(m_hWnd, text.c_str());
 		}
 
-		virtual BOOL SetShowing( int state = SW_NORMAL )
+		virtual BOOL SetShowing(int state = SW_NORMAL)
 		{
-			return ::ShowWindow( m_hWnd, state );
+			return ::ShowWindow(m_hWnd, state);
 		}
 
-		virtual BOOL SetEnabled( BOOL enabled = TRUE )
+		virtual BOOL SetEnabled(BOOL enabled = TRUE)
 		{
-			return ::EnableWindow( m_hWnd, enabled );
+			return ::EnableWindow(m_hWnd, enabled);
 		}
 
-		virtual HWND Focus( )
+		virtual HWND Focus()
 		{
-			return ::SetFocus( m_hWnd );
+			return ::SetFocus(m_hWnd);
 		}
 
-		virtual BOOL IsFocused( )
-		{ 
-			return ::GetForegroundWindow( ) == m_hWnd;
+		virtual BOOL IsFocused()
+		{
+			return ::GetForegroundWindow() == m_hWnd;
 		}
 
-		UINT GetStyle( ) const
+		UINT GetStyle() const
 		{
-			return (UINT) ::GetWindowLong( m_hWnd, GWL_STYLE ) & 0xFFFF;
+			return (UINT) ::GetWindowLong(m_hWnd, GWL_STYLE) & 0xFFFF;
 		}
 
-		LONG AddStyle( DWORD dwStyle )
+		LONG AddStyle(DWORD dwStyle)
 		{
-			DWORD new_style = ::GetWindowLong( m_hWnd, GWL_STYLE ) | dwStyle;
-			return ::SetWindowLong( m_hWnd, GWL_STYLE, new_style );
+			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) | dwStyle;
+			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
 		}
 
 		//Stolen From ATL
-		BOOL ModifyStyle( DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0 )
+		BOOL ModifyStyle(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0)
 		{
-			DWORD dwStyle = ::GetWindowLong( m_hWnd, GWL_STYLE );
-			DWORD dwNewStyle = ( dwStyle & ~dwRemove ) | dwAdd;
-			if ( dwStyle == dwNewStyle ) return FALSE;
-			::SetWindowLong( m_hWnd, GWL_STYLE, dwNewStyle );
-			if ( nFlags != 0 )
-				::SetWindowPos( m_hWnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags );
+			DWORD dwStyle = ::GetWindowLong(m_hWnd, GWL_STYLE);
+			DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
+			if (dwStyle == dwNewStyle) return FALSE;
+			::SetWindowLong(m_hWnd, GWL_STYLE, dwNewStyle);
+			if (nFlags != 0)
+				::SetWindowPos(m_hWnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags);
 			return TRUE;
 		}
 
@@ -101,21 +101,21 @@ namespace WPP
 	class Control : public Wnd
 	{
 	public:
-		Control( int resource_id, HWND parent = NULL )
-			: Wnd( resource_id, parent )
+		Control(int resource_id, HWND parent = NULL)
+			: Wnd(resource_id, parent)
 		{
-			if ( parent != NULL )
-				m_hWnd = GetDlgItem( m_Parent, resource_id );
+			if (parent != NULL)
+				m_hWnd = ::GetDlgItem(m_Parent, resource_id);
 		}
 
-		Control( HWND handle ) : Wnd( handle )
-		{ }
+		Control(HWND handle) : Wnd(handle)
+		{}
 
-		void SetItem( HWND parent, int item_id )
+		void SetItem(HWND parent, int item_id)
 		{
 			m_ItemID = item_id;
 			m_Parent = parent;
-			m_hWnd = GetDlgItem( parent, item_id );
+			m_hWnd = ::GetDlgItem(parent, item_id);
 		}
 	};
 
@@ -123,279 +123,279 @@ namespace WPP
 	{
 	public:
 		HIMAGELIST m_hImageList;
-		
-		ImageList( HIMAGELIST hImageList = NULL ) : m_hImageList( hImageList )
-		{ }
 
-		operator HIMAGELIST( ) const { return m_hImageList; }
+		ImageList(HIMAGELIST hImageList = NULL) : m_hImageList(hImageList)
+		{}
 
-		bool IsNull( ) const { return ( m_hImageList == NULL ); }
+		operator HIMAGELIST() const { return m_hImageList; }
+
+		bool IsNull() const { return (m_hImageList == NULL); }
 
 		// Attributes
-		int GetImageCount( ) const
+		int GetImageCount() const
 		{
-			return ImageList_GetImageCount( m_hImageList );
+			return ImageList_GetImageCount(m_hImageList);
 		}
 
-		COLORREF GetBkColor( ) const
+		COLORREF GetBkColor() const
 		{
-			return ImageList_GetBkColor( m_hImageList );
+			return ImageList_GetBkColor(m_hImageList);
 		}
 
-		COLORREF SetBkColor( COLORREF cr )
+		COLORREF SetBkColor(COLORREF cr)
 		{
-			return ImageList_SetBkColor( m_hImageList, cr );
+			return ImageList_SetBkColor(m_hImageList, cr);
 		}
 
-		BOOL GetImageInfo( int nImage, IMAGEINFO* pImageInfo ) const
+		BOOL GetImageInfo(int nImage, IMAGEINFO* pImageInfo) const
 		{
-			return ImageList_GetImageInfo( m_hImageList, nImage, pImageInfo );
+			return ImageList_GetImageInfo(m_hImageList, nImage, pImageInfo);
 		}
 
-		HICON GetIcon( int nIndex, UINT uFlags = ILD_NORMAL ) const
+		HICON GetIcon(int nIndex, UINT uFlags = ILD_NORMAL) const
 		{
-			return ImageList_GetIcon( m_hImageList, nIndex, uFlags );
+			return ImageList_GetIcon(m_hImageList, nIndex, uFlags);
 		}
 
-		BOOL GetIconSize( int& cx, int& cy ) const
+		BOOL GetIconSize(int& cx, int& cy) const
 		{
-			return ImageList_GetIconSize( m_hImageList, &cx, &cy );
+			return ImageList_GetIconSize(m_hImageList, &cx, &cy);
 		}
 
-		BOOL GetIconSize( SIZE& size ) const
+		BOOL GetIconSize(SIZE& size) const
 		{
-			return ImageList_GetIconSize( m_hImageList, (int*) &size.cx, (int*) &size.cy );
+			return ImageList_GetIconSize(m_hImageList, (int*) &size.cx, (int*) &size.cy);
 		}
 
-		BOOL SetIconSize( int cx, int cy )
+		BOOL SetIconSize(int cx, int cy)
 		{
-			return ImageList_SetIconSize( m_hImageList, cx, cy );
+			return ImageList_SetIconSize(m_hImageList, cx, cy);
 		}
 
-		BOOL SetIconSize( SIZE size )
+		BOOL SetIconSize(SIZE size)
 		{
-			return ImageList_SetIconSize( m_hImageList, size.cx, size.cy );
+			return ImageList_SetIconSize(m_hImageList, size.cx, size.cy);
 		}
 
-		BOOL SetImageCount( UINT uNewCount )
+		BOOL SetImageCount(UINT uNewCount)
 		{
-			return ImageList_SetImageCount( m_hImageList, uNewCount );
+			return ImageList_SetImageCount(m_hImageList, uNewCount);
 		}
 
-		BOOL SetOverlayImage( int nImage, int nOverlay )
+		BOOL SetOverlayImage(int nImage, int nOverlay)
 		{
-			return ImageList_SetOverlayImage( m_hImageList, nImage, nOverlay );
+			return ImageList_SetOverlayImage(m_hImageList, nImage, nOverlay);
 		}
 
 		// Operations
-		BOOL Create( int cx, int cy, UINT nFlags, int nInitial, int nGrow )
+		BOOL Create(int cx, int cy, UINT nFlags, int nInitial, int nGrow)
 		{
-			m_hImageList = ImageList_Create( cx, cy, nFlags, nInitial, nGrow );
-			return ( m_hImageList != NULL ) ? TRUE : FALSE;
+			m_hImageList = ImageList_Create(cx, cy, nFlags, nInitial, nGrow);
+			return (m_hImageList != NULL) ? TRUE : FALSE;
 		}
 
-		BOOL Create( int nBimapID, int cx, int nGrow, COLORREF crMask )
+		BOOL Create(int nBimapID, int cx, int nGrow, COLORREF crMask)
 		{
-			m_hImageList = ImageList_LoadBitmap( GetModuleHandle( NULL ), MAKEINTRESOURCE( nBimapID ), cx, nGrow, crMask );
-			return ( m_hImageList != NULL ) ? TRUE : FALSE;
+			m_hImageList = ImageList_LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(nBimapID), cx, nGrow, crMask);
+			return (m_hImageList != NULL) ? TRUE : FALSE;
 		}
 
-		BOOL CreateFromImage( int nImageID, int cx, int nGrow, COLORREF crMask, UINT uType, UINT uFlags = LR_DEFAULTCOLOR | LR_DEFAULTSIZE )
+		BOOL CreateFromImage(int nImageID, int cx, int nGrow, COLORREF crMask, UINT uType, UINT uFlags = LR_DEFAULTCOLOR | LR_DEFAULTSIZE)
 		{
-			m_hImageList = ImageList_LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE(nImageID), cx, nGrow, crMask, uType, uFlags );
-			return ( m_hImageList != NULL ) ? TRUE : FALSE;
+			m_hImageList = ImageList_LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(nImageID), cx, nGrow, crMask, uType, uFlags);
+			return (m_hImageList != NULL) ? TRUE : FALSE;
 		}
 
-		BOOL Merge( HIMAGELIST hImageList1, int nImage1, HIMAGELIST hImageList2, int nImage2, int dx, int dy )
+		BOOL Merge(HIMAGELIST hImageList1, int nImage1, HIMAGELIST hImageList2, int nImage2, int dx, int dy)
 		{
-			m_hImageList = ImageList_Merge( hImageList1, nImage1, hImageList2, nImage2, dx, dy );
-			return ( m_hImageList != NULL ) ? TRUE : FALSE;
+			m_hImageList = ImageList_Merge(hImageList1, nImage1, hImageList2, nImage2, dx, dy);
+			return (m_hImageList != NULL) ? TRUE : FALSE;
 		}
 
 #ifndef _WIN32_WCE
 #ifdef __IStream_INTERFACE_DEFINED__
-		BOOL CreateFromStream( LPSTREAM lpStream )
+		BOOL CreateFromStream(LPSTREAM lpStream)
 		{
-			m_hImageList = ImageList_Read( lpStream );
-			return ( m_hImageList != NULL ) ? TRUE : FALSE;
+			m_hImageList = ImageList_Read(lpStream);
+			return (m_hImageList != NULL) ? TRUE : FALSE;
 		}
 #endif // __IStream_INTERFACE_DEFINED__
 #endif // !_WIN32_WCE
 
-		BOOL Destroy( )
+		BOOL Destroy()
 		{
-			if ( m_hImageList == NULL ) return FALSE;
-			BOOL bRet = ImageList_Destroy( m_hImageList );
-			if ( bRet ) m_hImageList = NULL;
+			if (m_hImageList == NULL) return FALSE;
+			BOOL bRet = ImageList_Destroy(m_hImageList);
+			if (bRet) m_hImageList = NULL;
 			return bRet;
 		}
 
-		int Add( HBITMAP hBitmap, HBITMAP hBitmapMask = NULL )
+		int Add(HBITMAP hBitmap, HBITMAP hBitmapMask = NULL)
 		{
-			return ImageList_Add( m_hImageList, hBitmap, hBitmapMask );
+			return ImageList_Add(m_hImageList, hBitmap, hBitmapMask);
 		}
 
-		int Add( HBITMAP hBitmap, COLORREF crMask )
+		int Add(HBITMAP hBitmap, COLORREF crMask)
 		{
-			return ImageList_AddMasked( m_hImageList, hBitmap, crMask );
+			return ImageList_AddMasked(m_hImageList, hBitmap, crMask);
 		}
 
-		BOOL Remove( int nImage )
+		BOOL Remove(int nImage)
 		{
-			return ImageList_Remove( m_hImageList, nImage );
+			return ImageList_Remove(m_hImageList, nImage);
 		}
 
-		BOOL RemoveAll( )
+		BOOL RemoveAll()
 		{
-			return ImageList_RemoveAll( m_hImageList );
+			return ImageList_RemoveAll(m_hImageList);
 		}
 
-		BOOL Replace( int nImage, HBITMAP hBitmap, HBITMAP hBitmapMask )
+		BOOL Replace(int nImage, HBITMAP hBitmap, HBITMAP hBitmapMask)
 		{
-			return ImageList_Replace( m_hImageList, nImage, hBitmap, hBitmapMask );
+			return ImageList_Replace(m_hImageList, nImage, hBitmap, hBitmapMask);
 		}
 
-		int AddIcon( HICON hIcon )
+		int AddIcon(HICON hIcon)
 		{
-			return ImageList_AddIcon( m_hImageList, hIcon );
+			return ImageList_AddIcon(m_hImageList, hIcon);
 		}
 
-		int ReplaceIcon( int nImage, HICON hIcon )
+		int ReplaceIcon(int nImage, HICON hIcon)
 		{
-			return ImageList_ReplaceIcon( m_hImageList, nImage, hIcon );
+			return ImageList_ReplaceIcon(m_hImageList, nImage, hIcon);
 		}
 
-		HICON ExtractIcon( int nImage )
+		HICON ExtractIcon(int nImage)
 		{
-			return ImageList_ExtractIcon( NULL, m_hImageList, nImage );
+			return ImageList_ExtractIcon(NULL, m_hImageList, nImage);
 		}
 
-		BOOL Draw( HDC hDC, int nImage, int x, int y, UINT nStyle )
+		BOOL Draw(HDC hDC, int nImage, int x, int y, UINT nStyle)
 		{
-			return ImageList_Draw( m_hImageList, nImage, hDC, x, y, nStyle );
+			return ImageList_Draw(m_hImageList, nImage, hDC, x, y, nStyle);
 		}
 
-		BOOL Draw( HDC hDC, int nImage, POINT pt, UINT nStyle )
+		BOOL Draw(HDC hDC, int nImage, POINT pt, UINT nStyle)
 		{
-			return ImageList_Draw( m_hImageList, nImage, hDC, pt.x, pt.y, nStyle );
+			return ImageList_Draw(m_hImageList, nImage, hDC, pt.x, pt.y, nStyle);
 		}
 
-		BOOL DrawEx( int nImage, HDC hDC, int x, int y, int dx, int dy, COLORREF rgbBk, COLORREF rgbFg, UINT fStyle )
+		BOOL DrawEx(int nImage, HDC hDC, int x, int y, int dx, int dy, COLORREF rgbBk, COLORREF rgbFg, UINT fStyle)
 		{
-			return ImageList_DrawEx( m_hImageList, nImage, hDC, x, y, dx, dy, rgbBk, rgbFg, fStyle );
+			return ImageList_DrawEx(m_hImageList, nImage, hDC, x, y, dx, dy, rgbBk, rgbFg, fStyle);
 		}
 
-		BOOL DrawEx( int nImage, HDC hDC, RECT& rect, COLORREF rgbBk, COLORREF rgbFg, UINT fStyle )
+		BOOL DrawEx(int nImage, HDC hDC, RECT& rect, COLORREF rgbBk, COLORREF rgbFg, UINT fStyle)
 		{
-			return ImageList_DrawEx( m_hImageList, nImage, hDC, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, rgbBk, rgbFg, fStyle );
+			return ImageList_DrawEx(m_hImageList, nImage, hDC, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, rgbBk, rgbFg, fStyle);
 		}
 
-		static BOOL DrawIndirect( IMAGELISTDRAWPARAMS* pimldp )
+		static BOOL DrawIndirect(IMAGELISTDRAWPARAMS* pimldp)
 		{
-			return ImageList_DrawIndirect( pimldp );
+			return ImageList_DrawIndirect(pimldp);
 		}
 
-		BOOL Copy( int nSrc, int nDst, UINT uFlags = ILCF_MOVE )
+		BOOL Copy(int nSrc, int nDst, UINT uFlags = ILCF_MOVE)
 		{
-			return ImageList_Copy( m_hImageList, nDst, m_hImageList, nSrc, uFlags );
+			return ImageList_Copy(m_hImageList, nDst, m_hImageList, nSrc, uFlags);
 		}
 
 #ifdef __IStream_INTERFACE_DEFINED__
 #ifndef _WIN32_WCE
-		static HIMAGELIST Read( LPSTREAM lpStream )
+		static HIMAGELIST Read(LPSTREAM lpStream)
 		{
-			return ImageList_Read( lpStream );
+			return ImageList_Read(lpStream);
 		}
 
-		BOOL Write( LPSTREAM lpStream )
+		BOOL Write(LPSTREAM lpStream)
 		{
-			return ImageList_Write( m_hImageList, lpStream );
+			return ImageList_Write(m_hImageList, lpStream);
 		}
 #endif // !_WIN32_WCE
 
 #if (_WIN32_WINNT >= 0x0501)
-		static HRESULT ReadEx( DWORD dwFlags, LPSTREAM lpStream, REFIID riid, PVOID* ppv )
+		static HRESULT ReadEx(DWORD dwFlags, LPSTREAM lpStream, REFIID riid, PVOID* ppv)
 		{
-			return ImageList_ReadEx( dwFlags, lpStream, riid, ppv );
+			return ImageList_ReadEx(dwFlags, lpStream, riid, ppv);
 		}
 
-		HRESULT WriteEx( DWORD dwFlags, LPSTREAM lpStream )
+		HRESULT WriteEx(DWORD dwFlags, LPSTREAM lpStream)
 		{
-			return ImageList_WriteEx( m_hImageList, dwFlags, lpStream );
+			return ImageList_WriteEx(m_hImageList, dwFlags, lpStream);
 		}
 #endif // (_WIN32_WINNT >= 0x0501)
 #endif // __IStream_INTERFACE_DEFINED__
 
 		// Drag operations
-		BOOL BeginDrag( int nImage, POINT ptHotSpot )
+		BOOL BeginDrag(int nImage, POINT ptHotSpot)
 		{
-			return ImageList_BeginDrag( m_hImageList, nImage, ptHotSpot.x, ptHotSpot.y );
+			return ImageList_BeginDrag(m_hImageList, nImage, ptHotSpot.x, ptHotSpot.y);
 		}
 
-		BOOL BeginDrag( int nImage, int xHotSpot, int yHotSpot )
+		BOOL BeginDrag(int nImage, int xHotSpot, int yHotSpot)
 		{
-			return ImageList_BeginDrag( m_hImageList, nImage, xHotSpot, yHotSpot );
+			return ImageList_BeginDrag(m_hImageList, nImage, xHotSpot, yHotSpot);
 		}
 
-		static void EndDrag( )
+		static void EndDrag()
 		{
-			ImageList_EndDrag( );
+			ImageList_EndDrag();
 		}
 
-		static BOOL DragMove( POINT pt )
+		static BOOL DragMove(POINT pt)
 		{
-			return ImageList_DragMove( pt.x, pt.y );
+			return ImageList_DragMove(pt.x, pt.y);
 		}
 
-		static BOOL DragMove( int x, int y )
+		static BOOL DragMove(int x, int y)
 		{
-			return ImageList_DragMove( x, y );
+			return ImageList_DragMove(x, y);
 		}
 
-		BOOL SetDragCursorImage( int nDrag, POINT ptHotSpot )
+		BOOL SetDragCursorImage(int nDrag, POINT ptHotSpot)
 		{
-			return ImageList_SetDragCursorImage( m_hImageList, nDrag, ptHotSpot.x, ptHotSpot.y );
+			return ImageList_SetDragCursorImage(m_hImageList, nDrag, ptHotSpot.x, ptHotSpot.y);
 		}
 
-		BOOL SetDragCursorImage( int nDrag, int xHotSpot, int yHotSpot )
+		BOOL SetDragCursorImage(int nDrag, int xHotSpot, int yHotSpot)
 		{
-			return ImageList_SetDragCursorImage( m_hImageList, nDrag, xHotSpot, yHotSpot );
+			return ImageList_SetDragCursorImage(m_hImageList, nDrag, xHotSpot, yHotSpot);
 		}
 
-		static BOOL DragShowNolock( BOOL bShow = TRUE )
+		static BOOL DragShowNolock(BOOL bShow = TRUE)
 		{
-			return ImageList_DragShowNolock( bShow );
+			return ImageList_DragShowNolock(bShow);
 		}
 
-		static ImageList GetDragImage( LPPOINT lpPoint, LPPOINT lpPointHotSpot )
+		static ImageList GetDragImage(LPPOINT lpPoint, LPPOINT lpPointHotSpot)
 		{
-			return ImageList( ImageList_GetDragImage( lpPoint, lpPointHotSpot ) );
+			return ImageList(ImageList_GetDragImage(lpPoint, lpPointHotSpot));
 		}
 
-		static BOOL DragEnter( HWND hWnd, POINT point )
+		static BOOL DragEnter(HWND hWnd, POINT point)
 		{
-			return ImageList_DragEnter( hWnd, point.x, point.y );
+			return ImageList_DragEnter(hWnd, point.x, point.y);
 		}
 
-		static BOOL DragEnter( HWND hWnd, int x, int y )
+		static BOOL DragEnter(HWND hWnd, int x, int y)
 		{
-			return ImageList_DragEnter( hWnd, x, y );
+			return ImageList_DragEnter(hWnd, x, y);
 		}
 
-		static BOOL DragLeave( HWND hWnd )
+		static BOOL DragLeave(HWND hWnd)
 		{
-			return ImageList_DragLeave( hWnd );
+			return ImageList_DragLeave(hWnd);
 		}
 
 #if (_WIN32_IE >= 0x0400)
-		ImageList Duplicate( ) const
+		ImageList Duplicate() const
 		{
-			return ImageList( ImageList_Duplicate( m_hImageList ) );
+			return ImageList(ImageList_Duplicate(m_hImageList));
 		}
 
-		static ImageList Duplicate( HIMAGELIST hImageList )
+		static ImageList Duplicate(HIMAGELIST hImageList)
 		{
-			return ImageList( ImageList_Duplicate( hImageList ) );
+			return ImageList(ImageList_Duplicate(hImageList));
 		}
 #endif // (_WIN32_IE >= 0x0400)
 	};
@@ -405,44 +405,44 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		HICON GetIcon( )
+		HICON GetIcon()
 		{
-			return (HICON) SendMessage( m_hWnd, STM_GETICON, 0, 0L );
+			return (HICON) SendMessage(m_hWnd, STM_GETICON, 0, 0L);
 		}
 
-		HICON SetIcon( HICON hIcon )
+		HICON SetIcon(HICON hIcon)
 		{
-			return (HICON) SendMessage( m_hWnd, STM_SETICON, (WPARAM) hIcon, 0L );
+			return (HICON) SendMessage(m_hWnd, STM_SETICON, (WPARAM) hIcon, 0L);
 		}
 
-		HENHMETAFILE GetEnhMetaFile( )
+		HENHMETAFILE GetEnhMetaFile()
 		{
-			return (HENHMETAFILE) SendMessage( m_hWnd, STM_GETIMAGE, IMAGE_ENHMETAFILE, 0L );
+			return (HENHMETAFILE) SendMessage(m_hWnd, STM_GETIMAGE, IMAGE_ENHMETAFILE, 0L);
 		}
 
-		HENHMETAFILE SetEnhMetaFile( HENHMETAFILE hMetaFile )
+		HENHMETAFILE SetEnhMetaFile(HENHMETAFILE hMetaFile)
 		{
-			return (HENHMETAFILE) SendMessage( m_hWnd, STM_SETIMAGE, IMAGE_ENHMETAFILE, (LPARAM) hMetaFile );
+			return (HENHMETAFILE) SendMessage(m_hWnd, STM_SETIMAGE, IMAGE_ENHMETAFILE, (LPARAM) hMetaFile);
 		}
 
-		HBITMAP GetBitmap( )
+		HBITMAP GetBitmap()
 		{
-			return (HBITMAP) SendMessage( m_hWnd, STM_GETIMAGE, IMAGE_BITMAP, 0L );
+			return (HBITMAP) SendMessage(m_hWnd, STM_GETIMAGE, IMAGE_BITMAP, 0L);
 		}
 
-		HBITMAP SetBitmap( HBITMAP hBitmap )
+		HBITMAP SetBitmap(HBITMAP hBitmap)
 		{
-			return (HBITMAP) SendMessage( m_hWnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) hBitmap );
+			return (HBITMAP) SendMessage(m_hWnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) hBitmap);
 		}
 
-		HCURSOR GetCursor( )
+		HCURSOR GetCursor()
 		{
-			return (HCURSOR) SendMessage( m_hWnd, STM_GETIMAGE, IMAGE_CURSOR, 0L );
+			return (HCURSOR) SendMessage(m_hWnd, STM_GETIMAGE, IMAGE_CURSOR, 0L);
 		}
 
-		HCURSOR SetCursor( HCURSOR hCursor )
+		HCURSOR SetCursor(HCURSOR hCursor)
 		{
-			return (HCURSOR) SendMessage( m_hWnd, STM_SETIMAGE, IMAGE_CURSOR, (LPARAM) hCursor );
+			return (HCURSOR) SendMessage(m_hWnd, STM_SETIMAGE, IMAGE_CURSOR, (LPARAM) hCursor);
 		}
 	};
 
@@ -451,59 +451,59 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		void SetChecked( BOOL checked = FALSE )
+		void SetChecked(BOOL checked = FALSE)
 		{
-			Button_SetCheck( m_hWnd, checked ? BST_CHECKED : BST_UNCHECKED );
+			Button_SetCheck(m_hWnd, checked ? BST_CHECKED : BST_UNCHECKED);
 		}
 
-		int GetState( )
+		int GetState()
 		{
-			return Button_GetState( m_hWnd );
+			return Button_GetState(m_hWnd);
 		}
 
-		void SetState( int state )
+		void SetState(int state)
 		{
-			Button_SetState( m_hWnd, state );
+			Button_SetState(m_hWnd, state);
 		}
 
-		BOOL IsChecked( )
+		BOOL IsChecked()
 		{
-			return GetState( ) == BST_CHECKED;
+			return GetState() == BST_CHECKED;
 		}
 
-		void SetStyle( UINT style, BOOL redraw = TRUE )
+		void SetStyle(UINT style, BOOL redraw = TRUE)
 		{
-			Button_SetStyle( m_hWnd, style, redraw );
+			Button_SetStyle(m_hWnd, style, redraw);
 		}
 
-		HICON GetIcon( )
+		HICON GetIcon()
 		{
-			return (HICON) SendMessage( m_hWnd, BM_GETIMAGE, IMAGE_ICON, 0L );
+			return (HICON) SendMessage(m_hWnd, BM_GETIMAGE, IMAGE_ICON, 0L);
 		}
 
-		HICON SetIcon( HICON hIcon )
+		HICON SetIcon(HICON hIcon)
 		{
-			return (HICON) SendMessage( m_hWnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) hIcon );
+			return (HICON) SendMessage(m_hWnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) hIcon);
 		}
 
-		HBITMAP GetBitmap( )
+		HBITMAP GetBitmap()
 		{
-			return (HBITMAP) SendMessage( m_hWnd, BM_GETIMAGE, IMAGE_BITMAP, 0L );
+			return (HBITMAP) SendMessage(m_hWnd, BM_GETIMAGE, IMAGE_BITMAP, 0L);
 		}
 
-		HBITMAP SetBitmap( HBITMAP hBitmap )
+		HBITMAP SetBitmap(HBITMAP hBitmap)
 		{
-			return (HBITMAP) SendMessage( m_hWnd, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM) hBitmap );
+			return (HBITMAP) SendMessage(m_hWnd, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM) hBitmap);
 		}
 
-		void SetShield( BOOL shield_state )
+		void SetShield(BOOL shield_state)
 		{
-			Button_SetElevationRequiredState( m_hWnd, shield_state );
+			Button_SetElevationRequiredState(m_hWnd, shield_state);
 		}
 
-		void EmulatePress( )
+		void EmulatePress()
 		{
-			SendMessage( m_hWnd, BM_CLICK, 0, 0L );
+			SendMessage(m_hWnd, BM_CLICK, 0, 0L);
 		}
 	};
 
@@ -518,225 +518,225 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetListCount( )
+		int GetListCount()
 		{
-			return ListBox_GetCount( m_hWnd );
+			return ListBox_GetCount(m_hWnd);
 		}
 
-		int GetHorizonExtent( )
+		int GetHorizonExtent()
 		{
-			return ListBox_GetHorizontalExtent( m_hWnd );
+			return ListBox_GetHorizontalExtent(m_hWnd);
 		}
 
-		void SetHorizonExtent( int extent )
+		void SetHorizonExtent(int extent)
 		{
-			ListBox_SetHorizontalExtent( m_hWnd, extent );
+			ListBox_SetHorizontalExtent(m_hWnd, extent);
 		}
 
-		int GetTopIndex( )
+		int GetTopIndex()
 		{
-			return ListBox_GetTopIndex( m_hWnd );
+			return ListBox_GetTopIndex(m_hWnd);
 		}
 
-		int SetTopIndex( int top_index )
+		int SetTopIndex(int top_index)
 		{
-			return ListBox_SetTopIndex( m_hWnd, top_index );
+			return ListBox_SetTopIndex(m_hWnd, top_index);
 		}
 
-		LCID GetLocale( )
+		LCID GetLocale()
 		{
-			return (LCID) SendMessage( m_hWnd, LB_GETLOCALE, 0, 0L );
+			return (LCID) SendMessage(m_hWnd, LB_GETLOCALE, 0, 0L);
 		}
 
-		LCID SetLocale( LCID locale )
+		LCID SetLocale(LCID locale)
 		{
-			return (LCID) SendMessage( m_hWnd, LB_SETLOCALE, (WPARAM) locale, 0L );
+			return (LCID) SendMessage(m_hWnd, LB_SETLOCALE, (WPARAM) locale, 0L);
 		}
 
-		DWORD GetListboxInfo( )
+		DWORD GetListboxInfo()
 		{
-			return (DWORD) SendMessage( m_hWnd, LB_GETLISTBOXINFO, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, LB_GETLISTBOXINFO, 0, 0L);
 		}
 
-		int GetSelected( )
+		int GetSelected()
 		{
-			return ListBox_GetCurSel( m_hWnd );
+			return ListBox_GetCurSel(m_hWnd);
 		}
 
-		int SetSelected( int index )
+		int SetSelected(int index)
 		{
-			return ListBox_SetCurSel( m_hWnd, index );
+			return ListBox_SetCurSel(m_hWnd, index);
 		}
 
-		int GetMultiSel( int index )
+		int GetMultiSel(int index)
 		{
-			return ListBox_GetSel( m_hWnd, index );
+			return ListBox_GetSel(m_hWnd, index);
 		}
 
-		int SetMultiSel( int index, BOOL selected = TRUE )
+		int SetMultiSel(int index, BOOL selected = TRUE)
 		{
-			return ListBox_SetSel( m_hWnd, selected, index );
+			return ListBox_SetSel(m_hWnd, selected, index);
 		}
 
-		int GetMultiSelCount( )
+		int GetMultiSelCount()
 		{
-			return ListBox_GetSelCount( m_hWnd );
+			return ListBox_GetSelCount(m_hWnd);
 		}
 
-		int GetSelectedIndexs( int max_count, int *return_indexs )
+		int GetSelectedIndexs(int max_count, int *return_indexs)
 		{
-			return ListBox_GetSelItems( m_hWnd, max_count, return_indexs );
+			return ListBox_GetSelItems(m_hWnd, max_count, return_indexs);
 		}
 
-		int GetAnchorIndex( )
+		int GetAnchorIndex()
 		{
-			return (int) SendMessage( m_hWnd, LB_GETANCHORINDEX, 0, 0L );
+			return (int) SendMessage(m_hWnd, LB_GETANCHORINDEX, 0, 0L);
 		}
 
-		void SetAnchorIndex( int nIndex )
+		void SetAnchorIndex(int nIndex)
 		{
-			SendMessage( m_hWnd, LB_SETANCHORINDEX, nIndex, 0L );
+			SendMessage(m_hWnd, LB_SETANCHORINDEX, nIndex, 0L);
 		}
 
-		int GetCarretIndex( )
+		int GetCarretIndex()
 		{
-			return ListBox_GetCaretIndex( m_hWnd );
+			return ListBox_GetCaretIndex(m_hWnd);
 		}
 
-		int SetCarretIndex( int index, BOOL scroll_to = TRUE )
+		int SetCarretIndex(int index, BOOL scroll_to = TRUE)
 		{
-			return (int) SendMessage( m_hWnd, LB_SETCARETINDEX, index, MAKELONG( scroll_to, 0 ) );
+			return (int) SendMessage(m_hWnd, LB_SETCARETINDEX, index, MAKELONG(scroll_to, 0));
 		}
 
-		DWORD_PTR GetItemData( int index )
+		DWORD_PTR GetItemData(int index)
 		{
-			return ListBox_GetItemData( m_hWnd, index );
+			return ListBox_GetItemData(m_hWnd, index);
 		}
 
-		int SetItemData( int index, DWORD_PTR item_data )
+		int SetItemData(int index, DWORD_PTR item_data)
 		{
-			return ListBox_SetItemData( m_hWnd, index, item_data );
+			return ListBox_SetItemData(m_hWnd, index, item_data);
 		}
 
 		template < typename R >
-		R *GetItemDataPtr( int index )
+		R *GetItemDataPtr(int index)
 		{
-			return reinterpret_cast<R*>( GetItemData( index ) );
+			return reinterpret_cast<R*>(GetItemData(index));
 		}
 
 		template < typename T >
-		int SetItemDataPtr( int index, T *data )
+		int SetItemDataPtr(int index, T *data)
 		{
-			return SetItemData( index, reinterpret_cast<T*>( data ) );
+			return SetItemData(index, reinterpret_cast<T*>(data));
 		}
 
-		int GetItemRect( int index, LPRECT rect_out )
+		int GetItemRect(int index, LPRECT rect_out)
 		{
-			return ListBox_GetItemRect( m_hWnd, index, rect_out );
+			return ListBox_GetItemRect(m_hWnd, index, rect_out);
 		}
 
-		int GetItemTextLen( int index )
+		int GetItemTextLen(int index)
 		{
-			return ListBox_GetTextLen( m_hWnd, index );
+			return ListBox_GetTextLen(m_hWnd, index);
 		}
 
-		int GetItemHeight( int index )
+		int GetItemHeight(int index)
 		{
-			return ListBox_GetItemHeight( m_hWnd, index );
+			return ListBox_GetItemHeight(m_hWnd, index);
 		}
 
-		int SetItemHeight( int index, int item_height )
+		int SetItemHeight(int index, int item_height)
 		{
-			return ListBox_SetItemHeight( m_hWnd, index, item_height );
+			return ListBox_SetItemHeight(m_hWnd, index, item_height);
 		}
 
-		void SetColumnWidth( int width )
+		void SetColumnWidth(int width)
 		{
-			ListBox_SetColumnWidth( m_hWnd, width );
+			ListBox_SetColumnWidth(m_hWnd, width);
 		}
 
-		BOOL SetTabStops( int tab_stop_num, int * tab_stops )
+		BOOL SetTabStops(int tab_stop_num, int * tab_stops)
 		{
-			return ListBox_SetTabStops( m_hWnd, tab_stop_num, tab_stops );
+			return ListBox_SetTabStops(m_hWnd, tab_stop_num, tab_stops);
 		}
 
-		BOOL SetTabStops( )
+		BOOL SetTabStops()
 		{
-			return ListBox_SetTabStops( m_hWnd, 0, 0L );
+			return ListBox_SetTabStops(m_hWnd, 0, 0L);
 		}
 
-		BOOL SetTabStops( const int &each_step )
+		BOOL SetTabStops(const int &each_step)
 		{
-			return ListBox_SetTabStops( m_hWnd, 1, &each_step );
+			return ListBox_SetTabStops(m_hWnd, 1, &each_step);
 		}
 
-		int InitStorage( int item_count, UINT storage_initial_bytesize )
+		int InitStorage(int item_count, UINT storage_initial_bytesize)
 		{
-			return (int) SendMessage( m_hWnd, LB_INITSTORAGE, (WPARAM) item_count, (LPARAM) storage_initial_bytesize );
+			return (int) SendMessage(m_hWnd, LB_INITSTORAGE, (WPARAM) item_count, (LPARAM) storage_initial_bytesize);
 		}
 
-		void ResetContent( )
+		void ResetContent()
 		{
-			ListBox_ResetContent( m_hWnd );
+			ListBox_ResetContent(m_hWnd);
 		}
 
-		int ItemFromPoint( POINT position, BOOL& is_outside )
+		int ItemFromPoint(POINT position, BOOL& is_outside)
 		{
-			DWORD dw = (DWORD) SendMessage( m_hWnd, LB_ITEMFROMPOINT, 0, MAKELPARAM( position.x, position.y ) );
-			is_outside = (BOOL) HIWORD( dw );
-			return (int) LOWORD( dw );
+			DWORD dw = (DWORD) SendMessage(m_hWnd, LB_ITEMFROMPOINT, 0, MAKELPARAM(position.x, position.y));
+			is_outside = (BOOL) HIWORD(dw);
+			return (int) LOWORD(dw);
 		}
 
-		int Remove( int index )
+		int Remove(int index)
 		{
-			return ListBox_DeleteString( m_hWnd, index );
+			return ListBox_DeleteString(m_hWnd, index);
 		}
 
-		int GetItemText( int index, LPCTSTR buffer )
+		int GetItemText(int index, LPCTSTR buffer)
 		{
-			return ListBox_GetText( m_hWnd, index, buffer );
+			return ListBox_GetText(m_hWnd, index, buffer);
 		}
 
-		int Add( LPCTSTR string )
+		int Add(LPCTSTR string)
 		{
-			return ListBox_AddString( m_hWnd, string );
+			return ListBox_AddString(m_hWnd, string);
 		}
 
-		int Insert( int index, LPCTSTR string )
+		int Insert(int index, LPCTSTR string)
 		{
-			return ListBox_InsertString( m_hWnd, index, string );
+			return ListBox_InsertString(m_hWnd, index, string);
 		}
 
-		int AddDir( int attribute, LPCTSTR file_spec )
+		int AddDir(int attribute, LPCTSTR file_spec)
 		{
-			return ListBox_Dir( m_hWnd, attribute, file_spec );
+			return ListBox_Dir(m_hWnd, attribute, file_spec);
 		}
 
-		int AddFile( LPCTSTR file_path )
+		int AddFile(LPCTSTR file_path)
 		{
-			return (int) SendMessage( m_hWnd, LB_ADDFILE, 0, (LPARAM) file_path );
+			return (int) SendMessage(m_hWnd, LB_ADDFILE, 0, (LPARAM) file_path);
 		}
 
-		int FindString( int start_index, LPCTSTR item_string ) const
+		int FindString(int start_index, LPCTSTR item_string) const
 		{
-			return (int) SendMessage( m_hWnd, LB_FINDSTRING, start_index, (LPARAM) item_string );
+			return (int) SendMessage(m_hWnd, LB_FINDSTRING, start_index, (LPARAM) item_string);
 		}
 
-		int FindStringExact( int start_index, LPCTSTR item_string ) const
+		int FindStringExact(int start_index, LPCTSTR item_string) const
 		{
-			return (int) SendMessage( m_hWnd, LB_FINDSTRINGEXACT, start_index, (LPARAM) item_string );
+			return (int) SendMessage(m_hWnd, LB_FINDSTRINGEXACT, start_index, (LPARAM) item_string);
 		}
 
-		int SelectString( int start_index, LPCTSTR item_string )
+		int SelectString(int start_index, LPCTSTR item_string)
 		{
-			return (int) SendMessage( m_hWnd, LB_SELECTSTRING, start_index, (LPARAM) item_string );
+			return (int) SendMessage(m_hWnd, LB_SELECTSTRING, start_index, (LPARAM) item_string);
 		}
 
-		int SelItemRange( BOOL bSelect, int first_item, int last_item )
+		int SelItemRange(BOOL bSelect, int first_item, int last_item)
 		{
 			return bSelect ?
-				(int) SendMessage( m_hWnd, LB_SELITEMRANGEEX, first_item, last_item ) :
-				(int) SendMessage( m_hWnd, LB_SELITEMRANGEEX, last_item, first_item );
+				(int) SendMessage(m_hWnd, LB_SELITEMRANGEEX, first_item, last_item) :
+				(int) SendMessage(m_hWnd, LB_SELITEMRANGEEX, last_item, first_item);
 		}
 	};
 
@@ -745,227 +745,227 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetCount( )
+		int GetCount()
 		{
-			return ComboBox_GetCount( m_hWnd );
+			return ComboBox_GetCount(m_hWnd);
 		}
 
-		int GetCurSel( )
+		int GetCurSel()
 		{
-			return ComboBox_GetCurSel( m_hWnd );
+			return ComboBox_GetCurSel(m_hWnd);
 		}
 
-		int SetCurSel( int index )
+		int SetCurSel(int index)
 		{
-			return ComboBox_SetCurSel( m_hWnd, index );
+			return ComboBox_SetCurSel(m_hWnd, index);
 		}
 
-		LCID GetLocale( )
+		LCID GetLocale()
 		{
-			return (LCID) SendMessage( m_hWnd, CB_GETLOCALE, 0, 0L );
+			return (LCID) SendMessage(m_hWnd, CB_GETLOCALE, 0, 0L);
 		}
 
-		LCID SetLocale( LCID locale )
+		LCID SetLocale(LCID locale)
 		{
-			return (LCID) SendMessage( m_hWnd, CB_SETLOCALE, (WPARAM) locale, 0L );
+			return (LCID) SendMessage(m_hWnd, CB_SETLOCALE, (WPARAM) locale, 0L);
 		}
 
-		int GetTopIndex( )
+		int GetTopIndex()
 		{
-			return (int) SendMessage( m_hWnd, CB_GETTOPINDEX, 0, 0L );
+			return (int) SendMessage(m_hWnd, CB_GETTOPINDEX, 0, 0L);
 		}
 
-		int SetTopIndex( int index )
+		int SetTopIndex(int index)
 		{
-			return (int) SendMessage( m_hWnd, CB_SETTOPINDEX, index, 0L );
+			return (int) SendMessage(m_hWnd, CB_SETTOPINDEX, index, 0L);
 		}
 
-		UINT GetHorizontalExtent( )
+		UINT GetHorizontalExtent()
 		{
-			return (UINT) SendMessage( m_hWnd, CB_GETHORIZONTALEXTENT, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, CB_GETHORIZONTALEXTENT, 0, 0L);
 		}
 
-		void SetHorizontalExtent( UINT extent )
+		void SetHorizontalExtent(UINT extent)
 		{
-			SendMessage( m_hWnd, CB_SETHORIZONTALEXTENT, extent, 0L );
+			SendMessage(m_hWnd, CB_SETHORIZONTALEXTENT, extent, 0L);
 		}
 
-		int GetDroppedWidth( )
+		int GetDroppedWidth()
 		{
-			return (int) SendMessage( m_hWnd, CB_GETDROPPEDWIDTH, 0, 0L );
+			return (int) SendMessage(m_hWnd, CB_GETDROPPEDWIDTH, 0, 0L);
 		}
 
-		int SetDroppedWidth( UINT width )
+		int SetDroppedWidth(UINT width)
 		{
-			return (int) SendMessage( m_hWnd, CB_SETDROPPEDWIDTH, width, 0L );
+			return (int) SendMessage(m_hWnd, CB_SETDROPPEDWIDTH, width, 0L);
 		}
 
-		BOOL GetComboBoxInfo( PCOMBOBOXINFO combobox_info )
+		BOOL GetComboBoxInfo(PCOMBOBOXINFO combobox_info)
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_GETCOMBOBOXINFO, 0, (LPARAM) combobox_info );
+			return (BOOL) SendMessage(m_hWnd, CB_GETCOMBOBOXINFO, 0, (LPARAM) combobox_info);
 		}
 
-		DWORD GetEditSel( )
+		DWORD GetEditSel()
 		{
-			return (DWORD) SendMessage( m_hWnd, CB_GETEDITSEL, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, CB_GETEDITSEL, 0, 0L);
 		}
 
-		BOOL SetEditSel( int start_index, int end_index )
+		BOOL SetEditSel(int start_index, int end_index)
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_SETEDITSEL, 0, MAKELONG( start_index, end_index ) );
+			return (BOOL) SendMessage(m_hWnd, CB_SETEDITSEL, 0, MAKELONG(start_index, end_index));
 		}
 
-		DWORD_PTR GetItemData( int index )
+		DWORD_PTR GetItemData(int index)
 		{
-			return (DWORD_PTR) SendMessage( m_hWnd, CB_GETITEMDATA, index, 0L );
+			return (DWORD_PTR) SendMessage(m_hWnd, CB_GETITEMDATA, index, 0L);
 		}
 
-		int SetItemData( int index, DWORD_PTR item_data )
+		int SetItemData(int index, DWORD_PTR item_data)
 		{
-			return (int) SendMessage( m_hWnd, CB_SETITEMDATA, index, (LPARAM) item_data );
+			return (int) SendMessage(m_hWnd, CB_SETITEMDATA, index, (LPARAM) item_data);
 		}
 
-		int GetLBText( int index, LPTSTR string )
+		int GetLBText(int index, LPTSTR string)
 		{
-			return (int) SendMessage( m_hWnd, CB_GETLBTEXT, index, (LPARAM) string );
+			return (int) SendMessage(m_hWnd, CB_GETLBTEXT, index, (LPARAM) string);
 		}
 
-		int GetLBTextLen( int index )
+		int GetLBTextLen(int index)
 		{
-			return (int) SendMessage( m_hWnd, CB_GETLBTEXTLEN, index, 0L );
+			return (int) SendMessage(m_hWnd, CB_GETLBTEXTLEN, index, 0L);
 		}
 
-		std::tstring GetSelectedText( )
+		std::tstring GetSelectedText()
 		{
-			TCHAR text[ 1024 ] = { 0 };
-			if ( GetLBText( GetCurSel( ), text ) != LB_ERR )
+			TCHAR text[1024] = {0};
+			if (GetLBText(GetCurSel(), text) != LB_ERR)
 				return text;
-			return std::tstring( );
+			return std::tstring();
 		}
 
-		int GetItemHeight( int index )
+		int GetItemHeight(int index)
 		{
-			return (int) SendMessage( m_hWnd, CB_GETITEMHEIGHT, index, 0L );
+			return (int) SendMessage(m_hWnd, CB_GETITEMHEIGHT, index, 0L);
 		}
 
-		int SetItemHeight( int index, UINT item_height )
+		int SetItemHeight(int index, UINT item_height)
 		{
-			return (int) SendMessage( m_hWnd, CB_SETITEMHEIGHT, index, MAKELONG( item_height, 0 ) );
+			return (int) SendMessage(m_hWnd, CB_SETITEMHEIGHT, index, MAKELONG(item_height, 0));
 		}
 
-		BOOL GetExtendedUI( )
+		BOOL GetExtendedUI()
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_GETEXTENDEDUI, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, CB_GETEXTENDEDUI, 0, 0L);
 		}
 
-		int SetExtendedUI( BOOL extended = TRUE )
+		int SetExtendedUI(BOOL extended = TRUE)
 		{
-			return (int) SendMessage( m_hWnd, CB_SETEXTENDEDUI, extended, 0L );
+			return (int) SendMessage(m_hWnd, CB_SETEXTENDEDUI, extended, 0L);
 		}
 
-		void GetDroppedControlRect( LPRECT lprect )
+		void GetDroppedControlRect(LPRECT lprect)
 		{
-			SendMessage( m_hWnd, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM) lprect );
+			SendMessage(m_hWnd, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM) lprect);
 		}
 
-		BOOL GetDroppedState( )
+		BOOL GetDroppedState()
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_GETDROPPEDSTATE, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, CB_GETDROPPEDSTATE, 0, 0L);
 		}
 
-		int GetMinVisible( )
+		int GetMinVisible()
 		{
-			return (int) SendMessage( m_hWnd, CB_GETMINVISIBLE, 0, 0L );
+			return (int) SendMessage(m_hWnd, CB_GETMINVISIBLE, 0, 0L);
 		}
 
-		BOOL SetMinVisible( int min_vis )
+		BOOL SetMinVisible(int min_vis)
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_SETMINVISIBLE, min_vis, 0L );
+			return (BOOL) SendMessage(m_hWnd, CB_SETMINVISIBLE, min_vis, 0L);
 		}
 
-		BOOL GetCueBannerText( LPWSTR lpwText, int cchText ) const
+		BOOL GetCueBannerText(LPWSTR lpwText, int cchText) const
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_GETCUEBANNER, (WPARAM) lpwText, cchText );
+			return (BOOL) SendMessage(m_hWnd, CB_GETCUEBANNER, (WPARAM) lpwText, cchText);
 		}
 
-		BOOL SetCueBannerText( LPCWSTR lpcwText )
+		BOOL SetCueBannerText(LPCWSTR lpcwText)
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_SETCUEBANNER, 0, (LPARAM) lpcwText );
+			return (BOOL) SendMessage(m_hWnd, CB_SETCUEBANNER, 0, (LPARAM) lpcwText);
 		}
 
-		int InitStorage( int item_count, UINT byte_count )
+		int InitStorage(int item_count, UINT byte_count)
 		{
-			return (int) SendMessage( m_hWnd, CB_INITSTORAGE, (WPARAM) item_count, byte_count );
+			return (int) SendMessage(m_hWnd, CB_INITSTORAGE, (WPARAM) item_count, byte_count);
 		}
 
-		void ResetContent( )
+		void ResetContent()
 		{
-			SendMessage( m_hWnd, CB_RESETCONTENT, 0, 0L );
+			SendMessage(m_hWnd, CB_RESETCONTENT, 0, 0L);
 		}
 
-		BOOL LimitText( int max_char )
+		BOOL LimitText(int max_char)
 		{
-			return (BOOL) SendMessage( m_hWnd, CB_LIMITTEXT, max_char, 0L );
+			return (BOOL) SendMessage(m_hWnd, CB_LIMITTEXT, max_char, 0L);
 		}
 
-		void ShowDropDown( BOOL show_dropdown = TRUE )
+		void ShowDropDown(BOOL show_dropdown = TRUE)
 		{
-			SendMessage( m_hWnd, CB_SHOWDROPDOWN, show_dropdown, 0L );
+			SendMessage(m_hWnd, CB_SHOWDROPDOWN, show_dropdown, 0L);
 		}
 
-		int Add( LPCTSTR lpszString )
+		int Add(LPCTSTR lpszString)
 		{
-			return (int) SendMessage( m_hWnd, CB_ADDSTRING, 0, (LPARAM) lpszString );
+			return (int) SendMessage(m_hWnd, CB_ADDSTRING, 0, (LPARAM) lpszString);
 		}
 
-		int Remove( UINT index )
+		int Remove(UINT index)
 		{
-			return (int) SendMessage( m_hWnd, CB_DELETESTRING, index, 0L );
+			return (int) SendMessage(m_hWnd, CB_DELETESTRING, index, 0L);
 		}
 
-		int InsertString( int index, LPCTSTR lpszString )
+		int InsertString(int index, LPCTSTR lpszString)
 		{
-			return (int) SendMessage( m_hWnd, CB_INSERTSTRING, index, (LPARAM) lpszString );
+			return (int) SendMessage(m_hWnd, CB_INSERTSTRING, index, (LPARAM) lpszString);
 		}
 
-		int AddDir( UINT attr, LPCTSTR lpszWildCard )
+		int AddDir(UINT attr, LPCTSTR lpszWildCard)
 		{
-			return (int) SendMessage( m_hWnd, CB_DIR, attr, (LPARAM) lpszWildCard );
+			return (int) SendMessage(m_hWnd, CB_DIR, attr, (LPARAM) lpszWildCard);
 		}
 
-		int FindString( int start_index, LPCTSTR lpszString ) const
+		int FindString(int start_index, LPCTSTR lpszString) const
 		{
-			return (int) SendMessage( m_hWnd, CB_FINDSTRING, start_index, (LPARAM) lpszString );
+			return (int) SendMessage(m_hWnd, CB_FINDSTRING, start_index, (LPARAM) lpszString);
 		}
 
-		int FindStringExact( int start_index, LPCTSTR lpszFind ) const
+		int FindStringExact(int start_index, LPCTSTR lpszFind) const
 		{
-			return (int) SendMessage( m_hWnd, CB_FINDSTRINGEXACT, start_index, (LPARAM) lpszFind );
+			return (int) SendMessage(m_hWnd, CB_FINDSTRINGEXACT, start_index, (LPARAM) lpszFind);
 		}
 
-		int SelectString( int start_index, LPCTSTR lpszString )
+		int SelectString(int start_index, LPCTSTR lpszString)
 		{
-			return (int) SendMessage( m_hWnd, CB_SELECTSTRING, start_index, (LPARAM) lpszString );
+			return (int) SendMessage(m_hWnd, CB_SELECTSTRING, start_index, (LPARAM) lpszString);
 		}
 
-		void Clear( )
+		void Clear()
 		{
-			SendMessage( m_hWnd, WM_CLEAR, 0, 0L );
+			SendMessage(m_hWnd, WM_CLEAR, 0, 0L);
 		}
 
-		void Copy( )
+		void Copy()
 		{
-			SendMessage( m_hWnd, WM_COPY, 0, 0L );
+			SendMessage(m_hWnd, WM_COPY, 0, 0L);
 		}
 
-		void Cut( )
+		void Cut()
 		{
-			SendMessage( m_hWnd, WM_CUT, 0, 0L );
+			SendMessage(m_hWnd, WM_CUT, 0, 0L);
 		}
 
-		void Paste( )
+		void Paste()
 		{
-			SendMessage( m_hWnd, WM_PASTE, 0, 0L );
+			SendMessage(m_hWnd, WM_PASTE, 0, 0L);
 		}
 	};
 
@@ -974,326 +974,326 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		BOOL CanUndo( )
+		BOOL CanUndo()
 		{
-			return Edit_CanUndo( m_hWnd );
+			return Edit_CanUndo(m_hWnd);
 		}
 
-		int GetLineCount( ) const
+		int GetLineCount() const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETLINECOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETLINECOUNT, 0, 0L);
 		}
 
-		BOOL GetModify( ) const
+		BOOL GetModify() const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_GETMODIFY, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_GETMODIFY, 0, 0L);
 		}
 
-		void SetModify( BOOL bModified = TRUE )
+		void SetModify(BOOL bModified = TRUE)
 		{
-			SendMessage( m_hWnd, EM_SETMODIFY, bModified, 0L );
+			SendMessage(m_hWnd, EM_SETMODIFY, bModified, 0L);
 		}
 
-		void GetRect( LPRECT lpRect ) const
+		void GetRect(LPRECT lpRect) const
 		{
-			SendMessage( m_hWnd, EM_GETRECT, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, EM_GETRECT, 0, (LPARAM) lpRect);
 		}
 
-		DWORD GetSel( ) const
+		DWORD GetSel() const
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_GETSEL, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, EM_GETSEL, 0, 0L);
 		}
 
-		void GetSel( int& nStartChar, int& nEndChar ) const
+		void GetSel(int& nStartChar, int& nEndChar) const
 		{
-			SendMessage( m_hWnd, EM_GETSEL, (WPARAM) &nStartChar, (LPARAM) &nEndChar );
+			SendMessage(m_hWnd, EM_GETSEL, (WPARAM) &nStartChar, (LPARAM) &nEndChar);
 		}
 
-		HLOCAL GetResHandle( ) const
+		HLOCAL GetResHandle() const
 		{
-			return (HLOCAL) SendMessage( m_hWnd, EM_GETHANDLE, 0, 0L );
+			return (HLOCAL) SendMessage(m_hWnd, EM_GETHANDLE, 0, 0L);
 		}
 
-		void SetHandle( HLOCAL hBuffer )
+		void SetHandle(HLOCAL hBuffer)
 		{
-			SendMessage( m_hWnd, EM_SETHANDLE, (WPARAM) hBuffer, 0L );
+			SendMessage(m_hWnd, EM_SETHANDLE, (WPARAM) hBuffer, 0L);
 		}
 
-		DWORD GetMargins( ) const
+		DWORD GetMargins() const
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_GETMARGINS, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, EM_GETMARGINS, 0, 0L);
 		}
 
-		void GetMargins( UINT& nLeft, UINT& nRight ) const
+		void GetMargins(UINT& nLeft, UINT& nRight) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, EM_GETMARGINS, 0, 0L );
-			nLeft = LOWORD( dwRet );
-			nRight = HIWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, EM_GETMARGINS, 0, 0L);
+			nLeft = LOWORD(dwRet);
+			nRight = HIWORD(dwRet);
 		}
 
-		void SetMargins( UINT nLeft, UINT nRight, WORD wFlags = EC_LEFTMARGIN | EC_RIGHTMARGIN )
+		void SetMargins(UINT nLeft, UINT nRight, WORD wFlags = EC_LEFTMARGIN | EC_RIGHTMARGIN)
 		{
-			SendMessage( m_hWnd, EM_SETMARGINS, wFlags, MAKELONG( nLeft, nRight ) );
+			SendMessage(m_hWnd, EM_SETMARGINS, wFlags, MAKELONG(nLeft, nRight));
 		}
 
-		UINT GetLimitText( ) const
+		UINT GetLimitText() const
 		{
-			return (UINT) SendMessage( m_hWnd, EM_GETLIMITTEXT, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, EM_GETLIMITTEXT, 0, 0L);
 		}
 
-		void SetTextLimit( UINT nMax )
+		void SetTextLimit(UINT nMax)
 		{
-			SendMessage( m_hWnd, EM_SETLIMITTEXT, nMax, 0L );
+			SendMessage(m_hWnd, EM_SETLIMITTEXT, nMax, 0L);
 		}
 
-		POINT PosFromChar( UINT nChar ) const
+		POINT PosFromChar(UINT nChar) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, EM_POSFROMCHAR, nChar, 0 );
-			POINT point = { GET_X_LPARAM( dwRet ), GET_Y_LPARAM( dwRet ) };
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, EM_POSFROMCHAR, nChar, 0);
+			POINT point = {GET_X_LPARAM(dwRet), GET_Y_LPARAM(dwRet)};
 			return point;
 		}
 
-		int CharFromPos( POINT pt, int* pLine = NULL ) const
+		int CharFromPos(POINT pt, int* pLine = NULL) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, EM_CHARFROMPOS, 0, MAKELPARAM( pt.x, pt.y ) );
-			if ( pLine != NULL )
-				*pLine = (int) (short) HIWORD( dwRet );
-			return (int) (short) LOWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, EM_CHARFROMPOS, 0, MAKELPARAM(pt.x, pt.y));
+			if (pLine != NULL)
+				*pLine = (int) (short) HIWORD(dwRet);
+			return (int) (short) LOWORD(dwRet);
 		}
 
-		int GetLine( int nIndex, LPTSTR lpszBuffer ) const
+		int GetLine(int nIndex, LPTSTR lpszBuffer) const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETLINE, nIndex, (LPARAM) lpszBuffer );
+			return (int) SendMessage(m_hWnd, EM_GETLINE, nIndex, (LPARAM) lpszBuffer);
 		}
 
-		int GetLine( int nIndex, LPTSTR lpszBuffer, int nMaxLength ) const
+		int GetLine(int nIndex, LPTSTR lpszBuffer, int nMaxLength) const
 		{
 			*(LPWORD) lpszBuffer = (WORD) nMaxLength;
-			return (int) SendMessage( m_hWnd, EM_GETLINE, nIndex, (LPARAM) lpszBuffer );
+			return (int) SendMessage(m_hWnd, EM_GETLINE, nIndex, (LPARAM) lpszBuffer);
 		}
 
-		TCHAR GetPasswordChar( ) const
+		TCHAR GetPasswordChar() const
 		{
-			return (TCHAR) SendMessage( m_hWnd, EM_GETPASSWORDCHAR, 0, 0L );
+			return (TCHAR) SendMessage(m_hWnd, EM_GETPASSWORDCHAR, 0, 0L);
 		}
 
-		void SetPasswordChar( TCHAR ch )
+		void SetPasswordChar(TCHAR ch)
 		{
-			SendMessage( m_hWnd, EM_SETPASSWORDCHAR, ch, 0L );
+			SendMessage(m_hWnd, EM_SETPASSWORDCHAR, ch, 0L);
 		}
 
-		void SetUsingPassword( BOOL bPassword, TCHAR pass_char = '*' )
+		void SetUsingPassword(BOOL bPassword, TCHAR pass_char = '*')
 		{
-			SetPasswordChar( bPassword ? pass_char : 0 );
+			SetPasswordChar(bPassword ? pass_char : 0);
 		}
 
-		EDITWORDBREAKPROC GetWordBreakProc( ) const
+		EDITWORDBREAKPROC GetWordBreakProc() const
 		{
-			return (EDITWORDBREAKPROC) SendMessage( m_hWnd, EM_GETWORDBREAKPROC, 0, 0L );
+			return (EDITWORDBREAKPROC) SendMessage(m_hWnd, EM_GETWORDBREAKPROC, 0, 0L);
 		}
 
-		void SetWordBreakProc( EDITWORDBREAKPROC ewbprc )
+		void SetWordBreakProc(EDITWORDBREAKPROC ewbprc)
 		{
-			SendMessage( m_hWnd, EM_SETWORDBREAKPROC, 0, (LPARAM) ewbprc );
+			SendMessage(m_hWnd, EM_SETWORDBREAKPROC, 0, (LPARAM) ewbprc);
 		}
 
-		int GetFirstVisibleLine( ) const
+		int GetFirstVisibleLine() const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETFIRSTVISIBLELINE, 0, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETFIRSTVISIBLELINE, 0, 0L);
 		}
 
-		int GetThumb( ) const
+		int GetThumb() const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETTHUMB, 0, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETTHUMB, 0, 0L);
 		}
 
-		BOOL SetReadOnly( BOOL bReadOnly = TRUE )
+		BOOL SetReadOnly(BOOL bReadOnly = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETREADONLY, bReadOnly, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_SETREADONLY, bReadOnly, 0L);
 		}
 
-		UINT GetImeStatus( UINT uStatus ) const
+		UINT GetImeStatus(UINT uStatus) const
 		{
-			return (UINT) SendMessage( m_hWnd, EM_GETIMESTATUS, uStatus, 0L );
+			return (UINT) SendMessage(m_hWnd, EM_GETIMESTATUS, uStatus, 0L);
 		}
 
-		UINT SetImeStatus( UINT uStatus, UINT uData )
+		UINT SetImeStatus(UINT uStatus, UINT uData)
 		{
-			return (UINT) SendMessage( m_hWnd, EM_SETIMESTATUS, uStatus, uData );
+			return (UINT) SendMessage(m_hWnd, EM_SETIMESTATUS, uStatus, uData);
 		}
 
-		BOOL GetCueBannerText( LPCWSTR lpstrText, int cchText ) const
+		BOOL GetCueBannerText(LPCWSTR lpstrText, int cchText) const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_GETCUEBANNER, (WPARAM) lpstrText, cchText );
+			return (BOOL) SendMessage(m_hWnd, EM_GETCUEBANNER, (WPARAM) lpstrText, cchText);
 		}
 
-		BOOL SetCueBannerText( LPCWSTR lpstrText, BOOL bKeepWithFocus = FALSE )
+		BOOL SetCueBannerText(LPCWSTR lpstrText, BOOL bKeepWithFocus = FALSE)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETCUEBANNER, (WPARAM) bKeepWithFocus, (LPARAM) lpstrText );
+			return (BOOL) SendMessage(m_hWnd, EM_SETCUEBANNER, (WPARAM) bKeepWithFocus, (LPARAM) lpstrText);
 		}
 
-		void EmptyUndoBuffer( )
+		void EmptyUndoBuffer()
 		{
-			SendMessage( m_hWnd, EM_EMPTYUNDOBUFFER, 0, 0L );
+			SendMessage(m_hWnd, EM_EMPTYUNDOBUFFER, 0, 0L);
 		}
 
-		BOOL FmtLines( BOOL bAddEOL )
+		BOOL FmtLines(BOOL bAddEOL)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_FMTLINES, bAddEOL, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_FMTLINES, bAddEOL, 0L);
 		}
 
-		void LimitText( int nChars = 0 )
+		void LimitText(int nChars = 0)
 		{
-			SendMessage( m_hWnd, EM_LIMITTEXT, nChars, 0L );
+			SendMessage(m_hWnd, EM_LIMITTEXT, nChars, 0L);
 		}
 
-		int LineFromChar( int nIndex = -1 ) const
+		int LineFromChar(int nIndex = -1) const
 		{
-			return (int) SendMessage( m_hWnd, EM_LINEFROMCHAR, nIndex, 0L );
+			return (int) SendMessage(m_hWnd, EM_LINEFROMCHAR, nIndex, 0L);
 		}
 
-		int LineIndex( int nLine = -1 ) const
+		int LineIndex(int nLine = -1) const
 		{
-			return (int) SendMessage( m_hWnd, EM_LINEINDEX, nLine, 0L );
+			return (int) SendMessage(m_hWnd, EM_LINEINDEX, nLine, 0L);
 		}
 
-		int LineLength( int nLine = -1 ) const
+		int LineLength(int nLine = -1) const
 		{
-			return (int) SendMessage( m_hWnd, EM_LINELENGTH, nLine, 0L );
+			return (int) SendMessage(m_hWnd, EM_LINELENGTH, nLine, 0L);
 		}
 
-		void LineScroll( int nLines, int nChars = 0 )
+		void LineScroll(int nLines, int nChars = 0)
 		{
-			SendMessage( m_hWnd, EM_LINESCROLL, nChars, nLines );
+			SendMessage(m_hWnd, EM_LINESCROLL, nChars, nLines);
 		}
 
-		void ReplaceSel( LPCTSTR lpszNewText, BOOL bCanUndo = FALSE )
+		void ReplaceSel(LPCTSTR lpszNewText, BOOL bCanUndo = FALSE)
 		{
-			SendMessage( m_hWnd, EM_REPLACESEL, (WPARAM) bCanUndo, (LPARAM) lpszNewText );
+			SendMessage(m_hWnd, EM_REPLACESEL, (WPARAM) bCanUndo, (LPARAM) lpszNewText);
 		}
 
-		void SetRect( LPCRECT lpRect )
+		void SetRect(LPCRECT lpRect)
 		{
-			SendMessage( m_hWnd, EM_SETRECT, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, EM_SETRECT, 0, (LPARAM) lpRect);
 		}
 
-		void SetRectNP( LPCRECT lpRect )
+		void SetRectNP(LPCRECT lpRect)
 		{
-			SendMessage( m_hWnd, EM_SETRECTNP, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, EM_SETRECTNP, 0, (LPARAM) lpRect);
 		}
 
-		void SetSel( DWORD dwSelection, BOOL bNoScroll = FALSE )
+		void SetSel(DWORD dwSelection, BOOL bNoScroll = FALSE)
 		{
-			SendMessage( m_hWnd, EM_SETSEL, LOWORD( dwSelection ), HIWORD( dwSelection ) );
-			if ( !bNoScroll )
-				SendMessage( m_hWnd, EM_SCROLLCARET, 0, 0L );
+			SendMessage(m_hWnd, EM_SETSEL, LOWORD(dwSelection), HIWORD(dwSelection));
+			if (!bNoScroll)
+				SendMessage(m_hWnd, EM_SCROLLCARET, 0, 0L);
 		}
 
-		void SetSel( int nStartChar, int nEndChar, BOOL bNoScroll = FALSE )
+		void SetSel(int nStartChar, int nEndChar, BOOL bNoScroll = FALSE)
 		{
-			SendMessage( m_hWnd, EM_SETSEL, nStartChar, nEndChar );
-			if ( !bNoScroll )
-				SendMessage( m_hWnd, EM_SCROLLCARET, 0, 0L );
+			SendMessage(m_hWnd, EM_SETSEL, nStartChar, nEndChar);
+			if (!bNoScroll)
+				SendMessage(m_hWnd, EM_SCROLLCARET, 0, 0L);
 		}
 
-		void SetSelAll( BOOL bNoScroll = FALSE )
+		void SetSelAll(BOOL bNoScroll = FALSE)
 		{
-			SetSel( 0, -1, bNoScroll );
+			SetSel(0, -1, bNoScroll);
 		}
 
-		void SetSelNone( BOOL bNoScroll = FALSE )
+		void SetSelNone(BOOL bNoScroll = FALSE)
 		{
-			SetSel( -1, 0, bNoScroll );
+			SetSel(-1, 0, bNoScroll);
 		}
 
-		BOOL SetTabStops( int nTabStops, LPINT rgTabStops )
+		BOOL SetTabStops(int nTabStops, LPINT rgTabStops)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETTABSTOPS, nTabStops, (LPARAM) rgTabStops );
+			return (BOOL) SendMessage(m_hWnd, EM_SETTABSTOPS, nTabStops, (LPARAM) rgTabStops);
 		}
 
-		BOOL SetTabStops( )
+		BOOL SetTabStops()
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETTABSTOPS, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_SETTABSTOPS, 0, 0L);
 		}
 
-		BOOL SetTabStops( const int& cxEachStop )
+		BOOL SetTabStops(const int& cxEachStop)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETTABSTOPS, 1, (LPARAM) (LPINT) &cxEachStop );
+			return (BOOL) SendMessage(m_hWnd, EM_SETTABSTOPS, 1, (LPARAM) (LPINT) &cxEachStop);
 		}
 
-		void ScrollCaret( )
+		void ScrollCaret()
 		{
-			SendMessage( m_hWnd, EM_SCROLLCARET, 0, 0L );
+			SendMessage(m_hWnd, EM_SCROLLCARET, 0, 0L);
 		}
 
-		int Scroll( int nScrollAction )
+		int Scroll(int nScrollAction)
 		{
-			LRESULT lRet = SendMessage( m_hWnd, EM_SCROLL, nScrollAction, 0L );
-			if ( !(BOOL) HIWORD( lRet ) ) return -1;
-			return (int) (short) LOWORD( lRet );
+			LRESULT lRet = SendMessage(m_hWnd, EM_SCROLL, nScrollAction, 0L);
+			if (!(BOOL) HIWORD(lRet)) return -1;
+			return (int) (short) LOWORD(lRet);
 		}
 
-		void InsertText( int nInsertAfterChar, LPCTSTR lpstrText, BOOL bNoScroll = FALSE, BOOL bCanUndo = FALSE )
+		void InsertText(int nInsertAfterChar, LPCTSTR lpstrText, BOOL bNoScroll = FALSE, BOOL bCanUndo = FALSE)
 		{
-			SetSel( nInsertAfterChar, nInsertAfterChar, bNoScroll );
-			ReplaceSel( lpstrText, bCanUndo );
+			SetSel(nInsertAfterChar, nInsertAfterChar, bNoScroll);
+			ReplaceSel(lpstrText, bCanUndo);
 		}
 
-		void AppendText( LPCTSTR lpstrText, BOOL bNoScroll = FALSE, BOOL bCanUndo = FALSE )
+		void AppendText(LPCTSTR lpstrText, BOOL bNoScroll = FALSE, BOOL bCanUndo = FALSE)
 		{
-			InsertText( GetTextLength( ), lpstrText, bNoScroll, bCanUndo );
+			InsertText(GetTextLength(), lpstrText, bNoScroll, bCanUndo);
 		}
 
-		BOOL ShowBalloonTip( PEDITBALLOONTIP pEditBaloonTip )
+		BOOL ShowBalloonTip(PEDITBALLOONTIP pEditBaloonTip)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SHOWBALLOONTIP, 0, (LPARAM) pEditBaloonTip );
+			return (BOOL) SendMessage(m_hWnd, EM_SHOWBALLOONTIP, 0, (LPARAM) pEditBaloonTip);
 		}
 
-		BOOL HideBalloonTip( )
+		BOOL HideBalloonTip()
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_HIDEBALLOONTIP, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_HIDEBALLOONTIP, 0, 0L);
 		}
 
-		DWORD GetHilite( ) const
+		DWORD GetHilite() const
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_GETHILITE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, EM_GETHILITE, 0, 0L);
 		}
 
-		void GetHilite( int& nStartChar, int& nEndChar ) const
+		void GetHilite(int& nStartChar, int& nEndChar) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, EM_GETHILITE, 0, 0L );
-			nStartChar = (int) (short) LOWORD( dwRet );
-			nEndChar = (int) (short) HIWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, EM_GETHILITE, 0, 0L);
+			nStartChar = (int) (short) LOWORD(dwRet);
+			nEndChar = (int) (short) HIWORD(dwRet);
 		}
 
-		void SetHilite( int nStartChar, int nEndChar )
+		void SetHilite(int nStartChar, int nEndChar)
 		{
-			SendMessage( m_hWnd, EM_SETHILITE, nStartChar, nEndChar );
+			SendMessage(m_hWnd, EM_SETHILITE, nStartChar, nEndChar);
 		}
 
-		BOOL Undo( )
+		BOOL Undo()
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_UNDO, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_UNDO, 0, 0L);
 		}
 
-		void Clear( )
+		void Clear()
 		{
-			SendMessage( m_hWnd, WM_CLEAR, 0, 0L );
+			SendMessage(m_hWnd, WM_CLEAR, 0, 0L);
 		}
 
-		void Copy( )
+		void Copy()
 		{
-			SendMessage( m_hWnd, WM_COPY, 0, 0L );
+			SendMessage(m_hWnd, WM_COPY, 0, 0L);
 		}
 
-		void Cut( )
+		void Cut()
 		{
-			SendMessage( m_hWnd, WM_CUT, 0, 0L );
+			SendMessage(m_hWnd, WM_CUT, 0, 0L);
 		}
 
-		void Paste( )
+		void Paste()
 		{
-			SendMessage( m_hWnd, WM_PASTE, 0, 0L );
+			SendMessage(m_hWnd, WM_PASTE, 0, 0L);
 		}
 	};
 
@@ -1302,82 +1302,82 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetScrollPos( ) const
+		int GetScrollPos() const
 		{
-			return ::GetScrollPos( m_hWnd, SB_CTL );
+			return ::GetScrollPos(m_hWnd, SB_CTL);
 		}
 
-		int SetScrollPos( int nPos, BOOL bRedraw = TRUE )
+		int SetScrollPos(int nPos, BOOL bRedraw = TRUE)
 		{
-			return ::SetScrollPos( m_hWnd, SB_CTL, nPos, bRedraw );
+			return ::SetScrollPos(m_hWnd, SB_CTL, nPos, bRedraw);
 		}
 
-		void GetScrollRange( LPINT lpMinPos, LPINT lpMaxPos ) const
+		void GetScrollRange(LPINT lpMinPos, LPINT lpMaxPos) const
 		{
-			::GetScrollRange( m_hWnd, SB_CTL, lpMinPos, lpMaxPos );
+			::GetScrollRange(m_hWnd, SB_CTL, lpMinPos, lpMaxPos);
 		}
 
-		void SetScrollRange( int nMinPos, int nMaxPos, BOOL bRedraw = TRUE )
+		void SetScrollRange(int nMinPos, int nMaxPos, BOOL bRedraw = TRUE)
 		{
-			::SetScrollRange( m_hWnd, SB_CTL, nMinPos, nMaxPos, bRedraw );
+			::SetScrollRange(m_hWnd, SB_CTL, nMinPos, nMaxPos, bRedraw);
 		}
 
-		BOOL GetScrollInfo( LPSCROLLINFO lpScrollInfo ) const
+		BOOL GetScrollInfo(LPSCROLLINFO lpScrollInfo) const
 		{
-			return ::GetScrollInfo( m_hWnd, SB_CTL, lpScrollInfo );
+			return ::GetScrollInfo(m_hWnd, SB_CTL, lpScrollInfo);
 		}
 
-		int SetScrollInfo( LPSCROLLINFO lpScrollInfo, BOOL bRedraw = TRUE )
+		int SetScrollInfo(LPSCROLLINFO lpScrollInfo, BOOL bRedraw = TRUE)
 		{
-			return ::SetScrollInfo( m_hWnd, SB_CTL, lpScrollInfo, bRedraw );
+			return ::SetScrollInfo(m_hWnd, SB_CTL, lpScrollInfo, bRedraw);
 		}
 
-		int GetScrollLimit( ) const
+		int GetScrollLimit() const
 		{
-			SCROLLINFO info = { sizeof( SCROLLINFO ), SIF_RANGE | SIF_PAGE };
-			::GetScrollInfo( m_hWnd, SB_CTL, &info );
-			if ( info.nPage > 1 )
+			SCROLLINFO info = {sizeof(SCROLLINFO), SIF_RANGE | SIF_PAGE};
+			::GetScrollInfo(m_hWnd, SB_CTL, &info);
+			if (info.nPage > 1)
 				info.nMax -= info.nPage - 1;
 
 			return info.nMax;
 		}
 
-		BOOL GetScrollBarInfo( PSCROLLBARINFO pScrollBarInfo ) const
+		BOOL GetScrollBarInfo(PSCROLLBARINFO pScrollBarInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, SBM_GETSCROLLBARINFO, 0, (LPARAM) pScrollBarInfo );
+			return (BOOL) SendMessage(m_hWnd, SBM_GETSCROLLBARINFO, 0, (LPARAM) pScrollBarInfo);
 		}
 
-		void ShowScrollBar( BOOL bShow = TRUE )
+		void ShowScrollBar(BOOL bShow = TRUE)
 		{
-			::ShowScrollBar( m_hWnd, SB_CTL, bShow );
+			::ShowScrollBar(m_hWnd, SB_CTL, bShow);
 		}
 
-		BOOL EnableScrollBar( UINT nArrowFlags = ESB_ENABLE_BOTH )
+		BOOL EnableScrollBar(UINT nArrowFlags = ESB_ENABLE_BOTH)
 		{
-			return ::EnableScrollBar( m_hWnd, SB_CTL, nArrowFlags );
+			return ::EnableScrollBar(m_hWnd, SB_CTL, nArrowFlags);
 		}
 	};
 
 	class CToolInfo : public TOOLINFO
 	{
 	public:
-		CToolInfo( UINT nFlags, HWND hWnd, UINT_PTR nIDTool = 0, LPRECT lpRect = NULL, LPTSTR lpstrText = LPSTR_TEXTCALLBACK, LPARAM lUserParam = NULL )
+		CToolInfo(UINT nFlags, HWND hWnd, UINT_PTR nIDTool = 0, LPRECT lpRect = NULL, LPTSTR lpstrText = LPSTR_TEXTCALLBACK, LPARAM lUserParam = NULL)
 		{
-			Init( nFlags, hWnd, nIDTool, lpRect, lpstrText, lUserParam );
+			Init(nFlags, hWnd, nIDTool, lpRect, lpstrText, lUserParam);
 		}
 
-		operator LPTOOLINFO( ) { return this; }
+		operator LPTOOLINFO() { return this; }
 
-		operator LPARAM( ) { return ( LPARAM )this; }
+		operator LPARAM() { return (LPARAM)this; }
 
-		void Init( UINT nFlags, HWND hWnd, UINT_PTR nIDTool = 0, LPRECT lpRect = NULL, LPTSTR lpstrText = LPSTR_TEXTCALLBACK, LPARAM lUserParam = NULL )
+		void Init(UINT nFlags, HWND hWnd, UINT_PTR nIDTool = 0, LPRECT lpRect = NULL, LPTSTR lpstrText = LPSTR_TEXTCALLBACK, LPARAM lUserParam = NULL)
 		{
-			memset( this, 0, sizeof( TOOLINFO ) );
-			cbSize = sizeof( TOOLINFO );
+			memset(this, 0, sizeof(TOOLINFO));
+			cbSize = sizeof(TOOLINFO);
 			uFlags = nFlags;
-			if ( nIDTool == 0 )
+			if (nIDTool == 0)
 			{
-				hwnd = ::GetParent( hWnd );
+				hwnd = ::GetParent(hWnd);
 				uFlags |= TTF_IDISHWND;
 				uId = (UINT_PTR) hWnd;
 			} else
@@ -1385,9 +1385,9 @@ namespace WPP
 				hwnd = hWnd;
 				uId = nIDTool;
 			}
-			if ( lpRect != NULL )
+			if (lpRect != NULL)
 				rect = *lpRect;
-			hinst = GetModuleHandle( NULL );
+			hinst = GetModuleHandle(NULL);
 			lpszText = lpstrText;
 			lParam = lUserParam;
 		}
@@ -1398,27 +1398,27 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		void GetText( LPTOOLINFO lpToolInfo ) const
+		void GetText(LPTOOLINFO lpToolInfo) const
 		{
-			SendMessage( m_hWnd, TTM_GETTEXT, 0, (LPARAM) &lpToolInfo );
+			SendMessage(m_hWnd, TTM_GETTEXT, 0, (LPARAM) &lpToolInfo);
 		}
 
-		void GetText( LPTSTR lpstrText, HWND hWnd, UINT_PTR nIDTool = 0 ) const
+		void GetText(LPTSTR lpstrText, HWND hWnd, UINT_PTR nIDTool = 0) const
 		{
-			CToolInfo ti( 0, hWnd, nIDTool, NULL, lpstrText );
-			SendMessage( m_hWnd, TTM_GETTEXT, 0, ti );
+			CToolInfo ti(0, hWnd, nIDTool, NULL, lpstrText);
+			SendMessage(m_hWnd, TTM_GETTEXT, 0, ti);
 		}
 
-		BOOL GetToolInfo( LPTOOLINFO lpToolInfo ) const
+		BOOL GetToolInfo(LPTOOLINFO lpToolInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_GETTOOLINFO, 0, (LPARAM) lpToolInfo );
+			return (BOOL) SendMessage(m_hWnd, TTM_GETTOOLINFO, 0, (LPARAM) lpToolInfo);
 		}
 
-		BOOL GetToolInfo( HWND hWnd, UINT_PTR nIDTool, UINT* puFlags, LPRECT lpRect, LPTSTR lpstrText ) const
+		BOOL GetToolInfo(HWND hWnd, UINT_PTR nIDTool, UINT* puFlags, LPRECT lpRect, LPTSTR lpstrText) const
 		{
-			CToolInfo ti( 0, hWnd, nIDTool, NULL, lpstrText );
-			BOOL bRet = (BOOL) SendMessage( m_hWnd, TTM_GETTOOLINFO, 0, ti );
-			if ( bRet != FALSE )
+			CToolInfo ti(0, hWnd, nIDTool, NULL, lpstrText);
+			BOOL bRet = (BOOL) SendMessage(m_hWnd, TTM_GETTOOLINFO, 0, ti);
+			if (bRet != FALSE)
 			{
 				*puFlags = ti.uFlags;
 				*lpRect = ti.rect;
@@ -1426,148 +1426,148 @@ namespace WPP
 			return bRet;
 		}
 
-		void SetToolInfo( LPTOOLINFO lpToolInfo )
+		void SetToolInfo(LPTOOLINFO lpToolInfo)
 		{
-			SendMessage( m_hWnd, TTM_SETTOOLINFO, 0, (LPARAM) lpToolInfo );
+			SendMessage(m_hWnd, TTM_SETTOOLINFO, 0, (LPARAM) lpToolInfo);
 		}
 
-		void SetToolRect( LPTOOLINFO lpToolInfo )
+		void SetToolRect(LPTOOLINFO lpToolInfo)
 		{
-			SendMessage( m_hWnd, TTM_NEWTOOLRECT, 0, (LPARAM) lpToolInfo );
+			SendMessage(m_hWnd, TTM_NEWTOOLRECT, 0, (LPARAM) lpToolInfo);
 		}
 
-		void SetToolRect( HWND hWnd, UINT_PTR nIDTool, LPCRECT lpRect )
+		void SetToolRect(HWND hWnd, UINT_PTR nIDTool, LPCRECT lpRect)
 		{
-			CToolInfo ti( 0, hWnd, nIDTool, (LPRECT) lpRect, NULL );
-			SendMessage( m_hWnd, TTM_NEWTOOLRECT, 0, ti );
+			CToolInfo ti(0, hWnd, nIDTool, (LPRECT) lpRect, NULL);
+			SendMessage(m_hWnd, TTM_NEWTOOLRECT, 0, ti);
 		}
 
-		int GetToolCount( ) const
+		int GetToolCount() const
 		{
-			return (int) SendMessage( m_hWnd, TTM_GETTOOLCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, TTM_GETTOOLCOUNT, 0, 0L);
 		}
 
-		int GetDelayTime( DWORD dwType ) const
+		int GetDelayTime(DWORD dwType) const
 		{
-			return (int) SendMessage( m_hWnd, TTM_GETDELAYTIME, dwType, 0L );
+			return (int) SendMessage(m_hWnd, TTM_GETDELAYTIME, dwType, 0L);
 		}
 
-		void SetDelayTime( DWORD dwType, int nTime )
+		void SetDelayTime(DWORD dwType, int nTime)
 		{
-			SendMessage( m_hWnd, TTM_SETDELAYTIME, dwType, MAKELPARAM( nTime, 0 ) );
+			SendMessage(m_hWnd, TTM_SETDELAYTIME, dwType, MAKELPARAM(nTime, 0));
 		}
 
-		void GetMargin( LPRECT lpRect ) const
+		void GetMargin(LPRECT lpRect) const
 		{
-			SendMessage( m_hWnd, TTM_GETMARGIN, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, TTM_GETMARGIN, 0, (LPARAM) lpRect);
 		}
 
-		void SetMargin( LPRECT lpRect )
+		void SetMargin(LPRECT lpRect)
 		{
-			SendMessage( m_hWnd, TTM_SETMARGIN, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, TTM_SETMARGIN, 0, (LPARAM) lpRect);
 		}
 
-		int GetMaxTipWidth( ) const
+		int GetMaxTipWidth() const
 		{
-			return (int) SendMessage( m_hWnd, TTM_GETMAXTIPWIDTH, 0, 0L );
+			return (int) SendMessage(m_hWnd, TTM_GETMAXTIPWIDTH, 0, 0L);
 		}
 
-		int SetMaxTipWidth( int nWidth )
+		int SetMaxTipWidth(int nWidth)
 		{
-			return (int) SendMessage( m_hWnd, TTM_SETMAXTIPWIDTH, 0, nWidth );
+			return (int) SendMessage(m_hWnd, TTM_SETMAXTIPWIDTH, 0, nWidth);
 		}
 
-		COLORREF GetTipBkColor( ) const
+		COLORREF GetTipBkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, TTM_GETTIPBKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, TTM_GETTIPBKCOLOR, 0, 0L);
 		}
 
-		void SetTipBkColor( COLORREF clr )
+		void SetTipBkColor(COLORREF clr)
 		{
-			SendMessage( m_hWnd, TTM_SETTIPBKCOLOR, (WPARAM) clr, 0L );
+			SendMessage(m_hWnd, TTM_SETTIPBKCOLOR, (WPARAM) clr, 0L);
 		}
 
-		COLORREF GetTipTextColor( ) const
+		COLORREF GetTipTextColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, TTM_GETTIPTEXTCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, TTM_GETTIPTEXTCOLOR, 0, 0L);
 		}
 
-		void SetTipTextColor( COLORREF clr )
+		void SetTipTextColor(COLORREF clr)
 		{
-			SendMessage( m_hWnd, TTM_SETTIPTEXTCOLOR, (WPARAM) clr, 0L );
+			SendMessage(m_hWnd, TTM_SETTIPTEXTCOLOR, (WPARAM) clr, 0L);
 		}
 
-		BOOL GetCurrentTool( LPTOOLINFO lpToolInfo ) const
+		BOOL GetCurrentTool(LPTOOLINFO lpToolInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_GETCURRENTTOOL, 0, (LPARAM) lpToolInfo );
+			return (BOOL) SendMessage(m_hWnd, TTM_GETCURRENTTOOL, 0, (LPARAM) lpToolInfo);
 		}
 
-		SIZE GetBubbleSize( LPTOOLINFO lpToolInfo ) const
+		SIZE GetBubbleSize(LPTOOLINFO lpToolInfo) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, TTM_GETBUBBLESIZE, 0, (LPARAM) lpToolInfo );
-			SIZE size = { GET_X_LPARAM( dwRet ), GET_Y_LPARAM( dwRet ) };
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, TTM_GETBUBBLESIZE, 0, (LPARAM) lpToolInfo);
+			SIZE size = {GET_X_LPARAM(dwRet), GET_Y_LPARAM(dwRet)};
 			return size;
 		}
 
-		BOOL SetTitle( UINT_PTR uIcon, LPCTSTR lpstrTitle )
+		BOOL SetTitle(UINT_PTR uIcon, LPCTSTR lpstrTitle)
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_SETTITLE, uIcon, (LPARAM) lpstrTitle );
+			return (BOOL) SendMessage(m_hWnd, TTM_SETTITLE, uIcon, (LPARAM) lpstrTitle);
 		}
 
-		BOOL SetTitle( HICON hIcon, LPCTSTR lpstrTitle )
+		BOOL SetTitle(HICON hIcon, LPCTSTR lpstrTitle)
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) lpstrTitle );
+			return (BOOL) SendMessage(m_hWnd, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) lpstrTitle);
 		}
-		void GetTitle( PTTGETTITLE pTTGetTitle ) const
+		void GetTitle(PTTGETTITLE pTTGetTitle) const
 		{
-			SendMessage( m_hWnd, TTM_GETTITLE, 0, (LPARAM) pTTGetTitle );
-		}
-
-		void SetWindowTheme( LPCWSTR lpstrTheme )
-		{
-			SendMessage( m_hWnd, TTM_SETWINDOWTHEME, 0, (LPARAM) lpstrTheme );
+			SendMessage(m_hWnd, TTM_GETTITLE, 0, (LPARAM) pTTGetTitle);
 		}
 
-		void Activate( BOOL bActivate )
+		void SetWindowTheme(LPCWSTR lpstrTheme)
 		{
-			SendMessage( m_hWnd, TTM_ACTIVATE, bActivate, 0L );
+			SendMessage(m_hWnd, TTM_SETWINDOWTHEME, 0, (LPARAM) lpstrTheme);
 		}
 
-		BOOL AddTool( LPTOOLINFO lpToolInfo )
+		void Activate(BOOL bActivate)
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_ADDTOOL, 0, (LPARAM) lpToolInfo );
+			SendMessage(m_hWnd, TTM_ACTIVATE, bActivate, 0L);
 		}
 
-		BOOL AddTool( HWND hWnd, LPTSTR text = LPSTR_TEXTCALLBACK, LPCRECT lpRectTool = NULL, UINT_PTR nIDTool = 0 )
+		BOOL AddTool(LPTOOLINFO lpToolInfo)
 		{
-			CToolInfo ti( 0, hWnd, nIDTool, (LPRECT) lpRectTool, (LPTSTR) text );
-			return (BOOL) SendMessage( m_hWnd, TTM_ADDTOOL, 0, ti );
+			return (BOOL) SendMessage(m_hWnd, TTM_ADDTOOL, 0, (LPARAM) lpToolInfo);
 		}
 
-		void DelTool( LPTOOLINFO lpToolInfo )
+		BOOL AddTool(HWND hWnd, LPTSTR text = LPSTR_TEXTCALLBACK, LPCRECT lpRectTool = NULL, UINT_PTR nIDTool = 0)
 		{
-			SendMessage( m_hWnd, TTM_DELTOOL, 0, (LPARAM) lpToolInfo );
+			CToolInfo ti(0, hWnd, nIDTool, (LPRECT) lpRectTool, (LPTSTR) text);
+			return (BOOL) SendMessage(m_hWnd, TTM_ADDTOOL, 0, ti);
 		}
 
-		void DelTool( HWND hWnd, UINT_PTR nIDTool = 0 )
+		void DelTool(LPTOOLINFO lpToolInfo)
 		{
-			CToolInfo ti( 0, hWnd, nIDTool, NULL, NULL );
-			SendMessage( m_hWnd, TTM_DELTOOL, 0, ti );
+			SendMessage(m_hWnd, TTM_DELTOOL, 0, (LPARAM) lpToolInfo);
 		}
 
-		BOOL HitTest( LPTTHITTESTINFO lpHitTestInfo ) const
+		void DelTool(HWND hWnd, UINT_PTR nIDTool = 0)
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_HITTEST, 0, (LPARAM) lpHitTestInfo );
+			CToolInfo ti(0, hWnd, nIDTool, NULL, NULL);
+			SendMessage(m_hWnd, TTM_DELTOOL, 0, ti);
 		}
 
-		BOOL HitTest( HWND hWnd, POINT pt, LPTOOLINFO lpToolInfo ) const
+		BOOL HitTest(LPTTHITTESTINFO lpHitTestInfo) const
 		{
-			TTHITTESTINFO hti = { 0 };
-			hti.ti.cbSize = sizeof( TOOLINFO );
+			return (BOOL) SendMessage(m_hWnd, TTM_HITTEST, 0, (LPARAM) lpHitTestInfo);
+		}
+
+		BOOL HitTest(HWND hWnd, POINT pt, LPTOOLINFO lpToolInfo) const
+		{
+			TTHITTESTINFO hti = {0};
+			hti.ti.cbSize = sizeof(TOOLINFO);
 			hti.hwnd = hWnd;
 			hti.pt = pt;
 
-			if ( (BOOL) SendMessage( m_hWnd, TTM_HITTEST, 0, (LPARAM) &hti ) != FALSE )
+			if ((BOOL) SendMessage(m_hWnd, TTM_HITTEST, 0, (LPARAM) &hti) != FALSE)
 			{
 				*lpToolInfo = hti.ti;
 				return TRUE;
@@ -1575,61 +1575,61 @@ namespace WPP
 			return FALSE;
 		}
 
-		void RelayEvent( LPMSG lpMsg )
+		void RelayEvent(LPMSG lpMsg)
 		{
-			SendMessage( m_hWnd, TTM_RELAYEVENT, 0, (LPARAM) lpMsg );
+			SendMessage(m_hWnd, TTM_RELAYEVENT, 0, (LPARAM) lpMsg);
 		}
 
-		void UpdateTipText( LPTOOLINFO lpToolInfo )
+		void UpdateTipText(LPTOOLINFO lpToolInfo)
 		{
-			SendMessage( m_hWnd, TTM_UPDATETIPTEXT, 0, (LPARAM) lpToolInfo );
+			SendMessage(m_hWnd, TTM_UPDATETIPTEXT, 0, (LPARAM) lpToolInfo);
 		}
 
-		void UpdateTipText( LPCTSTR text, HWND hWnd, UINT_PTR nIDTool = 0 )
+		void UpdateTipText(LPCTSTR text, HWND hWnd, UINT_PTR nIDTool = 0)
 		{
-			CToolInfo ti( 0, hWnd, nIDTool, NULL, (LPTSTR) text );
-			SendMessage( m_hWnd, TTM_UPDATETIPTEXT, 0, ti );
+			CToolInfo ti(0, hWnd, nIDTool, NULL, (LPTSTR) text);
+			SendMessage(m_hWnd, TTM_UPDATETIPTEXT, 0, ti);
 		}
 
-		BOOL EnumTools( UINT_PTR nTool, LPTOOLINFO lpToolInfo ) const
+		BOOL EnumTools(UINT_PTR nTool, LPTOOLINFO lpToolInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_ENUMTOOLS, nTool, (LPARAM) lpToolInfo );
+			return (BOOL) SendMessage(m_hWnd, TTM_ENUMTOOLS, nTool, (LPARAM) lpToolInfo);
 		}
 
-		void Pop( )
+		void Pop()
 		{
-			SendMessage( m_hWnd, TTM_POP, 0, 0L );
+			SendMessage(m_hWnd, TTM_POP, 0, 0L);
 		}
 
-		void TrackActivate( LPTOOLINFO lpToolInfo, BOOL bActivate )
+		void TrackActivate(LPTOOLINFO lpToolInfo, BOOL bActivate)
 		{
-			SendMessage( m_hWnd, TTM_TRACKACTIVATE, bActivate, (LPARAM) lpToolInfo );
+			SendMessage(m_hWnd, TTM_TRACKACTIVATE, bActivate, (LPARAM) lpToolInfo);
 		}
 
-		void TrackActivate( HWND hWnd, UINT_PTR nIDTool, BOOL bActivate )
+		void TrackActivate(HWND hWnd, UINT_PTR nIDTool, BOOL bActivate)
 		{
-			CToolInfo ti( 0, hWnd, nIDTool );
-			SendMessage( m_hWnd, TTM_TRACKACTIVATE, bActivate, ti );
+			CToolInfo ti(0, hWnd, nIDTool);
+			SendMessage(m_hWnd, TTM_TRACKACTIVATE, bActivate, ti);
 		}
 
-		void TrackPosition( int xPos, int yPos )
+		void TrackPosition(int xPos, int yPos)
 		{
-			SendMessage( m_hWnd, TTM_TRACKPOSITION, 0, MAKELPARAM( xPos, yPos ) );
+			SendMessage(m_hWnd, TTM_TRACKPOSITION, 0, MAKELPARAM(xPos, yPos));
 		}
 
-		void Update( )
+		void Update()
 		{
-			SendMessage( m_hWnd, TTM_UPDATE, 0, 0L );
+			SendMessage(m_hWnd, TTM_UPDATE, 0, 0L);
 		}
 
-		BOOL AdjustRect( LPRECT lpRect, BOOL bLarger = TRUE )
+		BOOL AdjustRect(LPRECT lpRect, BOOL bLarger = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TTM_ADJUSTRECT, bLarger, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, TTM_ADJUSTRECT, bLarger, (LPARAM) lpRect);
 		}
 
-		void Popup( )
+		void Popup()
 		{
-			SendMessage( m_hWnd, TTM_POPUP, 0, 0L );
+			SendMessage(m_hWnd, TTM_POPUP, 0, 0L);
 		}
 	};
 
@@ -1638,144 +1638,144 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetItemCount( ) const
+		int GetItemCount() const
 		{
-			return (int) SendMessage( m_hWnd, HDM_GETITEMCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, HDM_GETITEMCOUNT, 0, 0L);
 		}
 
-		BOOL GetItem( int nIndex, LPHDITEM pHeaderItem ) const
+		BOOL GetItem(int nIndex, LPHDITEM pHeaderItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_GETITEM, nIndex, (LPARAM) pHeaderItem );
+			return (BOOL) SendMessage(m_hWnd, HDM_GETITEM, nIndex, (LPARAM) pHeaderItem);
 		}
 
-		BOOL SetItem( int nIndex, LPHDITEM pHeaderItem )
+		BOOL SetItem(int nIndex, LPHDITEM pHeaderItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_SETITEM, nIndex, (LPARAM) pHeaderItem );
+			return (BOOL) SendMessage(m_hWnd, HDM_SETITEM, nIndex, (LPARAM) pHeaderItem);
 		}
 
-		ImageList GetImageList( ) const
+		ImageList GetImageList() const
 		{
-			return  ImageList((HIMAGELIST) SendMessage( m_hWnd, HDM_GETIMAGELIST, 0, 0L ));
+			return  ImageList((HIMAGELIST) SendMessage(m_hWnd, HDM_GETIMAGELIST, 0, 0L));
 		}
 
-		ImageList SetImageList( HIMAGELIST hImageList )
+		ImageList SetImageList(HIMAGELIST hImageList)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, HDM_SETIMAGELIST, 0, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, HDM_SETIMAGELIST, 0, (LPARAM) hImageList));
 		}
 
-		BOOL GetOrderArray( int nSize, int* lpnArray ) const
+		BOOL GetOrderArray(int nSize, int* lpnArray) const
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_GETORDERARRAY, nSize, (LPARAM) lpnArray );
+			return (BOOL) SendMessage(m_hWnd, HDM_GETORDERARRAY, nSize, (LPARAM) lpnArray);
 		}
 
-		BOOL SetOrderArray( int nSize, int* lpnArray )
+		BOOL SetOrderArray(int nSize, int* lpnArray)
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_SETORDERARRAY, nSize, (LPARAM) lpnArray );
+			return (BOOL) SendMessage(m_hWnd, HDM_SETORDERARRAY, nSize, (LPARAM) lpnArray);
 		}
 
-		BOOL GetItemRect( int nIndex, LPRECT lpItemRect ) const
+		BOOL GetItemRect(int nIndex, LPRECT lpItemRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_GETITEMRECT, nIndex, (LPARAM) lpItemRect );
+			return (BOOL) SendMessage(m_hWnd, HDM_GETITEMRECT, nIndex, (LPARAM) lpItemRect);
 		}
 
-		int SetHotDivider( BOOL bPos, DWORD dwInputValue )
+		int SetHotDivider(BOOL bPos, DWORD dwInputValue)
 		{
-			return (int) SendMessage( m_hWnd, HDM_SETHOTDIVIDER, bPos, dwInputValue );
+			return (int) SendMessage(m_hWnd, HDM_SETHOTDIVIDER, bPos, dwInputValue);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, HDM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, HDM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		int GetBitmapMargin( ) const
+		int GetBitmapMargin() const
 		{
-			return (int) SendMessage( m_hWnd, HDM_GETBITMAPMARGIN, 0, 0L );
+			return (int) SendMessage(m_hWnd, HDM_GETBITMAPMARGIN, 0, 0L);
 		}
 
-		int SetBitmapMargin( int nWidth )
+		int SetBitmapMargin(int nWidth)
 		{
-			return (int) SendMessage( m_hWnd, HDM_SETBITMAPMARGIN, nWidth, 0L );
+			return (int) SendMessage(m_hWnd, HDM_SETBITMAPMARGIN, nWidth, 0L);
 		}
 
-		int SetFilterChangeTimeout( DWORD dwTimeOut )
+		int SetFilterChangeTimeout(DWORD dwTimeOut)
 		{
-			return (int) SendMessage( m_hWnd, HDM_SETFILTERCHANGETIMEOUT, 0, dwTimeOut );
+			return (int) SendMessage(m_hWnd, HDM_SETFILTERCHANGETIMEOUT, 0, dwTimeOut);
 		}
 
-		BOOL GetItemDropDownRect( int nIndex, LPRECT lpRect ) const
+		BOOL GetItemDropDownRect(int nIndex, LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_GETITEMDROPDOWNRECT, nIndex, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, HDM_GETITEMDROPDOWNRECT, nIndex, (LPARAM) lpRect);
 		}
 
-		BOOL GetOverflowRect( LPRECT lpRect ) const
+		BOOL GetOverflowRect(LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_GETOVERFLOWRECT, 0, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, HDM_GETOVERFLOWRECT, 0, (LPARAM) lpRect);
 		}
 
-		int GetFocusedItem( ) const
+		int GetFocusedItem() const
 		{
-			return (int) SendMessage( m_hWnd, HDM_GETFOCUSEDITEM, 0, 0L );
+			return (int) SendMessage(m_hWnd, HDM_GETFOCUSEDITEM, 0, 0L);
 		}
 
-		BOOL SetFocusedItem( int nIndex )
+		BOOL SetFocusedItem(int nIndex)
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_SETFOCUSEDITEM, 0, nIndex );
+			return (BOOL) SendMessage(m_hWnd, HDM_SETFOCUSEDITEM, 0, nIndex);
 		}
 
-		int InsertItem( int nIndex, LPHDITEM phdi )
+		int InsertItem(int nIndex, LPHDITEM phdi)
 		{
-			return (int) SendMessage( m_hWnd, HDM_INSERTITEM, nIndex, (LPARAM) phdi );
+			return (int) SendMessage(m_hWnd, HDM_INSERTITEM, nIndex, (LPARAM) phdi);
 		}
 
-		int AddItem( LPHDITEM phdi )
+		int AddItem(LPHDITEM phdi)
 		{
-			return InsertItem( GetItemCount( ), phdi );
+			return InsertItem(GetItemCount(), phdi);
 		}
 
-		BOOL DeleteItem( int nIndex )
+		BOOL DeleteItem(int nIndex)
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_DELETEITEM, nIndex, 0L );
+			return (BOOL) SendMessage(m_hWnd, HDM_DELETEITEM, nIndex, 0L);
 		}
 
-		BOOL Layout( HD_LAYOUT* pHeaderLayout )
+		BOOL Layout(HD_LAYOUT* pHeaderLayout)
 		{
-			return (BOOL) SendMessage( m_hWnd, HDM_LAYOUT, 0, (LPARAM) pHeaderLayout );
+			return (BOOL) SendMessage(m_hWnd, HDM_LAYOUT, 0, (LPARAM) pHeaderLayout);
 		}
 
-		int HitTest( LPHDHITTESTINFO lpHitTestInfo ) const
+		int HitTest(LPHDHITTESTINFO lpHitTestInfo) const
 		{
-			return (int) SendMessage( m_hWnd, HDM_HITTEST, 0, (LPARAM) lpHitTestInfo );
+			return (int) SendMessage(m_hWnd, HDM_HITTEST, 0, (LPARAM) lpHitTestInfo);
 		}
 
-		int OrderToIndex( int nOrder )
+		int OrderToIndex(int nOrder)
 		{
-			return (int) SendMessage( m_hWnd, HDM_ORDERTOINDEX, nOrder, 0L );
+			return (int) SendMessage(m_hWnd, HDM_ORDERTOINDEX, nOrder, 0L);
 		}
 
-		ImageList CreateDragImage( int nIndex )
+		ImageList CreateDragImage(int nIndex)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, HDM_CREATEDRAGIMAGE, nIndex, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, HDM_CREATEDRAGIMAGE, nIndex, 0L));
 		}
 
-		int EditFilter( int nColumn, BOOL bDiscardChanges )
+		int EditFilter(int nColumn, BOOL bDiscardChanges)
 		{
-			return (int) SendMessage( m_hWnd, HDM_EDITFILTER, nColumn, MAKELPARAM( bDiscardChanges, 0 ) );
+			return (int) SendMessage(m_hWnd, HDM_EDITFILTER, nColumn, MAKELPARAM(bDiscardChanges, 0));
 		}
 
-		int ClearFilter( int nColumn )
+		int ClearFilter(int nColumn)
 		{
-			return (int) SendMessage( m_hWnd, HDM_CLEARFILTER, nColumn, 0L );
+			return (int) SendMessage(m_hWnd, HDM_CLEARFILTER, nColumn, 0L);
 		}
 
-		int ClearAllFilters( )
+		int ClearAllFilters()
 		{
-			return (int) SendMessage( m_hWnd, HDM_CLEARFILTER, (WPARAM) -1, 0L );
+			return (int) SendMessage(m_hWnd, HDM_CLEARFILTER, (WPARAM) -1, 0L);
 		}
 	};
 
@@ -1784,50 +1784,50 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		COLORREF GetBkColor( ) const
+		COLORREF GetBkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, LVM_GETBKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, LVM_GETBKCOLOR, 0, 0L);
 		}
 
-		BOOL SetBkColor( COLORREF cr )
+		BOOL SetBkColor(COLORREF cr)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETBKCOLOR, 0, cr );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETBKCOLOR, 0, cr);
 		}
 
-		ImageList GetImageList( int nImageListType ) const
+		ImageList GetImageList(int nImageListType) const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, LVM_GETIMAGELIST, nImageListType, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, LVM_GETIMAGELIST, nImageListType, 0L));
 		}
 
-		ImageList SetImageList( HIMAGELIST hImageList, int nImageList )
+		ImageList SetImageList(HIMAGELIST hImageList, int nImageList)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, LVM_SETIMAGELIST, nImageList, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, LVM_SETIMAGELIST, nImageList, (LPARAM) hImageList));
 		}
 
-		int GetItemCount( ) const
+		int GetItemCount() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETITEMCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETITEMCOUNT, 0, 0L);
 		}
 
-		BOOL SetItemCount( int nItems )
+		BOOL SetItemCount(int nItems)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEMCOUNT, nItems, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEMCOUNT, nItems, 0L);
 		}
 
-		BOOL GetItem( LPLVITEM pItem ) const
+		BOOL GetItem(LPLVITEM pItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETITEM, 0, (LPARAM) pItem );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETITEM, 0, (LPARAM) pItem);
 		}
 
-		BOOL SetItem( const LVITEM* pItem )
+		BOOL SetItem(const LVITEM* pItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEM, 0, (LPARAM) pItem );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEM, 0, (LPARAM) pItem);
 		}
 
-		BOOL SetItem( int nItem, int nSubItem, UINT nMask, LPCTSTR lpszItem,
-					  int nImage, UINT nState, UINT nStateMask, LPARAM lParam )
+		BOOL SetItem(int nItem, int nSubItem, UINT nMask, LPCTSTR lpszItem,
+					 int nImage, UINT nState, UINT nStateMask, LPARAM lParam)
 		{
-			LVITEM lvi = { 0 };
+			LVITEM lvi = {0};
 			lvi.mask = nMask;
 			lvi.iItem = nItem;
 			lvi.iSubItem = nSubItem;
@@ -1836,554 +1836,554 @@ namespace WPP
 			lvi.pszText = (LPTSTR) lpszItem;
 			lvi.iImage = nImage;
 			lvi.lParam = lParam;
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEM, 0, (LPARAM) &lvi );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEM, 0, (LPARAM) &lvi);
 		}
 
-		UINT GetItemState( int nItem, UINT nMask ) const
+		UINT GetItemState(int nItem, UINT nMask) const
 		{
-			return (UINT) SendMessage( m_hWnd, LVM_GETITEMSTATE, nItem, nMask );
+			return (UINT) SendMessage(m_hWnd, LVM_GETITEMSTATE, nItem, nMask);
 		}
 
-		BOOL SetItemState( int nItem, UINT nState, UINT nStateMask )
+		BOOL SetItemState(int nItem, UINT nState, UINT nStateMask)
 		{
-			LVITEM lvi = { 0 };
+			LVITEM lvi = {0};
 			lvi.state = nState;
 			lvi.stateMask = nStateMask;
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEMSTATE, nItem, (LPARAM) &lvi );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEMSTATE, nItem, (LPARAM) &lvi);
 		}
 
-		BOOL SetItemState( int nItem, LPLVITEM pItem )
+		BOOL SetItemState(int nItem, LPLVITEM pItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEMSTATE, nItem, (LPARAM) pItem );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEMSTATE, nItem, (LPARAM) pItem);
 		}
 
-		int GetItemText( int nItem, int nSubItem, LPTSTR lpszText, int nLen ) const
+		int GetItemText(int nItem, int nSubItem, LPTSTR lpszText, int nLen) const
 		{
-			LVITEM lvi = { 0 };
+			LVITEM lvi = {0};
 			lvi.iSubItem = nSubItem;
 			lvi.cchTextMax = nLen;
 			lvi.pszText = lpszText;
-			return (int) SendMessage( m_hWnd, LVM_GETITEMTEXT, (WPARAM) nItem, (LPARAM) &lvi );
+			return (int) SendMessage(m_hWnd, LVM_GETITEMTEXT, (WPARAM) nItem, (LPARAM) &lvi);
 		}
 
-		BOOL SetItemText( int nItem, int nSubItem, LPCTSTR lpszText )
+		BOOL SetItemText(int nItem, int nSubItem, LPCTSTR lpszText)
 		{
-			return SetItem( nItem, nSubItem, LVIF_TEXT, lpszText, 0, 0, 0, 0 );
+			return SetItem(nItem, nSubItem, LVIF_TEXT, lpszText, 0, 0, 0, 0);
 		}
 
-		DWORD_PTR GetItemData( int nItem ) const
+		DWORD_PTR GetItemData(int nItem) const
 		{
-			LVITEM lvi = { 0 };
+			LVITEM lvi = {0};
 			lvi.iItem = nItem;
 			lvi.mask = LVIF_PARAM;
-			BOOL bRet = (BOOL) SendMessage( m_hWnd, LVM_GETITEM, 0, (LPARAM) &lvi );
-			return (DWORD_PTR) ( bRet ? lvi.lParam : NULL );
+			BOOL bRet = (BOOL) SendMessage(m_hWnd, LVM_GETITEM, 0, (LPARAM) &lvi);
+			return (DWORD_PTR) (bRet ? lvi.lParam : NULL);
 		}
 
-		BOOL SetItemData( int nItem, DWORD_PTR dwData )
+		BOOL SetItemData(int nItem, DWORD_PTR dwData)
 		{
-			return SetItem( nItem, 0, LVIF_PARAM, NULL, 0, 0, 0, (LPARAM) dwData );
+			return SetItem(nItem, 0, LVIF_PARAM, NULL, 0, 0, 0, (LPARAM) dwData);
 		}
 
-		UINT GetCallbackMask( ) const
+		UINT GetCallbackMask() const
 		{
-			return (UINT) SendMessage( m_hWnd, LVM_GETCALLBACKMASK, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, LVM_GETCALLBACKMASK, 0, 0L);
 		}
 
-		BOOL SetCallbackMask( UINT nMask )
+		BOOL SetCallbackMask(UINT nMask)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETCALLBACKMASK, nMask, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETCALLBACKMASK, nMask, 0L);
 		}
 
-		BOOL GetItemPosition( int nItem, LPPOINT lpPoint ) const
+		BOOL GetItemPosition(int nItem, LPPOINT lpPoint) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETITEMPOSITION, nItem, (LPARAM) lpPoint );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETITEMPOSITION, nItem, (LPARAM) lpPoint);
 		}
 
-		BOOL SetItemPosition( int nItem, POINT pt )
+		BOOL SetItemPosition(int nItem, POINT pt)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEMPOSITION32, nItem, (LPARAM) &pt );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEMPOSITION32, nItem, (LPARAM) &pt);
 		}
 
-		BOOL SetItemPosition( int nItem, int x, int y )
+		BOOL SetItemPosition(int nItem, int x, int y)
 		{
-			POINT pt = { x, y };
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEMPOSITION32, nItem, (LPARAM) &pt );
+			POINT pt = {x, y};
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEMPOSITION32, nItem, (LPARAM) &pt);
 		}
 
-		int GetStringWidth( LPCTSTR lpsz ) const
+		int GetStringWidth(LPCTSTR lpsz) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETSTRINGWIDTH, 0, (LPARAM) lpsz );
+			return (int) SendMessage(m_hWnd, LVM_GETSTRINGWIDTH, 0, (LPARAM) lpsz);
 		}
 
-		EditText GetEditControl( ) const
+		EditText GetEditControl() const
 		{
-			return EditText( (HWND) SendMessage( m_hWnd, LVM_GETEDITCONTROL, 0, 0L ) );
+			return EditText((HWND) SendMessage(m_hWnd, LVM_GETEDITCONTROL, 0, 0L));
 		}
 
-		BOOL GetColumn( int nCol, LVCOLUMN* pColumn ) const
+		BOOL GetColumn(int nCol, LVCOLUMN* pColumn) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETCOLUMN, nCol, (LPARAM) pColumn );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETCOLUMN, nCol, (LPARAM) pColumn);
 		}
 
-		BOOL SetColumn( int nCol, const LVCOLUMN* pColumn )
+		BOOL SetColumn(int nCol, const LVCOLUMN* pColumn)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETCOLUMN, nCol, (LPARAM) pColumn );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETCOLUMN, nCol, (LPARAM) pColumn);
 		}
 
-		int GetColumnWidth( int nCol ) const
+		int GetColumnWidth(int nCol) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETCOLUMNWIDTH, nCol, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETCOLUMNWIDTH, nCol, 0L);
 		}
 
-		BOOL SetColumnWidth( int nCol, int cx )
+		BOOL SetColumnWidth(int nCol, int cx)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETCOLUMNWIDTH, nCol, MAKELPARAM( cx, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETCOLUMNWIDTH, nCol, MAKELPARAM(cx, 0));
 		}
 
-		BOOL GetViewRect( LPRECT lpRect ) const
+		BOOL GetViewRect(LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETVIEWRECT, 0, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETVIEWRECT, 0, (LPARAM) lpRect);
 		}
 
-		COLORREF GetTextColor( ) const
+		COLORREF GetTextColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, LVM_GETTEXTCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, LVM_GETTEXTCOLOR, 0, 0L);
 		}
 
-		BOOL SetTextColor( COLORREF cr )
+		BOOL SetTextColor(COLORREF cr)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETTEXTCOLOR, 0, cr );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETTEXTCOLOR, 0, cr);
 		}
 
-		COLORREF GetTextBkColor( ) const
+		COLORREF GetTextBkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, LVM_GETTEXTBKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, LVM_GETTEXTBKCOLOR, 0, 0L);
 		}
 
-		BOOL SetTextBkColor( COLORREF cr )
+		BOOL SetTextBkColor(COLORREF cr)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETTEXTBKCOLOR, 0, cr );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETTEXTBKCOLOR, 0, cr);
 		}
 
-		int GetTopIndex( ) const
+		int GetTopIndex() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETTOPINDEX, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETTOPINDEX, 0, 0L);
 		}
 
-		int GetCountPerPage( ) const
+		int GetCountPerPage() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETCOUNTPERPAGE, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETCOUNTPERPAGE, 0, 0L);
 		}
 
-		BOOL GetOrigin( LPPOINT lpPoint ) const
+		BOOL GetOrigin(LPPOINT lpPoint) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETORIGIN, 0, (LPARAM) lpPoint );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETORIGIN, 0, (LPARAM) lpPoint);
 		}
 
-		UINT GetSelectedCount( ) const
+		UINT GetSelectedCount() const
 		{
-			return (UINT) SendMessage( m_hWnd, LVM_GETSELECTEDCOUNT, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, LVM_GETSELECTEDCOUNT, 0, 0L);
 		}
 
-		BOOL GetItemRect( int nItem, LPRECT lpRect, UINT nCode ) const
+		BOOL GetItemRect(int nItem, LPRECT lpRect, UINT nCode) const
 		{
 			lpRect->left = nCode;
-			return (BOOL) SendMessage( m_hWnd, LVM_GETITEMRECT, (WPARAM) nItem, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETITEMRECT, (WPARAM) nItem, (LPARAM) lpRect);
 		}
 
-		HCURSOR GetHotCursor( ) const
+		HCURSOR GetHotCursor() const
 		{
-			return (HCURSOR) SendMessage( m_hWnd, LVM_GETHOTCURSOR, 0, 0L );
+			return (HCURSOR) SendMessage(m_hWnd, LVM_GETHOTCURSOR, 0, 0L);
 		}
 
-		HCURSOR SetHotCursor( HCURSOR hHotCursor )
+		HCURSOR SetHotCursor(HCURSOR hHotCursor)
 		{
-			return (HCURSOR) SendMessage( m_hWnd, LVM_SETHOTCURSOR, 0, (LPARAM) hHotCursor );
+			return (HCURSOR) SendMessage(m_hWnd, LVM_SETHOTCURSOR, 0, (LPARAM) hHotCursor);
 		}
 
-		int GetHotItem( ) const
+		int GetHotItem() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETHOTITEM, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETHOTITEM, 0, 0L);
 		}
 
-		int SetHotItem( int nIndex )
+		int SetHotItem(int nIndex)
 		{
-			return (int) SendMessage( m_hWnd, LVM_SETHOTITEM, nIndex, 0L );
+			return (int) SendMessage(m_hWnd, LVM_SETHOTITEM, nIndex, 0L);
 		}
 
-		BOOL GetColumnOrderArray( int nCount, int* lpnArray ) const
+		BOOL GetColumnOrderArray(int nCount, int* lpnArray) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETCOLUMNORDERARRAY, nCount, (LPARAM) lpnArray );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETCOLUMNORDERARRAY, nCount, (LPARAM) lpnArray);
 		}
 
-		BOOL SetColumnOrderArray( int nCount, int* lpnArray )
+		BOOL SetColumnOrderArray(int nCount, int* lpnArray)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETCOLUMNORDERARRAY, nCount, (LPARAM) lpnArray );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETCOLUMNORDERARRAY, nCount, (LPARAM) lpnArray);
 		}
 
-		Header GetHeader( ) const
+		Header GetHeader() const
 		{
-			return Header( (HWND) SendMessage( m_hWnd, LVM_GETHEADER, 0, 0L ) );
+			return Header((HWND) SendMessage(m_hWnd, LVM_GETHEADER, 0, 0L));
 		}
 
-		BOOL GetSubItemRect( int nItem, int nSubItem, int nFlag, LPRECT lpRect ) const
+		BOOL GetSubItemRect(int nItem, int nSubItem, int nFlag, LPRECT lpRect) const
 		{
 			lpRect->top = nSubItem;
 			lpRect->left = nFlag;
-			return (BOOL) SendMessage( m_hWnd, LVM_GETSUBITEMRECT, nItem, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETSUBITEMRECT, nItem, (LPARAM) lpRect);
 		}
 
-		DWORD SetIconSpacing( int cx, int cy )
+		DWORD SetIconSpacing(int cx, int cy)
 		{
-			return (DWORD) SendMessage( m_hWnd, LVM_SETICONSPACING, 0, MAKELPARAM( cx, cy ) );
+			return (DWORD) SendMessage(m_hWnd, LVM_SETICONSPACING, 0, MAKELPARAM(cx, cy));
 		}
 
-		int GetISearchString( LPTSTR lpstr ) const
+		int GetISearchString(LPTSTR lpstr) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETISEARCHSTRING, 0, (LPARAM) lpstr );
+			return (int) SendMessage(m_hWnd, LVM_GETISEARCHSTRING, 0, (LPARAM) lpstr);
 		}
 
-		void GetItemSpacing( SIZE& sizeSpacing, BOOL bSmallIconView = FALSE ) const
+		void GetItemSpacing(SIZE& sizeSpacing, BOOL bSmallIconView = FALSE) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, LVM_GETITEMSPACING, bSmallIconView, 0L );
-			sizeSpacing.cx = GET_X_LPARAM( dwRet );
-			sizeSpacing.cy = GET_Y_LPARAM( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, LVM_GETITEMSPACING, bSmallIconView, 0L);
+			sizeSpacing.cx = GET_X_LPARAM(dwRet);
+			sizeSpacing.cy = GET_Y_LPARAM(dwRet);
 		}
 
-		int GetSelectedIndex( ) const
+		int GetSelectedIndex() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETNEXTITEM, (WPARAM) -1, MAKELPARAM( LVNI_ALL | LVNI_SELECTED, 0 ) );
+			return (int) SendMessage(m_hWnd, LVM_GETNEXTITEM, (WPARAM) -1, MAKELPARAM(LVNI_ALL | LVNI_SELECTED, 0));
 		}
 
-		BOOL GetSelectedItem( LPLVITEM pItem ) const
+		BOOL GetSelectedItem(LPLVITEM pItem) const
 		{
-			pItem->iItem = (int) SendMessage( m_hWnd, LVM_GETNEXTITEM, (WPARAM) -1, MAKELPARAM( LVNI_ALL | LVNI_SELECTED, 0 ) );
-			if ( pItem->iItem == -1 ) return FALSE;
-			return (BOOL) SendMessage( m_hWnd, LVM_GETITEM, 0, (LPARAM) pItem );
+			pItem->iItem = (int) SendMessage(m_hWnd, LVM_GETNEXTITEM, (WPARAM) -1, MAKELPARAM(LVNI_ALL | LVNI_SELECTED, 0));
+			if (pItem->iItem == -1) return FALSE;
+			return (BOOL) SendMessage(m_hWnd, LVM_GETITEM, 0, (LPARAM) pItem);
 		}
 
-		DWORD GetExtendedListViewStyle( ) const
+		DWORD GetExtendedListViewStyle() const
 		{
-			return (DWORD) SendMessage( m_hWnd, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0L);
 		}
 
-		DWORD SetExtendedListViewStyle( DWORD dwExStyle, DWORD dwExMask = 0 )
+		DWORD SetExtendedListViewStyle(DWORD dwExStyle, DWORD dwExMask = 0)
 		{
-			return (DWORD) SendMessage( m_hWnd, LVM_SETEXTENDEDLISTVIEWSTYLE, dwExMask, dwExStyle );
+			return (DWORD) SendMessage(m_hWnd, LVM_SETEXTENDEDLISTVIEWSTYLE, dwExMask, dwExStyle);
 		}
 
-		BOOL GetCheckState( int nIndex ) const
+		BOOL GetCheckState(int nIndex) const
 		{
-			UINT uRet = GetItemState( nIndex, LVIS_STATEIMAGEMASK );
-			return ( uRet >> 12 ) - 1;
+			UINT uRet = GetItemState(nIndex, LVIS_STATEIMAGEMASK);
+			return (uRet >> 12) - 1;
 		}
 
-		BOOL SetCheckState( int nItem, BOOL bCheck )
+		BOOL SetCheckState(int nItem, BOOL bCheck)
 		{
 			int nCheck = bCheck ? 2 : 1;
-			return SetItemState( nItem, INDEXTOSTATEIMAGEMASK( nCheck ), LVIS_STATEIMAGEMASK );
+			return SetItemState(nItem, INDEXTOSTATEIMAGEMASK(nCheck), LVIS_STATEIMAGEMASK);
 		}
 
-		DWORD GetViewType( ) const
+		DWORD GetViewType() const
 		{
-			return ( GetStyle( ) & LVS_TYPEMASK );
+			return (GetStyle() & LVS_TYPEMASK);
 		}
 
-		DWORD SetViewType( DWORD dwType )
+		DWORD SetViewType(DWORD dwType)
 		{
-			DWORD dwOldType = GetViewType( );
-			if ( dwType != dwOldType ) ModifyStyle( LVS_TYPEMASK, ( dwType & LVS_TYPEMASK ) );
+			DWORD dwOldType = GetViewType();
+			if (dwType != dwOldType) ModifyStyle(LVS_TYPEMASK, (dwType & LVS_TYPEMASK));
 			return dwOldType;
 		}
 
-		BOOL GetBkImage( LPLVBKIMAGE plvbki ) const
+		BOOL GetBkImage(LPLVBKIMAGE plvbki) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETBKIMAGE, 0, (LPARAM) plvbki );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETBKIMAGE, 0, (LPARAM) plvbki);
 		}
 
-		BOOL SetBkImage( LPLVBKIMAGE plvbki )
+		BOOL SetBkImage(LPLVBKIMAGE plvbki)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETBKIMAGE, 0, (LPARAM) plvbki );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETBKIMAGE, 0, (LPARAM) plvbki);
 		}
 
-		int GetSelectionMark( ) const
+		int GetSelectionMark() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETSELECTIONMARK, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETSELECTIONMARK, 0, 0L);
 		}
 
-		int SetSelectionMark( int nIndex )
+		int SetSelectionMark(int nIndex)
 		{
-			return (int) SendMessage( m_hWnd, LVM_SETSELECTIONMARK, 0, nIndex );
+			return (int) SendMessage(m_hWnd, LVM_SETSELECTIONMARK, 0, nIndex);
 		}
 
-		BOOL GetWorkAreas( int nWorkAreas, LPRECT lpRect ) const
+		BOOL GetWorkAreas(int nWorkAreas, LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETWORKAREAS, nWorkAreas, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETWORKAREAS, nWorkAreas, (LPARAM) lpRect);
 		}
 
-		BOOL SetWorkAreas( int nWorkAreas, LPRECT lpRect )
+		BOOL SetWorkAreas(int nWorkAreas, LPRECT lpRect)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETWORKAREAS, nWorkAreas, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETWORKAREAS, nWorkAreas, (LPARAM) lpRect);
 		}
 
-		DWORD GetHoverTime( ) const
+		DWORD GetHoverTime() const
 		{
-			return (DWORD) SendMessage( m_hWnd, LVM_GETHOVERTIME, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, LVM_GETHOVERTIME, 0, 0L);
 		}
 
-		DWORD SetHoverTime( DWORD dwHoverTime )
+		DWORD SetHoverTime(DWORD dwHoverTime)
 		{
-			return (DWORD) SendMessage( m_hWnd, LVM_SETHOVERTIME, 0, dwHoverTime );
+			return (DWORD) SendMessage(m_hWnd, LVM_SETHOVERTIME, 0, dwHoverTime);
 		}
 
-		BOOL GetNumberOfWorkAreas( int* pnWorkAreas ) const
+		BOOL GetNumberOfWorkAreas(int* pnWorkAreas) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETNUMBEROFWORKAREAS, 0, (LPARAM) pnWorkAreas );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETNUMBEROFWORKAREAS, 0, (LPARAM) pnWorkAreas);
 		}
 
-		BOOL SetItemCountEx( int nItems, DWORD dwFlags )
+		BOOL SetItemCountEx(int nItems, DWORD dwFlags)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEMCOUNT, nItems, dwFlags );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEMCOUNT, nItems, dwFlags);
 		}
 
-		ToolTip GetToolTips( ) const
+		ToolTip GetToolTips() const
 		{
-			return ToolTip( (HWND) SendMessage( m_hWnd, LVM_GETTOOLTIPS, 0, 0L ) );
+			return ToolTip((HWND) SendMessage(m_hWnd, LVM_GETTOOLTIPS, 0, 0L));
 		}
 
-		ToolTip SetToolTips( HWND hWndTT )
+		ToolTip SetToolTips(HWND hWndTT)
 		{
-			return ToolTip( (HWND) SendMessage( m_hWnd, LVM_SETTOOLTIPS, (WPARAM) hWndTT, 0L ) );
+			return ToolTip((HWND) SendMessage(m_hWnd, LVM_SETTOOLTIPS, (WPARAM) hWndTT, 0L));
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		int GetSelectedColumn( ) const
+		int GetSelectedColumn() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETSELECTEDCOLUMN, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETSELECTEDCOLUMN, 0, 0L);
 		}
 
-		void SetSelectedColumn( int nColumn )
+		void SetSelectedColumn(int nColumn)
 		{
-			SendMessage( m_hWnd, LVM_SETSELECTEDCOLUMN, nColumn, 0L );
+			SendMessage(m_hWnd, LVM_SETSELECTEDCOLUMN, nColumn, 0L);
 		}
 
-		DWORD GetView( ) const
+		DWORD GetView() const
 		{
-			return (DWORD) SendMessage( m_hWnd, LVM_GETVIEW, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, LVM_GETVIEW, 0, 0L);
 		}
 
-		int SetView( DWORD dwView )
+		int SetView(DWORD dwView)
 		{
-			return (int) SendMessage( m_hWnd, LVM_SETVIEW, dwView, 0L );
+			return (int) SendMessage(m_hWnd, LVM_SETVIEW, dwView, 0L);
 		}
 
-		BOOL IsGroupViewEnabled( ) const
+		BOOL IsGroupViewEnabled() const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_ISGROUPVIEWENABLED, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_ISGROUPVIEWENABLED, 0, 0L);
 		}
 
-		int GetGroupInfo( int nGroupID, PLVGROUP pGroup ) const
+		int GetGroupInfo(int nGroupID, PLVGROUP pGroup) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETGROUPINFO, nGroupID, (LPARAM) pGroup );
+			return (int) SendMessage(m_hWnd, LVM_GETGROUPINFO, nGroupID, (LPARAM) pGroup);
 		}
 
-		int SetGroupInfo( int nGroupID, PLVGROUP pGroup )
+		int SetGroupInfo(int nGroupID, PLVGROUP pGroup)
 		{
-			return (int) SendMessage( m_hWnd, LVM_SETGROUPINFO, nGroupID, (LPARAM) pGroup );
+			return (int) SendMessage(m_hWnd, LVM_SETGROUPINFO, nGroupID, (LPARAM) pGroup);
 		}
 
-		void GetGroupMetrics( PLVGROUPMETRICS pGroupMetrics ) const
+		void GetGroupMetrics(PLVGROUPMETRICS pGroupMetrics) const
 		{
-			SendMessage( m_hWnd, LVM_GETGROUPMETRICS, 0, (LPARAM) pGroupMetrics );
+			SendMessage(m_hWnd, LVM_GETGROUPMETRICS, 0, (LPARAM) pGroupMetrics);
 		}
 
-		void SetGroupMetrics( PLVGROUPMETRICS pGroupMetrics )
+		void SetGroupMetrics(PLVGROUPMETRICS pGroupMetrics)
 		{
-			SendMessage( m_hWnd, LVM_SETGROUPMETRICS, 0, (LPARAM) pGroupMetrics );
+			SendMessage(m_hWnd, LVM_SETGROUPMETRICS, 0, (LPARAM) pGroupMetrics);
 		}
 
-		void GetTileViewInfo( PLVTILEVIEWINFO pTileViewInfo ) const
+		void GetTileViewInfo(PLVTILEVIEWINFO pTileViewInfo) const
 		{
-			SendMessage( m_hWnd, LVM_GETTILEVIEWINFO, 0, (LPARAM) pTileViewInfo );
+			SendMessage(m_hWnd, LVM_GETTILEVIEWINFO, 0, (LPARAM) pTileViewInfo);
 		}
 
-		BOOL SetTileViewInfo( PLVTILEVIEWINFO pTileViewInfo )
+		BOOL SetTileViewInfo(PLVTILEVIEWINFO pTileViewInfo)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETTILEVIEWINFO, 0, (LPARAM) pTileViewInfo );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETTILEVIEWINFO, 0, (LPARAM) pTileViewInfo);
 		}
 
-		void GetTileInfo( PLVTILEINFO pTileInfo ) const
+		void GetTileInfo(PLVTILEINFO pTileInfo) const
 		{
-			SendMessage( m_hWnd, LVM_GETTILEINFO, 0, (LPARAM) pTileInfo );
+			SendMessage(m_hWnd, LVM_GETTILEINFO, 0, (LPARAM) pTileInfo);
 		}
 
-		BOOL SetTileInfo( PLVTILEINFO pTileInfo )
+		BOOL SetTileInfo(PLVTILEINFO pTileInfo)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETTILEINFO, 0, (LPARAM) pTileInfo );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETTILEINFO, 0, (LPARAM) pTileInfo);
 		}
 
-		BOOL GetInsertMark( LPLVINSERTMARK pInsertMark ) const
+		BOOL GetInsertMark(LPLVINSERTMARK pInsertMark) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETINSERTMARK, 0, (LPARAM) pInsertMark );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETINSERTMARK, 0, (LPARAM) pInsertMark);
 		}
 
-		BOOL SetInsertMark( LPLVINSERTMARK pInsertMark )
+		BOOL SetInsertMark(LPLVINSERTMARK pInsertMark)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETINSERTMARK, 0, (LPARAM) pInsertMark );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETINSERTMARK, 0, (LPARAM) pInsertMark);
 		}
 
-		int GetInsertMarkRect( LPRECT lpRect ) const
+		int GetInsertMarkRect(LPRECT lpRect) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETINSERTMARKRECT, 0, (LPARAM) lpRect );
+			return (int) SendMessage(m_hWnd, LVM_GETINSERTMARKRECT, 0, (LPARAM) lpRect);
 		}
 
-		COLORREF GetInsertMarkColor( ) const
+		COLORREF GetInsertMarkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, LVM_GETINSERTMARKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, LVM_GETINSERTMARKCOLOR, 0, 0L);
 		}
 
-		COLORREF SetInsertMarkColor( COLORREF clr )
+		COLORREF SetInsertMarkColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, LVM_SETINSERTMARKCOLOR, 0, clr );
+			return (COLORREF) SendMessage(m_hWnd, LVM_SETINSERTMARKCOLOR, 0, clr);
 		}
 
-		COLORREF GetOutlineColor( ) const
+		COLORREF GetOutlineColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, LVM_GETOUTLINECOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, LVM_GETOUTLINECOLOR, 0, 0L);
 		}
 
-		COLORREF SetOutlineColor( COLORREF clr )
+		COLORREF SetOutlineColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, LVM_SETOUTLINECOLOR, 0, clr );
+			return (COLORREF) SendMessage(m_hWnd, LVM_SETOUTLINECOLOR, 0, clr);
 		}
 
-		int GetGroupCount( ) const
+		int GetGroupCount() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETGROUPCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETGROUPCOUNT, 0, 0L);
 		}
 
-		BOOL GetGroupInfoByIndex( int nIndex, PLVGROUP pGroup ) const
+		BOOL GetGroupInfoByIndex(int nIndex, PLVGROUP pGroup) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETGROUPINFOBYINDEX, nIndex, (LPARAM) pGroup );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETGROUPINFOBYINDEX, nIndex, (LPARAM) pGroup);
 		}
 
-		BOOL GetGroupRect( int nGroupID, int nType, LPRECT lpRect ) const
+		BOOL GetGroupRect(int nGroupID, int nType, LPRECT lpRect) const
 		{
-			if ( lpRect != NULL ) lpRect->top = nType;
-			return (BOOL) SendMessage( m_hWnd, LVM_GETGROUPRECT, nGroupID, (LPARAM) lpRect );
+			if (lpRect != NULL) lpRect->top = nType;
+			return (BOOL) SendMessage(m_hWnd, LVM_GETGROUPRECT, nGroupID, (LPARAM) lpRect);
 		}
 
-		UINT GetGroupState( int nGroupID, UINT uMask ) const
+		UINT GetGroupState(int nGroupID, UINT uMask) const
 		{
-			return (UINT) SendMessage( m_hWnd, LVM_GETGROUPSTATE, nGroupID, (LPARAM) uMask );
+			return (UINT) SendMessage(m_hWnd, LVM_GETGROUPSTATE, nGroupID, (LPARAM) uMask);
 		}
 
-		int GetFocusedGroup( ) const
+		int GetFocusedGroup() const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETFOCUSEDGROUP, 0, 0L );
+			return (int) SendMessage(m_hWnd, LVM_GETFOCUSEDGROUP, 0, 0L);
 		}
 
-		BOOL GetEmptyText( LPWSTR lpstrText, int cchText ) const
+		BOOL GetEmptyText(LPWSTR lpstrText, int cchText) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETEMPTYTEXT, cchText, (LPARAM) lpstrText );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETEMPTYTEXT, cchText, (LPARAM) lpstrText);
 		}
 
-		BOOL GetFooterRect( LPRECT lpRect ) const
+		BOOL GetFooterRect(LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETFOOTERRECT, 0, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETFOOTERRECT, 0, (LPARAM) lpRect);
 		}
 
-		BOOL GetFooterInfo( LPLVFOOTERINFO lpFooterInfo ) const
+		BOOL GetFooterInfo(LPLVFOOTERINFO lpFooterInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETFOOTERINFO, 0, (LPARAM) lpFooterInfo );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETFOOTERINFO, 0, (LPARAM) lpFooterInfo);
 		}
 
-		BOOL GetFooterItemRect( int nItem, LPRECT lpRect ) const
+		BOOL GetFooterItemRect(int nItem, LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETFOOTERITEMRECT, nItem, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETFOOTERITEMRECT, nItem, (LPARAM) lpRect);
 		}
 
-		BOOL GetFooterItem( int nItem, LPLVFOOTERITEM lpFooterItem ) const
+		BOOL GetFooterItem(int nItem, LPLVFOOTERITEM lpFooterItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETFOOTERITEM, nItem, (LPARAM) lpFooterItem );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETFOOTERITEM, nItem, (LPARAM) lpFooterItem);
 		}
 
-		BOOL GetItemIndexRect( PLVITEMINDEX pItemIndex, int nSubItem, int nType, LPRECT lpRect ) const
+		BOOL GetItemIndexRect(PLVITEMINDEX pItemIndex, int nSubItem, int nType, LPRECT lpRect) const
 		{
-			if ( lpRect != NULL )
+			if (lpRect != NULL)
 			{
 				lpRect->top = nSubItem;
 				lpRect->left = nType;
 			}
-			return (BOOL) SendMessage( m_hWnd, LVM_GETITEMINDEXRECT, (WPARAM) pItemIndex, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETITEMINDEXRECT, (WPARAM) pItemIndex, (LPARAM) lpRect);
 		}
 
-		BOOL SetItemIndexState( PLVITEMINDEX pItemIndex, UINT uState, UINT dwMask )
+		BOOL SetItemIndexState(PLVITEMINDEX pItemIndex, UINT uState, UINT dwMask)
 		{
-			LVITEM lvi = { 0 };
+			LVITEM lvi = {0};
 			lvi.state = uState;
 			lvi.stateMask = dwMask;
-			return (BOOL) SendMessage( m_hWnd, LVM_SETITEMINDEXSTATE, (WPARAM) pItemIndex, (LPARAM) &lvi );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETITEMINDEXSTATE, (WPARAM) pItemIndex, (LPARAM) &lvi);
 		}
 
-		BOOL GetNextItemIndex( PLVITEMINDEX pItemIndex, WORD wFlags ) const
+		BOOL GetNextItemIndex(PLVITEMINDEX pItemIndex, WORD wFlags) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_GETNEXTITEMINDEX, (WPARAM) pItemIndex, MAKELPARAM( wFlags, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, LVM_GETNEXTITEMINDEX, (WPARAM) pItemIndex, MAKELPARAM(wFlags, 0));
 		}
 
-		int InsertColumn( int nCol, const LVCOLUMN* pColumn )
+		int InsertColumn(int nCol, const LVCOLUMN* pColumn)
 		{
-			return (int) SendMessage( m_hWnd, LVM_INSERTCOLUMN, nCol, (LPARAM) pColumn );
+			return (int) SendMessage(m_hWnd, LVM_INSERTCOLUMN, nCol, (LPARAM) pColumn);
 		}
 
-		int InsertColumn( int nCol, LPCTSTR lpszColumnHeading, int nFormat = LVCFMT_LEFT,
-						  int nWidth = -1, int nSubItem = -1, int iImage = -1, int iOrder = -1 )
+		int InsertColumn(int nCol, LPCTSTR lpszColumnHeading, int nFormat = LVCFMT_LEFT,
+						 int nWidth = -1, int nSubItem = -1, int iImage = -1, int iOrder = -1)
 		{
-			LVCOLUMN column = { 0 };
+			LVCOLUMN column = {0};
 			column.mask = LVCF_TEXT | LVCF_FMT;
 			column.pszText = (LPTSTR) lpszColumnHeading;
 			column.fmt = nFormat;
-			if ( nWidth != -1 )
+			if (nWidth != -1)
 			{
 				column.mask |= LVCF_WIDTH;
 				column.cx = nWidth;
 			}
-			if ( nSubItem != -1 )
+			if (nSubItem != -1)
 			{
 				column.mask |= LVCF_SUBITEM;
 				column.iSubItem = nSubItem;
 			}
-			if ( iImage != -1 )
+			if (iImage != -1)
 			{
 				column.mask |= LVCF_IMAGE;
 				column.iImage = iImage;
 			}
-			if ( iOrder != -1 )
+			if (iOrder != -1)
 			{
 				column.mask |= LVCF_ORDER;
 				column.iOrder = iOrder;
 			}
-			return InsertColumn( nCol, &column );
+			return InsertColumn(nCol, &column);
 		}
 
-		BOOL DeleteColumn( int nCol )
+		BOOL DeleteColumn(int nCol)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_DELETECOLUMN, nCol, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_DELETECOLUMN, nCol, 0L);
 		}
 
-		int InsertItem( UINT nMask, int nItem, LPCTSTR lpszItem, UINT nState, UINT nStateMask, int nImage, LPARAM lParam )
+		int InsertItem(UINT nMask, int nItem, LPCTSTR lpszItem, UINT nState, UINT nStateMask, int nImage, LPARAM lParam)
 		{
-			LVITEM item = { 0 };
+			LVITEM item = {0};
 			item.mask = nMask;
 			item.iItem = nItem;
 			item.iSubItem = 0;
@@ -2392,262 +2392,262 @@ namespace WPP
 			item.stateMask = nStateMask;
 			item.iImage = nImage;
 			item.lParam = lParam;
-			return InsertItem( &item );
+			return InsertItem(&item);
 		}
 
-		int InsertItem( const LVITEM* pItem )
+		int InsertItem(const LVITEM* pItem)
 		{
-			return (int) SendMessage( m_hWnd, LVM_INSERTITEM, 0, (LPARAM) pItem );
+			return (int) SendMessage(m_hWnd, LVM_INSERTITEM, 0, (LPARAM) pItem);
 		}
 
-		int InsertItem( int nItem, LPCTSTR lpszItem )
+		int InsertItem(int nItem, LPCTSTR lpszItem)
 		{
-			return InsertItem( LVIF_TEXT, nItem, lpszItem, 0, 0, 0, 0 );
+			return InsertItem(LVIF_TEXT, nItem, lpszItem, 0, 0, 0, 0);
 		}
 
-		int InsertItem( int nItem, LPCTSTR lpszItem, int nImage )
+		int InsertItem(int nItem, LPCTSTR lpszItem, int nImage)
 		{
-			return InsertItem( LVIF_TEXT | LVIF_IMAGE, nItem, lpszItem, 0, 0, nImage, 0 );
+			return InsertItem(LVIF_TEXT | LVIF_IMAGE, nItem, lpszItem, 0, 0, nImage, 0);
 		}
 
-		int GetNextItem( int nItem, int nFlags ) const
+		int GetNextItem(int nItem, int nFlags) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_GETNEXTITEM, nItem, MAKELPARAM( nFlags, 0 ) );
+			return (int) SendMessage(m_hWnd, LVM_GETNEXTITEM, nItem, MAKELPARAM(nFlags, 0));
 		}
 
-		BOOL DeleteItem( int nItem )
+		BOOL DeleteItem(int nItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_DELETEITEM, nItem, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_DELETEITEM, nItem, 0L);
 		}
 
-		BOOL DeleteAllItems( )
+		BOOL DeleteAllItems()
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_DELETEALLITEMS, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_DELETEALLITEMS, 0, 0L);
 		}
 
-		int FindItem( LVFINDINFO* pFindInfo, int nStart = -1 ) const
+		int FindItem(LVFINDINFO* pFindInfo, int nStart = -1) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_FINDITEM, nStart, (LPARAM) pFindInfo );
+			return (int) SendMessage(m_hWnd, LVM_FINDITEM, nStart, (LPARAM) pFindInfo);
 		}
 
-		int FindItem( LPCTSTR lpstrFind, bool bPartial = true, bool bWrap = false, int nStart = -1 ) const
+		int FindItem(LPCTSTR lpstrFind, bool bPartial = true, bool bWrap = false, int nStart = -1) const
 		{
-			LVFINDINFO lvfi = { 0 };
-			lvfi.flags = LVFI_STRING | ( bWrap ? LVFI_WRAP : 0 ) | ( bPartial ? LVFI_PARTIAL : 0 );
+			LVFINDINFO lvfi = {0};
+			lvfi.flags = LVFI_STRING | (bWrap ? LVFI_WRAP : 0) | (bPartial ? LVFI_PARTIAL : 0);
 			lvfi.psz = lpstrFind;
-			return (int) SendMessage( m_hWnd, LVM_FINDITEM, nStart, (LPARAM) &lvfi );
+			return (int) SendMessage(m_hWnd, LVM_FINDITEM, nStart, (LPARAM) &lvfi);
 		}
 
-		int HitTest( LVHITTESTINFO* pHitTestInfo ) const
+		int HitTest(LVHITTESTINFO* pHitTestInfo) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_HITTEST, 0, (LPARAM) pHitTestInfo );
+			return (int) SendMessage(m_hWnd, LVM_HITTEST, 0, (LPARAM) pHitTestInfo);
 		}
 
-		int HitTest( POINT pt, UINT* pFlags ) const
+		int HitTest(POINT pt, UINT* pFlags) const
 		{
-			LVHITTESTINFO hti = { 0 };
+			LVHITTESTINFO hti = {0};
 			hti.pt = pt;
-			int nRes = (int) SendMessage( m_hWnd, LVM_HITTEST, 0, (LPARAM) &hti );
-			if ( pFlags != NULL )
+			int nRes = (int) SendMessage(m_hWnd, LVM_HITTEST, 0, (LPARAM) &hti);
+			if (pFlags != NULL)
 				*pFlags = hti.flags;
 			return nRes;
 		}
 
-		BOOL EnsureVisible( int nItem, BOOL bPartialOK )
+		BOOL EnsureVisible(int nItem, BOOL bPartialOK)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_ENSUREVISIBLE, nItem, MAKELPARAM( bPartialOK, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, LVM_ENSUREVISIBLE, nItem, MAKELPARAM(bPartialOK, 0));
 		}
 
-		BOOL Scroll( SIZE size )
+		BOOL Scroll(SIZE size)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SCROLL, size.cx, size.cy );
+			return (BOOL) SendMessage(m_hWnd, LVM_SCROLL, size.cx, size.cy);
 		}
 
-		BOOL RedrawItems( int nFirst, int nLast )
+		BOOL RedrawItems(int nFirst, int nLast)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_REDRAWITEMS, nFirst, nLast );
+			return (BOOL) SendMessage(m_hWnd, LVM_REDRAWITEMS, nFirst, nLast);
 		}
 
-		BOOL Arrange( UINT nCode )
+		BOOL Arrange(UINT nCode)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_ARRANGE, nCode, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_ARRANGE, nCode, 0L);
 		}
 
-		EditText EditLabel( int nItem )
+		EditText EditLabel(int nItem)
 		{
-			return EditText( (HWND) SendMessage( m_hWnd, LVM_EDITLABEL, nItem, 0L ) );
+			return EditText((HWND) SendMessage(m_hWnd, LVM_EDITLABEL, nItem, 0L));
 		}
 
-		BOOL Update( int nItem )
+		BOOL Update(int nItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_UPDATE, nItem, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_UPDATE, nItem, 0L);
 		}
 
-		BOOL SortItems( PFNLVCOMPARE pfnCompare, LPARAM lParamSort )
+		BOOL SortItems(PFNLVCOMPARE pfnCompare, LPARAM lParamSort)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SORTITEMS, (WPARAM) lParamSort, (LPARAM) pfnCompare );
+			return (BOOL) SendMessage(m_hWnd, LVM_SORTITEMS, (WPARAM) lParamSort, (LPARAM) pfnCompare);
 		}
 
-		ImageList RemoveImageList( int nImageList )
+		ImageList RemoveImageList(int nImageList)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, LVM_SETIMAGELIST, (WPARAM) nImageList, NULL ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, LVM_SETIMAGELIST, (WPARAM) nImageList, NULL));
 		}
 
-		ImageList CreateDragImage( int nItem, LPPOINT lpPoint )
+		ImageList CreateDragImage(int nItem, LPPOINT lpPoint)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, LVM_CREATEDRAGIMAGE, nItem, (LPARAM) lpPoint ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, LVM_CREATEDRAGIMAGE, nItem, (LPARAM) lpPoint));
 		}
 
-		DWORD ApproximateViewRect( int cx = -1, int cy = -1, int nCount = -1 )
+		DWORD ApproximateViewRect(int cx = -1, int cy = -1, int nCount = -1)
 		{
-			return (DWORD) SendMessage( m_hWnd, LVM_APPROXIMATEVIEWRECT, nCount, MAKELPARAM( cx, cy ) );
+			return (DWORD) SendMessage(m_hWnd, LVM_APPROXIMATEVIEWRECT, nCount, MAKELPARAM(cx, cy));
 		}
 
-		int SubItemHitTest( LPLVHITTESTINFO lpInfo ) const
+		int SubItemHitTest(LPLVHITTESTINFO lpInfo) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_SUBITEMHITTEST, 0, (LPARAM) lpInfo );
+			return (int) SendMessage(m_hWnd, LVM_SUBITEMHITTEST, 0, (LPARAM) lpInfo);
 		}
 
-		int AddColumn( LPCTSTR strItem, int nItem, int nSubItem = -1,
-					   int nMask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
-					   int nFmt = LVCFMT_LEFT )
+		int AddColumn(LPCTSTR strItem, int nItem, int nSubItem = -1,
+					  int nMask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
+					  int nFmt = LVCFMT_LEFT)
 		{
 			const int cxOffset = 15;
-			LVCOLUMN lvc = { 0 };
+			LVCOLUMN lvc = {0};
 			lvc.mask = nMask;
 			lvc.fmt = nFmt;
 			lvc.pszText = (LPTSTR) strItem;
-			lvc.cx = GetStringWidth( lvc.pszText ) + cxOffset;
-			if ( nMask & LVCF_SUBITEM )
-				lvc.iSubItem = ( nSubItem != -1 ) ? nSubItem : nItem;
-			return InsertColumn( nItem, &lvc );
+			lvc.cx = GetStringWidth(lvc.pszText) + cxOffset;
+			if (nMask & LVCF_SUBITEM)
+				lvc.iSubItem = (nSubItem != -1) ? nSubItem : nItem;
+			return InsertColumn(nItem, &lvc);
 		}
 
-		int AddItem( int nItem, int nSubItem, LPCTSTR strItem, int nImageIndex = -3 )
+		int AddItem(int nItem, int nSubItem, LPCTSTR strItem, int nImageIndex = -3)
 		{
-			LVITEM lvItem = { 0 };
+			LVITEM lvItem = {0};
 			lvItem.mask = LVIF_TEXT;
 			lvItem.iItem = nItem;
 			lvItem.iSubItem = nSubItem;
 			lvItem.pszText = (LPTSTR) strItem;
-			if ( nImageIndex != -3 )
+			if (nImageIndex != -3)
 			{
 				lvItem.mask |= LVIF_IMAGE;
 				lvItem.iImage = nImageIndex;
 			}
-			if ( nSubItem == 0 )
-				return InsertItem( &lvItem );
-			return SetItem( &lvItem ) ? nItem : -1;
+			if (nSubItem == 0)
+				return InsertItem(&lvItem);
+			return SetItem(&lvItem) ? nItem : -1;
 		}
 
-		BOOL SortItemsEx( PFNLVCOMPARE pfnCompare, LPARAM lParamSort )
+		BOOL SortItemsEx(PFNLVCOMPARE pfnCompare, LPARAM lParamSort)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SORTITEMSEX, (WPARAM) lParamSort, (LPARAM) pfnCompare );
+			return (BOOL) SendMessage(m_hWnd, LVM_SORTITEMSEX, (WPARAM) lParamSort, (LPARAM) pfnCompare);
 		}
 
-		int InsertGroup( int nItem, PLVGROUP pGroup )
+		int InsertGroup(int nItem, PLVGROUP pGroup)
 		{
-			return (int) SendMessage( m_hWnd, LVM_INSERTGROUP, nItem, (LPARAM) pGroup );
+			return (int) SendMessage(m_hWnd, LVM_INSERTGROUP, nItem, (LPARAM) pGroup);
 		}
 
-		int AddGroup( PLVGROUP pGroup )
+		int AddGroup(PLVGROUP pGroup)
 		{
-			return InsertGroup( -1, pGroup );
+			return InsertGroup(-1, pGroup);
 		}
 
-		int RemoveGroup( int nGroupID )
+		int RemoveGroup(int nGroupID)
 		{
-			return (int) SendMessage( m_hWnd, LVM_REMOVEGROUP, nGroupID, 0L );
+			return (int) SendMessage(m_hWnd, LVM_REMOVEGROUP, nGroupID, 0L);
 		}
 
-		void MoveGroup( int nGroupID, int nItem )
+		void MoveGroup(int nGroupID, int nItem)
 		{
-			SendMessage( m_hWnd, LVM_MOVEGROUP, nGroupID, nItem );
+			SendMessage(m_hWnd, LVM_MOVEGROUP, nGroupID, nItem);
 		}
 
-		void MoveItemToGroup( int nItem, int nGroupID )
+		void MoveItemToGroup(int nItem, int nGroupID)
 		{
-			SendMessage( m_hWnd, LVM_MOVEITEMTOGROUP, nItem, nGroupID );
+			SendMessage(m_hWnd, LVM_MOVEITEMTOGROUP, nItem, nGroupID);
 		}
 
-		int EnableGroupView( BOOL bEnable )
+		int EnableGroupView(BOOL bEnable)
 		{
-			return (int) SendMessage( m_hWnd, LVM_ENABLEGROUPVIEW, bEnable, 0L );
+			return (int) SendMessage(m_hWnd, LVM_ENABLEGROUPVIEW, bEnable, 0L);
 		}
 
-		int SortGroups( PFNLVGROUPCOMPARE pCompareFunc, LPVOID lpVoid = NULL )
+		int SortGroups(PFNLVGROUPCOMPARE pCompareFunc, LPVOID lpVoid = NULL)
 		{
-			return (int) SendMessage( m_hWnd, LVM_SORTGROUPS, (WPARAM) pCompareFunc, (LPARAM) lpVoid );
+			return (int) SendMessage(m_hWnd, LVM_SORTGROUPS, (WPARAM) pCompareFunc, (LPARAM) lpVoid);
 		}
 
-		void InsertGroupSorted( PLVINSERTGROUPSORTED pInsertGroupSorted )
+		void InsertGroupSorted(PLVINSERTGROUPSORTED pInsertGroupSorted)
 		{
-			SendMessage( m_hWnd, LVM_INSERTGROUPSORTED, (WPARAM) pInsertGroupSorted, 0L );
+			SendMessage(m_hWnd, LVM_INSERTGROUPSORTED, (WPARAM) pInsertGroupSorted, 0L);
 		}
 
-		void RemoveAllGroups( )
+		void RemoveAllGroups()
 		{
-			SendMessage( m_hWnd, LVM_REMOVEALLGROUPS, 0, 0L );
+			SendMessage(m_hWnd, LVM_REMOVEALLGROUPS, 0, 0L);
 		}
 
-		BOOL HasGroup( int nGroupID )
+		BOOL HasGroup(int nGroupID)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_HASGROUP, nGroupID, 0L );
+			return (BOOL) SendMessage(m_hWnd, LVM_HASGROUP, nGroupID, 0L);
 		}
 
-		BOOL InsertMarkHitTest( LPPOINT lpPoint, LPLVINSERTMARK pInsertMark ) const
+		BOOL InsertMarkHitTest(LPPOINT lpPoint, LPLVINSERTMARK pInsertMark) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_INSERTMARKHITTEST, (WPARAM) lpPoint, (LPARAM) pInsertMark );
+			return (BOOL) SendMessage(m_hWnd, LVM_INSERTMARKHITTEST, (WPARAM) lpPoint, (LPARAM) pInsertMark);
 		}
 
-		BOOL SetInfoTip( PLVSETINFOTIP pSetInfoTip )
+		BOOL SetInfoTip(PLVSETINFOTIP pSetInfoTip)
 		{
-			return (BOOL) SendMessage( m_hWnd, LVM_SETINFOTIP, 0, (LPARAM) pSetInfoTip );
+			return (BOOL) SendMessage(m_hWnd, LVM_SETINFOTIP, 0, (LPARAM) pSetInfoTip);
 		}
 
-		void CancelEditLabel( )
+		void CancelEditLabel()
 		{
-			SendMessage( m_hWnd, LVM_CANCELEDITLABEL, 0, 0L );
+			SendMessage(m_hWnd, LVM_CANCELEDITLABEL, 0, 0L);
 		}
 
-		UINT MapIndexToID( int nIndex ) const
+		UINT MapIndexToID(int nIndex) const
 		{
-			return (UINT) SendMessage( m_hWnd, LVM_MAPINDEXTOID, nIndex, 0L );
+			return (UINT) SendMessage(m_hWnd, LVM_MAPINDEXTOID, nIndex, 0L);
 		}
 
-		int MapIDToIndex( UINT uID ) const
+		int MapIDToIndex(UINT uID) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_MAPIDTOINDEX, uID, 0L );
+			return (int) SendMessage(m_hWnd, LVM_MAPIDTOINDEX, uID, 0L);
 		}
 
-		int HitTestEx( LPLVHITTESTINFO lpHitTestInfo ) const
+		int HitTestEx(LPLVHITTESTINFO lpHitTestInfo) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_HITTEST, (WPARAM) -1, (LPARAM) lpHitTestInfo );
+			return (int) SendMessage(m_hWnd, LVM_HITTEST, (WPARAM) -1, (LPARAM) lpHitTestInfo);
 		}
 
-		int HitTestEx( POINT pt, UINT* pFlags ) const
+		int HitTestEx(POINT pt, UINT* pFlags) const
 		{
-			LVHITTESTINFO hti = { 0 };
+			LVHITTESTINFO hti = {0};
 			hti.pt = pt;
-			int nRes = (int) SendMessage( m_hWnd, LVM_HITTEST, (WPARAM) -1, (LPARAM) &hti );
-			if ( pFlags != NULL )
+			int nRes = (int) SendMessage(m_hWnd, LVM_HITTEST, (WPARAM) -1, (LPARAM) &hti);
+			if (pFlags != NULL)
 				*pFlags = hti.flags;
 			return nRes;
 		}
 
-		int SubItemHitTestEx( LPLVHITTESTINFO lpHitTestInfo ) const
+		int SubItemHitTestEx(LPLVHITTESTINFO lpHitTestInfo) const
 		{
-			return (int) SendMessage( m_hWnd, LVM_SUBITEMHITTEST, (WPARAM) -1, (LPARAM) lpHitTestInfo );
+			return (int) SendMessage(m_hWnd, LVM_SUBITEMHITTEST, (WPARAM) -1, (LPARAM) lpHitTestInfo);
 		}
 
-		BOOL SelectItem( int nIndex )
+		BOOL SelectItem(int nIndex)
 		{
-			if ( ( GetStyle( ) & LVS_SINGLESEL ) == 0 )
-				SetItemState( -1, 0, LVIS_SELECTED );
+			if ((GetStyle() & LVS_SINGLESEL) == 0)
+				SetItemState(-1, 0, LVIS_SELECTED);
 
-			BOOL bRet = SetItemState( nIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED );
-			if ( bRet )
-				bRet = EnsureVisible( nIndex, FALSE );
+			BOOL bRet = SetItemState(nIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+			if (bRet)
+				bRet = EnsureVisible(nIndex, FALSE);
 
 			return bRet;
 		}
@@ -2658,45 +2658,45 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		UINT GetCount( ) const
+		UINT GetCount() const
 		{
-			return (UINT) SendMessage( m_hWnd, TVM_GETCOUNT, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, TVM_GETCOUNT, 0, 0L);
 		}
 
-		UINT GetIndent( ) const
+		UINT GetIndent() const
 		{
-			return (UINT) SendMessage( m_hWnd, TVM_GETINDENT, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, TVM_GETINDENT, 0, 0L);
 		}
 
-		void SetIndent( UINT nIndent )
+		void SetIndent(UINT nIndent)
 		{
-			SendMessage( m_hWnd, TVM_SETINDENT, nIndent, 0L );
+			SendMessage(m_hWnd, TVM_SETINDENT, nIndent, 0L);
 		}
 
-		ImageList GetImageList( int nImageListType = TVSIL_NORMAL ) const
+		ImageList GetImageList(int nImageListType = TVSIL_NORMAL) const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TVM_GETIMAGELIST, (WPARAM) nImageListType, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TVM_GETIMAGELIST, (WPARAM) nImageListType, 0L));
 		}
 
-		ImageList SetImageList( HIMAGELIST hImageList, int nImageListType = TVSIL_NORMAL )
+		ImageList SetImageList(HIMAGELIST hImageList, int nImageListType = TVSIL_NORMAL)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TVM_SETIMAGELIST, (WPARAM) nImageListType, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TVM_SETIMAGELIST, (WPARAM) nImageListType, (LPARAM) hImageList));
 		}
 
-		BOOL GetItem( LPTVITEM pItem ) const
+		BOOL GetItem(LPTVITEM pItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_GETITEM, 0, (LPARAM) pItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_GETITEM, 0, (LPARAM) pItem);
 		}
 
-		BOOL SetItem( LPTVITEM pItem )
+		BOOL SetItem(LPTVITEM pItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SETITEM, 0, (LPARAM) pItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SETITEM, 0, (LPARAM) pItem);
 		}
 
-		BOOL SetItem( HTREEITEM hItem, UINT nMask, LPCTSTR lpszItem, int nImage,
-					  int nSelectedImage, UINT nState, UINT nStateMask, LPARAM lParam )
+		BOOL SetItem(HTREEITEM hItem, UINT nMask, LPCTSTR lpszItem, int nImage,
+					 int nSelectedImage, UINT nState, UINT nStateMask, LPARAM lParam)
 		{
-			TVITEM item = { 0 };
+			TVITEM item = {0};
 			item.hItem = hItem;
 			item.mask = nMask;
 			item.pszText = (LPTSTR) lpszItem;
@@ -2705,32 +2705,32 @@ namespace WPP
 			item.state = nState;
 			item.stateMask = nStateMask;
 			item.lParam = lParam;
-			return (BOOL) SendMessage( m_hWnd, TVM_SETITEM, 0, (LPARAM) &item );
+			return (BOOL) SendMessage(m_hWnd, TVM_SETITEM, 0, (LPARAM) &item);
 		}
 
-		BOOL GetItemText( HTREEITEM hItem, LPTSTR lpstrText, int nLen ) const
+		BOOL GetItemText(HTREEITEM hItem, LPTSTR lpstrText, int nLen) const
 		{
-			TVITEM item = { 0 };
+			TVITEM item = {0};
 			item.hItem = hItem;
 			item.mask = TVIF_TEXT;
 			item.pszText = lpstrText;
 			item.cchTextMax = nLen;
 
-			return (BOOL) SendMessage( m_hWnd, TVM_GETITEM, 0, (LPARAM) &item );
+			return (BOOL) SendMessage(m_hWnd, TVM_GETITEM, 0, (LPARAM) &item);
 		}
 
-		BOOL SetItemText( HTREEITEM hItem, LPCTSTR lpszItem )
+		BOOL SetItemText(HTREEITEM hItem, LPCTSTR lpszItem)
 		{
-			return SetItem( hItem, TVIF_TEXT, lpszItem, 0, 0, 0, 0, NULL );
+			return SetItem(hItem, TVIF_TEXT, lpszItem, 0, 0, 0, 0, NULL);
 		}
 
-		BOOL GetItemImage( HTREEITEM hItem, int& nImage, int& nSelectedImage ) const
+		BOOL GetItemImage(HTREEITEM hItem, int& nImage, int& nSelectedImage) const
 		{
-			TVITEM item = { 0 };
+			TVITEM item = {0};
 			item.hItem = hItem;
 			item.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-			BOOL bRes = (BOOL) SendMessage( m_hWnd, TVM_GETITEM, 0, (LPARAM) &item );
-			if ( bRes )
+			BOOL bRes = (BOOL) SendMessage(m_hWnd, TVM_GETITEM, 0, (LPARAM) &item);
+			if (bRes)
 			{
 				nImage = item.iImage;
 				nSelectedImage = item.iSelectedImage;
@@ -2738,214 +2738,214 @@ namespace WPP
 			return bRes;
 		}
 
-		BOOL SetItemImage( HTREEITEM hItem, int nImage, int nSelectedImage )
+		BOOL SetItemImage(HTREEITEM hItem, int nImage, int nSelectedImage)
 		{
-			return SetItem( hItem, TVIF_IMAGE | TVIF_SELECTEDIMAGE, NULL, nImage, nSelectedImage, 0, 0, NULL );
+			return SetItem(hItem, TVIF_IMAGE | TVIF_SELECTEDIMAGE, NULL, nImage, nSelectedImage, 0, 0, NULL);
 		}
 
-		UINT GetItemState( HTREEITEM hItem, UINT nStateMask ) const
+		UINT GetItemState(HTREEITEM hItem, UINT nStateMask) const
 		{
-			return ( ( (UINT) SendMessage( m_hWnd, TVM_GETITEMSTATE, (WPARAM) hItem, (LPARAM) nStateMask ) ) & nStateMask );
+			return (((UINT) SendMessage(m_hWnd, TVM_GETITEMSTATE, (WPARAM) hItem, (LPARAM) nStateMask)) & nStateMask);
 		}
 
-		BOOL SetItemState( HTREEITEM hItem, UINT nState, UINT nStateMask )
+		BOOL SetItemState(HTREEITEM hItem, UINT nState, UINT nStateMask)
 		{
-			return SetItem( hItem, TVIF_STATE, NULL, 0, 0, nState, nStateMask, NULL );
+			return SetItem(hItem, TVIF_STATE, NULL, 0, 0, nState, nStateMask, NULL);
 		}
 
-		DWORD_PTR GetItemData( HTREEITEM hItem ) const
+		DWORD_PTR GetItemData(HTREEITEM hItem) const
 		{
-			TVITEM item = { 0 };
+			TVITEM item = {0};
 			item.hItem = hItem;
 			item.mask = TVIF_PARAM;
-			BOOL bRet = (BOOL) SendMessage( m_hWnd, TVM_GETITEM, 0, (LPARAM) &item );
-			return (DWORD_PTR) ( bRet ? item.lParam : NULL );
+			BOOL bRet = (BOOL) SendMessage(m_hWnd, TVM_GETITEM, 0, (LPARAM) &item);
+			return (DWORD_PTR) (bRet ? item.lParam : NULL);
 		}
 
-		BOOL SetItemData( HTREEITEM hItem, DWORD_PTR dwData )
+		BOOL SetItemData(HTREEITEM hItem, DWORD_PTR dwData)
 		{
-			return SetItem( hItem, TVIF_PARAM, NULL, 0, 0, 0, 0, (LPARAM) dwData );
+			return SetItem(hItem, TVIF_PARAM, NULL, 0, 0, 0, 0, (LPARAM) dwData);
 		}
 
-		EditText GetEditControl( ) const
+		EditText GetEditControl() const
 		{
-			return EditText( (HWND) SendMessage( m_hWnd, TVM_GETEDITCONTROL, 0, 0L ) );
+			return EditText((HWND) SendMessage(m_hWnd, TVM_GETEDITCONTROL, 0, 0L));
 		}
 
-		UINT GetVisibleCount( ) const
+		UINT GetVisibleCount() const
 		{
-			return (UINT) SendMessage( m_hWnd, TVM_GETVISIBLECOUNT, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, TVM_GETVISIBLECOUNT, 0, 0L);
 		}
 
-		BOOL GetItemRect( HTREEITEM hItem, LPRECT lpRect, BOOL bTextOnly ) const
+		BOOL GetItemRect(HTREEITEM hItem, LPRECT lpRect, BOOL bTextOnly) const
 		{
 			*(HTREEITEM*) lpRect = hItem;
-			return (BOOL) SendMessage( m_hWnd, TVM_GETITEMRECT, (WPARAM) bTextOnly, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, TVM_GETITEMRECT, (WPARAM) bTextOnly, (LPARAM) lpRect);
 		}
 
-		BOOL ItemHasChildren( HTREEITEM hItem ) const
+		BOOL ItemHasChildren(HTREEITEM hItem) const
 		{
-			TVITEM item = { 0 };
+			TVITEM item = {0};
 			item.hItem = hItem;
 			item.mask = TVIF_CHILDREN;
-			SendMessage( m_hWnd, TVM_GETITEM, 0, (LPARAM) &item );
+			SendMessage(m_hWnd, TVM_GETITEM, 0, (LPARAM) &item);
 			return item.cChildren;
 		}
 
-		ToolTip GetToolTips( ) const
+		ToolTip GetToolTips() const
 		{
-			return ToolTip( (HWND) SendMessage( m_hWnd, TVM_GETTOOLTIPS, 0, 0L ) );
+			return ToolTip((HWND) SendMessage(m_hWnd, TVM_GETTOOLTIPS, 0, 0L));
 		}
 
-		ToolTip SetToolTips( HWND hWndTT )
+		ToolTip SetToolTips(HWND hWndTT)
 		{
-			return ToolTip( (HWND) SendMessage( m_hWnd, TVM_SETTOOLTIPS, (WPARAM) hWndTT, 0L ) );
+			return ToolTip((HWND) SendMessage(m_hWnd, TVM_SETTOOLTIPS, (WPARAM) hWndTT, 0L));
 		}
 
-		int GetISearchString( LPTSTR lpstr ) const
+		int GetISearchString(LPTSTR lpstr) const
 		{
-			return (int) SendMessage( m_hWnd, TVM_GETISEARCHSTRING, 0, (LPARAM) lpstr );
+			return (int) SendMessage(m_hWnd, TVM_GETISEARCHSTRING, 0, (LPARAM) lpstr);
 		}
 
-		BOOL GetCheckState( HTREEITEM hItem ) const
+		BOOL GetCheckState(HTREEITEM hItem) const
 		{
-			UINT uRet = GetItemState( hItem, TVIS_STATEIMAGEMASK );
-			return ( uRet >> 12 ) - 1;
+			UINT uRet = GetItemState(hItem, TVIS_STATEIMAGEMASK);
+			return (uRet >> 12) - 1;
 		}
 
-		BOOL SetCheckState( HTREEITEM hItem, BOOL bCheck )
+		BOOL SetCheckState(HTREEITEM hItem, BOOL bCheck)
 		{
 			int nCheck = bCheck ? 2 : 1;   // one based index
-			return SetItemState( hItem, INDEXTOSTATEIMAGEMASK( nCheck ), TVIS_STATEIMAGEMASK );
+			return SetItemState(hItem, INDEXTOSTATEIMAGEMASK(nCheck), TVIS_STATEIMAGEMASK);
 		}
 
-		COLORREF GetBkColor( ) const
+		COLORREF GetBkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_GETBKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, TVM_GETBKCOLOR, 0, 0L);
 		}
 
-		COLORREF SetBkColor( COLORREF clr )
+		COLORREF SetBkColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_SETBKCOLOR, 0, (LPARAM) clr );
+			return (COLORREF) SendMessage(m_hWnd, TVM_SETBKCOLOR, 0, (LPARAM) clr);
 		}
 
-		COLORREF GetInsertMarkColor( ) const
+		COLORREF GetInsertMarkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_GETINSERTMARKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, TVM_GETINSERTMARKCOLOR, 0, 0L);
 		}
 
-		COLORREF SetInsertMarkColor( COLORREF clr )
+		COLORREF SetInsertMarkColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_SETINSERTMARKCOLOR, 0, (LPARAM) clr );
+			return (COLORREF) SendMessage(m_hWnd, TVM_SETINSERTMARKCOLOR, 0, (LPARAM) clr);
 		}
 
-		int GetItemHeight( ) const
+		int GetItemHeight() const
 		{
-			return (int) SendMessage( m_hWnd, TVM_GETITEMHEIGHT, 0, 0L );
+			return (int) SendMessage(m_hWnd, TVM_GETITEMHEIGHT, 0, 0L);
 		}
 
-		int SetItemHeight( int cyHeight )
+		int SetItemHeight(int cyHeight)
 		{
-			return (int) SendMessage( m_hWnd, TVM_SETITEMHEIGHT, cyHeight, 0L );
+			return (int) SendMessage(m_hWnd, TVM_SETITEMHEIGHT, cyHeight, 0L);
 		}
 
-		int GetScrollTime( ) const
+		int GetScrollTime() const
 		{
-			return (int) SendMessage( m_hWnd, TVM_GETSCROLLTIME, 0, 0L );
+			return (int) SendMessage(m_hWnd, TVM_GETSCROLLTIME, 0, 0L);
 		}
 
-		int SetScrollTime( int nScrollTime )
+		int SetScrollTime(int nScrollTime)
 		{
-			return (int) SendMessage( m_hWnd, TVM_SETSCROLLTIME, nScrollTime, 0L );
+			return (int) SendMessage(m_hWnd, TVM_SETSCROLLTIME, nScrollTime, 0L);
 		}
 
-		COLORREF GetTextColor( ) const
+		COLORREF GetTextColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_GETTEXTCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, TVM_GETTEXTCOLOR, 0, 0L);
 		}
 
-		COLORREF SetTextColor( COLORREF clr )
+		COLORREF SetTextColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_SETTEXTCOLOR, 0, (LPARAM) clr );
+			return (COLORREF) SendMessage(m_hWnd, TVM_SETTEXTCOLOR, 0, (LPARAM) clr);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, TVM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, TVM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		COLORREF GetLineColor( ) const
+		COLORREF GetLineColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_GETLINECOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, TVM_GETLINECOLOR, 0, 0L);
 		}
 
-		COLORREF SetLineColor( COLORREF clrNew /*= CLR_DEFAULT*/ )
+		COLORREF SetLineColor(COLORREF clrNew /*= CLR_DEFAULT*/)
 		{
-			return (COLORREF) SendMessage( m_hWnd, TVM_SETLINECOLOR, 0, (LPARAM) clrNew );
+			return (COLORREF) SendMessage(m_hWnd, TVM_SETLINECOLOR, 0, (LPARAM) clrNew);
 		}
 
-		BOOL GetItem( LPTVITEMEX pItem ) const
+		BOOL GetItem(LPTVITEMEX pItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_GETITEM, 0, (LPARAM) pItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_GETITEM, 0, (LPARAM) pItem);
 		}
 
-		BOOL SetItem( LPTVITEMEX pItem )
+		BOOL SetItem(LPTVITEMEX pItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SETITEM, 0, (LPARAM) pItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SETITEM, 0, (LPARAM) pItem);
 		}
 
-		DWORD GetExtendedStyle( ) const
+		DWORD GetExtendedStyle() const
 		{
-			return (DWORD) SendMessage( m_hWnd, TVM_GETEXTENDEDSTYLE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, TVM_GETEXTENDEDSTYLE, 0, 0L);
 		}
 
-		DWORD SetExtendedStyle( DWORD dwStyle, DWORD dwMask )
+		DWORD SetExtendedStyle(DWORD dwStyle, DWORD dwMask)
 		{
-			return (DWORD) SendMessage( m_hWnd, TVM_SETEXTENDEDSTYLE, dwMask, dwStyle );
+			return (DWORD) SendMessage(m_hWnd, TVM_SETEXTENDEDSTYLE, dwMask, dwStyle);
 		}
 
-		BOOL SetAutoScrollInfo( UINT uPixPerSec, UINT uUpdateTime )
+		BOOL SetAutoScrollInfo(UINT uPixPerSec, UINT uUpdateTime)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SETAUTOSCROLLINFO, (WPARAM) uPixPerSec, (LPARAM) uUpdateTime );
+			return (BOOL) SendMessage(m_hWnd, TVM_SETAUTOSCROLLINFO, (WPARAM) uPixPerSec, (LPARAM) uUpdateTime);
 		}
 
-		DWORD GetSelectedCount( ) const
+		DWORD GetSelectedCount() const
 		{
-			return (DWORD) SendMessage( m_hWnd, TVM_GETSELECTEDCOUNT, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, TVM_GETSELECTEDCOUNT, 0, 0L);
 		}
 
-		BOOL GetItemPartRect( HTREEITEM hItem, TVITEMPART partID, LPRECT lpRect ) const
+		BOOL GetItemPartRect(HTREEITEM hItem, TVITEMPART partID, LPRECT lpRect) const
 		{
-			TVGETITEMPARTRECTINFO gipri = { hItem, lpRect, partID };
-			return (BOOL) SendMessage( m_hWnd, TVM_GETITEMPARTRECT, 0, (LPARAM) &gipri );
+			TVGETITEMPARTRECTINFO gipri = {hItem, lpRect, partID};
+			return (BOOL) SendMessage(m_hWnd, TVM_GETITEMPARTRECT, 0, (LPARAM) &gipri);
 		}
 
-		HTREEITEM InsertItem( LPTVINSERTSTRUCT lpInsertStruct )
+		HTREEITEM InsertItem(LPTVINSERTSTRUCT lpInsertStruct)
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_INSERTITEM, 0, (LPARAM) lpInsertStruct );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_INSERTITEM, 0, (LPARAM) lpInsertStruct);
 		}
 
-		HTREEITEM InsertItem( LPCTSTR lpszItem, int nImage,
-							  int nSelectedImage, HTREEITEM hParent, HTREEITEM hInsertAfter )
+		HTREEITEM InsertItem(LPCTSTR lpszItem, int nImage,
+							 int nSelectedImage, HTREEITEM hParent, HTREEITEM hInsertAfter)
 		{
-			return InsertItem( TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE, lpszItem, nImage, nSelectedImage, 0, 0, 0, hParent, hInsertAfter );
+			return InsertItem(TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE, lpszItem, nImage, nSelectedImage, 0, 0, 0, hParent, hInsertAfter);
 		}
 
-		HTREEITEM InsertItem( LPCTSTR lpszItem, HTREEITEM hParent, HTREEITEM hInsertAfter )
+		HTREEITEM InsertItem(LPCTSTR lpszItem, HTREEITEM hParent, HTREEITEM hInsertAfter)
 		{
-			return InsertItem( TVIF_TEXT, lpszItem, 0, 0, 0, 0, 0, hParent, hInsertAfter );
+			return InsertItem(TVIF_TEXT, lpszItem, 0, 0, 0, 0, 0, hParent, hInsertAfter);
 		}
 
-		HTREEITEM InsertItem( UINT nMask, LPCTSTR lpszItem, int nImage,
-							  int nSelectedImage, UINT nState, UINT nStateMask, LPARAM lParam,
-							  HTREEITEM hParent, HTREEITEM hInsertAfter )
+		HTREEITEM InsertItem(UINT nMask, LPCTSTR lpszItem, int nImage,
+							 int nSelectedImage, UINT nState, UINT nStateMask, LPARAM lParam,
+							 HTREEITEM hParent, HTREEITEM hInsertAfter)
 		{
-			TVINSERTSTRUCT tvis = { 0 };
+			TVINSERTSTRUCT tvis = {0};
 			tvis.hParent = hParent;
 			tvis.hInsertAfter = hInsertAfter;
 			tvis.item.mask = nMask;
@@ -2955,187 +2955,187 @@ namespace WPP
 			tvis.item.state = nState;
 			tvis.item.stateMask = nStateMask;
 			tvis.item.lParam = lParam;
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_INSERTITEM, 0, (LPARAM) &tvis );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_INSERTITEM, 0, (LPARAM) &tvis);
 		}
 
-		BOOL DeleteItem( HTREEITEM hItem )
+		BOOL DeleteItem(HTREEITEM hItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_DELETEITEM, 0, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_DELETEITEM, 0, (LPARAM) hItem);
 		}
 
-		BOOL DeleteAllItems( )
+		BOOL DeleteAllItems()
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_DELETEITEM, 0, (LPARAM) TVI_ROOT );
+			return (BOOL) SendMessage(m_hWnd, TVM_DELETEITEM, 0, (LPARAM) TVI_ROOT);
 		}
 
-		BOOL Expand( HTREEITEM hItem, UINT nCode = TVE_EXPAND )
+		BOOL Expand(HTREEITEM hItem, UINT nCode = TVE_EXPAND)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_EXPAND, nCode, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_EXPAND, nCode, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetNextItem( HTREEITEM hItem, UINT nCode ) const
+		HTREEITEM GetNextItem(HTREEITEM hItem, UINT nCode) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, nCode, (LPARAM) hItem );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, nCode, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetChildItem( HTREEITEM hItem ) const
+		HTREEITEM GetChildItem(HTREEITEM hItem) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM) hItem );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetNextSiblingItem( HTREEITEM hItem ) const
+		HTREEITEM GetNextSiblingItem(HTREEITEM hItem) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM) hItem );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetPrevSiblingItem( HTREEITEM hItem ) const
+		HTREEITEM GetPrevSiblingItem(HTREEITEM hItem) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_PREVIOUS, (LPARAM) hItem );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_PREVIOUS, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetParentItem( HTREEITEM hItem ) const
+		HTREEITEM GetParentItem(HTREEITEM hItem) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM) hItem );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetFirstVisibleItem( ) const
+		HTREEITEM GetFirstVisibleItem() const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_FIRSTVISIBLE, 0L );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_FIRSTVISIBLE, 0L);
 		}
 
-		HTREEITEM GetNextVisibleItem( HTREEITEM hItem ) const
+		HTREEITEM GetNextVisibleItem(HTREEITEM hItem) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_NEXTVISIBLE, (LPARAM) hItem );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_NEXTVISIBLE, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetPrevVisibleItem( HTREEITEM hItem ) const
+		HTREEITEM GetPrevVisibleItem(HTREEITEM hItem) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_PREVIOUSVISIBLE, (LPARAM) hItem );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_PREVIOUSVISIBLE, (LPARAM) hItem);
 		}
 
-		HTREEITEM GetSelectedItem( ) const
+		HTREEITEM GetSelectedItem() const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_CARET, 0L );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_CARET, 0L);
 		}
 
-		HTREEITEM GetSelectedItemParent( ) const
+		HTREEITEM GetSelectedItemParent() const
 		{
-			return GetParentItem( GetSelectedItem( ) );
+			return GetParentItem(GetSelectedItem());
 		}
 
-		HTREEITEM GetDropHilightItem( ) const
+		HTREEITEM GetDropHilightItem() const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_DROPHILITE, 0L );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_DROPHILITE, 0L);
 		}
 
-		HTREEITEM GetRootItem( ) const
+		HTREEITEM GetRootItem() const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0L );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0L);
 		}
 
-		HTREEITEM GetLastVisibleItem( ) const
+		HTREEITEM GetLastVisibleItem() const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_LASTVISIBLE, 0L );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_LASTVISIBLE, 0L);
 		}
 
-		HTREEITEM GetNextSelectedItem( ) const
+		HTREEITEM GetNextSelectedItem() const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_GETNEXTITEM, TVGN_NEXTSELECTED, 0L );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_NEXTSELECTED, 0L);
 		}
 
-		BOOL Select( HTREEITEM hItem, UINT nCode )
+		BOOL Select(HTREEITEM hItem, UINT nCode)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SELECTITEM, nCode, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SELECTITEM, nCode, (LPARAM) hItem);
 		}
 
-		BOOL SelectItem( HTREEITEM hItem )
+		BOOL SelectItem(HTREEITEM hItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM) hItem);
 		}
 
-		BOOL SelectDropTarget( HTREEITEM hItem )
+		BOOL SelectDropTarget(HTREEITEM hItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SELECTITEM, TVGN_DROPHILITE, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SELECTITEM, TVGN_DROPHILITE, (LPARAM) hItem);
 		}
 
-		BOOL SelectSetFirstVisible( HTREEITEM hItem )
+		BOOL SelectSetFirstVisible(HTREEITEM hItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SELECTITEM, TVGN_FIRSTVISIBLE, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SELECTITEM, TVGN_FIRSTVISIBLE, (LPARAM) hItem);
 		}
 
-		EditText EditLabel( HTREEITEM hItem )
+		EditText EditLabel(HTREEITEM hItem)
 		{
-			return EditText( (HWND) SendMessage( m_hWnd, TVM_EDITLABEL, 0, (LPARAM) hItem ) );
+			return EditText((HWND) SendMessage(m_hWnd, TVM_EDITLABEL, 0, (LPARAM) hItem));
 		}
 
-		BOOL EndEditLabelNow( BOOL bCancel )
+		BOOL EndEditLabelNow(BOOL bCancel)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_ENDEDITLABELNOW, bCancel, 0L );
+			return (BOOL) SendMessage(m_hWnd, TVM_ENDEDITLABELNOW, bCancel, 0L);
 		}
 
-		HTREEITEM HitTest( TVHITTESTINFO* pHitTestInfo ) const
+		HTREEITEM HitTest(TVHITTESTINFO* pHitTestInfo) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_HITTEST, 0, (LPARAM) pHitTestInfo );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_HITTEST, 0, (LPARAM) pHitTestInfo);
 		}
 
-		HTREEITEM HitTest( POINT pt, UINT* pFlags ) const
+		HTREEITEM HitTest(POINT pt, UINT* pFlags) const
 		{
-			TVHITTESTINFO hti = { 0 };
+			TVHITTESTINFO hti = {0};
 			hti.pt = pt;
-			HTREEITEM hTreeItem = (HTREEITEM) SendMessage( m_hWnd, TVM_HITTEST, 0, (LPARAM) &hti );
-			if ( pFlags != NULL )
+			HTREEITEM hTreeItem = (HTREEITEM) SendMessage(m_hWnd, TVM_HITTEST, 0, (LPARAM) &hti);
+			if (pFlags != NULL)
 				*pFlags = hti.flags;
 			return hTreeItem;
 		}
 
-		BOOL SortChildren( HTREEITEM hItem, BOOL bRecurse = FALSE )
+		BOOL SortChildren(HTREEITEM hItem, BOOL bRecurse = FALSE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SORTCHILDREN, (WPARAM) bRecurse, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SORTCHILDREN, (WPARAM) bRecurse, (LPARAM) hItem);
 		}
 
-		BOOL EnsureVisible( HTREEITEM hItem )
+		BOOL EnsureVisible(HTREEITEM hItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_ENSUREVISIBLE, 0, (LPARAM) hItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_ENSUREVISIBLE, 0, (LPARAM) hItem);
 		}
 
-		BOOL SortChildrenCB( LPTVSORTCB pSort, BOOL bRecurse = FALSE )
+		BOOL SortChildrenCB(LPTVSORTCB pSort, BOOL bRecurse = FALSE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SORTCHILDRENCB, (WPARAM) bRecurse, (LPARAM) pSort );
+			return (BOOL) SendMessage(m_hWnd, TVM_SORTCHILDRENCB, (WPARAM) bRecurse, (LPARAM) pSort);
 		}
 
-		ImageList RemoveImageList( int nImageList )
+		ImageList RemoveImageList(int nImageList)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TVM_SETIMAGELIST, (WPARAM) nImageList, NULL ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TVM_SETIMAGELIST, (WPARAM) nImageList, NULL));
 		}
 
-		ImageList CreateDragImage( HTREEITEM hItem )
+		ImageList CreateDragImage(HTREEITEM hItem)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TVM_CREATEDRAGIMAGE, 0, (LPARAM) hItem ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TVM_CREATEDRAGIMAGE, 0, (LPARAM) hItem));
 		}
 
-		BOOL SetInsertMark( HTREEITEM hTreeItem, BOOL bAfter )
+		BOOL SetInsertMark(HTREEITEM hTreeItem, BOOL bAfter)
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SETINSERTMARK, bAfter, (LPARAM) hTreeItem );
+			return (BOOL) SendMessage(m_hWnd, TVM_SETINSERTMARK, bAfter, (LPARAM) hTreeItem);
 		}
 
-		BOOL RemoveInsertMark( )
+		BOOL RemoveInsertMark()
 		{
-			return (BOOL) SendMessage( m_hWnd, TVM_SETINSERTMARK, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, TVM_SETINSERTMARK, 0, 0L);
 		}
 
-		HTREEITEM MapAccIDToHTREEITEM( UINT uID ) const
+		HTREEITEM MapAccIDToHTREEITEM(UINT uID) const
 		{
-			return (HTREEITEM) SendMessage( m_hWnd, TVM_MAPACCIDTOHTREEITEM, uID, 0L );
+			return (HTREEITEM) SendMessage(m_hWnd, TVM_MAPACCIDTOHTREEITEM, uID, 0L);
 		}
 
-		UINT MapHTREEITEMToAccID( HTREEITEM hTreeItem ) const
+		UINT MapHTREEITEMToAccID(HTREEITEM hTreeItem) const
 		{
-			return (UINT) SendMessage( m_hWnd, TVM_MAPHTREEITEMTOACCID, (WPARAM) hTreeItem, 0L );
+			return (UINT) SendMessage(m_hWnd, TVM_MAPHTREEITEMTOACCID, (WPARAM) hTreeItem, 0L);
 		}
 
-		void ShowInfoTip( HTREEITEM hItem )
+		void ShowInfoTip(HTREEITEM hItem)
 		{
-			SendMessage( m_hWnd, TVM_SHOWINFOTIP, 0, (LPARAM) hItem );
+			SendMessage(m_hWnd, TVM_SHOWINFOTIP, 0, (LPARAM) hItem);
 		}
 	};
 
@@ -3144,228 +3144,228 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		BOOL IsButtonEnabled( int nID ) const
+		BOOL IsButtonEnabled(int nID) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_ISBUTTONENABLED, nID, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_ISBUTTONENABLED, nID, 0L);
 		}
 
-		BOOL IsButtonChecked( int nID ) const
+		BOOL IsButtonChecked(int nID) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_ISBUTTONCHECKED, nID, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_ISBUTTONCHECKED, nID, 0L);
 		}
 
-		BOOL IsButtonPressed( int nID ) const
+		BOOL IsButtonPressed(int nID) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_ISBUTTONPRESSED, nID, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_ISBUTTONPRESSED, nID, 0L);
 		}
 
-		BOOL IsButtonHidden( int nID ) const
+		BOOL IsButtonHidden(int nID) const
 		{
-			return(BOOL) SendMessage( m_hWnd, TB_ISBUTTONHIDDEN, nID, 0L );
+			return(BOOL) SendMessage(m_hWnd, TB_ISBUTTONHIDDEN, nID, 0L);
 		}
 
-		BOOL IsButtonIndeterminate( int nID ) const
+		BOOL IsButtonIndeterminate(int nID) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_ISBUTTONINDETERMINATE, nID, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_ISBUTTONINDETERMINATE, nID, 0L);
 		}
 
-		int GetState( int nID ) const
+		int GetState(int nID) const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETSTATE, nID, 0L );
+			return (int) SendMessage(m_hWnd, TB_GETSTATE, nID, 0L);
 		}
 
-		BOOL SetState( int nID, UINT nState )
+		BOOL SetState(int nID, UINT nState)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETSTATE, nID, MAKELPARAM( nState, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_SETSTATE, nID, MAKELPARAM(nState, 0));
 		}
 
-		BOOL GetButton( int nIndex, LPTBBUTTON lpButton ) const
+		BOOL GetButton(int nIndex, LPTBBUTTON lpButton) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_GETBUTTON, nIndex, (LPARAM) lpButton );
+			return (BOOL) SendMessage(m_hWnd, TB_GETBUTTON, nIndex, (LPARAM) lpButton);
 		}
 
-		int GetButtonCount( ) const
+		int GetButtonCount() const
 		{
-			return (int) SendMessage( m_hWnd, TB_BUTTONCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, TB_BUTTONCOUNT, 0, 0L);
 		}
 
-		BOOL GetItemRect( int nIndex, LPRECT lpRect ) const
+		BOOL GetItemRect(int nIndex, LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_GETITEMRECT, nIndex, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, TB_GETITEMRECT, nIndex, (LPARAM) lpRect);
 		}
 
-		void SetButtonStructSize( int nSize = sizeof( TBBUTTON ) )
+		void SetButtonStructSize(int nSize = sizeof(TBBUTTON))
 		{
-			SendMessage( m_hWnd, TB_BUTTONSTRUCTSIZE, nSize, 0L );
+			SendMessage(m_hWnd, TB_BUTTONSTRUCTSIZE, nSize, 0L);
 		}
 
-		BOOL SetButtonSize( SIZE size )
+		BOOL SetButtonSize(SIZE size)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETBUTTONSIZE, 0, MAKELPARAM( size.cx, size.cy ) );
+			return (BOOL) SendMessage(m_hWnd, TB_SETBUTTONSIZE, 0, MAKELPARAM(size.cx, size.cy));
 		}
 
-		BOOL SetButtonSize( int cx, int cy )
+		BOOL SetButtonSize(int cx, int cy)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETBUTTONSIZE, 0, MAKELPARAM( cx, cy ) );
+			return (BOOL) SendMessage(m_hWnd, TB_SETBUTTONSIZE, 0, MAKELPARAM(cx, cy));
 		}
 
-		BOOL SetBitmapSize( SIZE size )
+		BOOL SetBitmapSize(SIZE size)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETBITMAPSIZE, 0, MAKELPARAM( size.cx, size.cy ) );
+			return (BOOL) SendMessage(m_hWnd, TB_SETBITMAPSIZE, 0, MAKELPARAM(size.cx, size.cy));
 		}
 
-		BOOL SetBitmapSize( int cx, int cy )
+		BOOL SetBitmapSize(int cx, int cy)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETBITMAPSIZE, 0, MAKELPARAM( cx, cy ) );
+			return (BOOL) SendMessage(m_hWnd, TB_SETBITMAPSIZE, 0, MAKELPARAM(cx, cy));
 		}
 
-		ToolTip GetToolTips( ) const
+		ToolTip GetToolTips() const
 		{
-			return ToolTip( (HWND) SendMessage( m_hWnd, TB_GETTOOLTIPS, 0, 0L ) );
+			return ToolTip((HWND) SendMessage(m_hWnd, TB_GETTOOLTIPS, 0, 0L));
 		}
 
-		void SetToolTips( HWND hWndToolTip )
+		void SetToolTips(HWND hWndToolTip)
 		{
-			SendMessage( m_hWnd, TB_SETTOOLTIPS, (WPARAM) hWndToolTip, 0L );
+			SendMessage(m_hWnd, TB_SETTOOLTIPS, (WPARAM) hWndToolTip, 0L);
 		}
 
-		void SetNotifyWnd( HWND hWnd )
+		void SetNotifyWnd(HWND hWnd)
 		{
-			SendMessage( m_hWnd, TB_SETPARENT, (WPARAM) hWnd, 0L );
+			SendMessage(m_hWnd, TB_SETPARENT, (WPARAM) hWnd, 0L);
 		}
 
-		int GetRows( ) const
+		int GetRows() const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETROWS, 0, 0L );
+			return (int) SendMessage(m_hWnd, TB_GETROWS, 0, 0L);
 		}
 
-		void SetRows( int nRows, BOOL bLarger, LPRECT lpRect )
+		void SetRows(int nRows, BOOL bLarger, LPRECT lpRect)
 		{
-			SendMessage( m_hWnd, TB_SETROWS, MAKELPARAM( nRows, bLarger ), (LPARAM) lpRect );
+			SendMessage(m_hWnd, TB_SETROWS, MAKELPARAM(nRows, bLarger), (LPARAM) lpRect);
 		}
 
-		BOOL SetCmdID( int nIndex, UINT nID )
+		BOOL SetCmdID(int nIndex, UINT nID)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETCMDID, nIndex, nID );
+			return (BOOL) SendMessage(m_hWnd, TB_SETCMDID, nIndex, nID);
 		}
 
-		DWORD GetBitmapFlags( ) const
+		DWORD GetBitmapFlags() const
 		{
-			return (DWORD) SendMessage( m_hWnd, TB_GETBITMAPFLAGS, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, TB_GETBITMAPFLAGS, 0, 0L);
 		}
 
-		int GetBitmap( int nID ) const
+		int GetBitmap(int nID) const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETBITMAP, nID, 0L );
+			return (int) SendMessage(m_hWnd, TB_GETBITMAP, nID, 0L);
 		}
 
-		int GetButtonText( int nID, LPTSTR lpstrText ) const
+		int GetButtonText(int nID, LPTSTR lpstrText) const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETBUTTONTEXT, nID, (LPARAM) lpstrText );
+			return (int) SendMessage(m_hWnd, TB_GETBUTTONTEXT, nID, (LPARAM) lpstrText);
 		}
 
-		ImageList GetImageList( int nIndex = 0 ) const
+		ImageList GetImageList(int nIndex = 0) const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_GETIMAGELIST, nIndex, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_GETIMAGELIST, nIndex, 0L));
 		}
 
-		ImageList SetImageList( HIMAGELIST hImageList, int nIndex = 0 )
+		ImageList SetImageList(HIMAGELIST hImageList, int nIndex = 0)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_SETIMAGELIST, nIndex, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_SETIMAGELIST, nIndex, (LPARAM) hImageList));
 		}
 
-		ImageList GetDisabledImageList( int nIndex = 0 ) const
+		ImageList GetDisabledImageList(int nIndex = 0) const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_GETDISABLEDIMAGELIST, nIndex, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_GETDISABLEDIMAGELIST, nIndex, 0L));
 		}
 
-		ImageList SetDisabledImageList( HIMAGELIST hImageList, int nIndex = 0 )
+		ImageList SetDisabledImageList(HIMAGELIST hImageList, int nIndex = 0)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_SETDISABLEDIMAGELIST, nIndex, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_SETDISABLEDIMAGELIST, nIndex, (LPARAM) hImageList));
 		}
 
-		ImageList GetHotImageList( int nIndex = 0 ) const
+		ImageList GetHotImageList(int nIndex = 0) const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_GETHOTIMAGELIST, nIndex, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_GETHOTIMAGELIST, nIndex, 0L));
 		}
 
-		ImageList SetHotImageList( HIMAGELIST hImageList, int nIndex = 0 )
+		ImageList SetHotImageList(HIMAGELIST hImageList, int nIndex = 0)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_SETHOTIMAGELIST, nIndex, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_SETHOTIMAGELIST, nIndex, (LPARAM) hImageList));
 		}
 
-		DWORD GetStyle( ) const
+		DWORD GetStyle() const
 		{
-			return (DWORD) SendMessage( m_hWnd, TB_GETSTYLE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, TB_GETSTYLE, 0, 0L);
 		}
 
-		void SetStyle( DWORD dwStyle )
+		void SetStyle(DWORD dwStyle)
 		{
-			SendMessage( m_hWnd, TB_SETSTYLE, 0, dwStyle );
+			SendMessage(m_hWnd, TB_SETSTYLE, 0, dwStyle);
 		}
 
-		DWORD GetButtonSize( ) const
+		DWORD GetButtonSize() const
 		{
-			return (DWORD) SendMessage( m_hWnd, TB_GETBUTTONSIZE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, TB_GETBUTTONSIZE, 0, 0L);
 		}
 
-		void GetButtonSize( SIZE& size ) const
+		void GetButtonSize(SIZE& size) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, TB_GETBUTTONSIZE, 0, 0L );
-			size.cx = LOWORD( dwRet );
-			size.cy = HIWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, TB_GETBUTTONSIZE, 0, 0L);
+			size.cx = LOWORD(dwRet);
+			size.cy = HIWORD(dwRet);
 		}
 
-		BOOL GetRect( int nID, LPRECT lpRect ) const
+		BOOL GetRect(int nID, LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_GETRECT, nID, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, TB_GETRECT, nID, (LPARAM) lpRect);
 		}
 
-		int GetTextRows( ) const
+		int GetTextRows() const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETTEXTROWS, 0, 0L );
+			return (int) SendMessage(m_hWnd, TB_GETTEXTROWS, 0, 0L);
 		}
 
-		BOOL SetButtonWidth( int cxMin, int cxMax )
+		BOOL SetButtonWidth(int cxMin, int cxMax)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETBUTTONWIDTH, 0, MAKELPARAM( cxMin, cxMax ) );
+			return (BOOL) SendMessage(m_hWnd, TB_SETBUTTONWIDTH, 0, MAKELPARAM(cxMin, cxMax));
 		}
 
-		BOOL SetIndent( int nIndent )
+		BOOL SetIndent(int nIndent)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETINDENT, nIndent, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_SETINDENT, nIndent, 0L);
 		}
 
-		BOOL SetMaxTextRows( int nMaxTextRows )
+		BOOL SetMaxTextRows(int nMaxTextRows)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETMAXTEXTROWS, nMaxTextRows, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_SETMAXTEXTROWS, nMaxTextRows, 0L);
 		}
 
-		BOOL GetAnchorHighlight( ) const
+		BOOL GetAnchorHighlight() const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_GETANCHORHIGHLIGHT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_GETANCHORHIGHLIGHT, 0, 0L);
 		}
 
-		BOOL SetAnchorHighlight( BOOL bEnable = TRUE )
+		BOOL SetAnchorHighlight(BOOL bEnable = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETANCHORHIGHLIGHT, bEnable, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_SETANCHORHIGHLIGHT, bEnable, 0L);
 		}
 
-		int GetButtonInfo( int nID, LPTBBUTTONINFO lptbbi ) const
+		int GetButtonInfo(int nID, LPTBBUTTONINFO lptbbi) const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETBUTTONINFO, nID, (LPARAM) lptbbi );
+			return (int) SendMessage(m_hWnd, TB_GETBUTTONINFO, nID, (LPARAM) lptbbi);
 		}
 
-		BOOL SetButtonInfo( int nID, LPTBBUTTONINFO lptbbi )
+		BOOL SetButtonInfo(int nID, LPTBBUTTONINFO lptbbi)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETBUTTONINFO, nID, (LPARAM) lptbbi );
+			return (BOOL) SendMessage(m_hWnd, TB_SETBUTTONINFO, nID, (LPARAM) lptbbi);
 		}
 
-		BOOL SetButtonInfo( int nID, DWORD dwMask, BYTE Style, BYTE State, LPCTSTR lpszItem,
-							int iImage, WORD cx, int iCommand, DWORD_PTR lParam )
+		BOOL SetButtonInfo(int nID, DWORD dwMask, BYTE Style, BYTE State, LPCTSTR lpszItem,
+						   int iImage, WORD cx, int iCommand, DWORD_PTR lParam)
 		{
-			TBBUTTONINFO tbbi = { 0 };
-			tbbi.cbSize = sizeof( TBBUTTONINFO );
+			TBBUTTONINFO tbbi = {0};
+			tbbi.cbSize = sizeof(TBBUTTONINFO);
 			tbbi.dwMask = dwMask;
 			tbbi.idCommand = iCommand;
 			tbbi.iImage = iImage;
@@ -3374,333 +3374,333 @@ namespace WPP
 			tbbi.cx = cx;
 			tbbi.pszText = (LPTSTR) lpszItem;
 			tbbi.lParam = lParam;
-			return (BOOL) SendMessage( m_hWnd, TB_SETBUTTONINFO, nID, (LPARAM) &tbbi );
+			return (BOOL) SendMessage(m_hWnd, TB_SETBUTTONINFO, nID, (LPARAM) &tbbi);
 		}
 
-		int GetHotItem( ) const
+		int GetHotItem() const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETHOTITEM, 0, 0L );
+			return (int) SendMessage(m_hWnd, TB_GETHOTITEM, 0, 0L);
 		}
 
-		int SetHotItem( int nItem )
+		int SetHotItem(int nItem)
 		{
-			return (int) SendMessage( m_hWnd, TB_SETHOTITEM, nItem, 0L );
+			return (int) SendMessage(m_hWnd, TB_SETHOTITEM, nItem, 0L);
 		}
 
-		BOOL IsButtonHighlighted( int nButtonID ) const
+		BOOL IsButtonHighlighted(int nButtonID) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_ISBUTTONHIGHLIGHTED, nButtonID, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_ISBUTTONHIGHLIGHTED, nButtonID, 0L);
 		}
 
-		DWORD SetDrawTextFlags( DWORD dwMask, DWORD dwFlags )
+		DWORD SetDrawTextFlags(DWORD dwMask, DWORD dwFlags)
 		{
-			return (DWORD) SendMessage( m_hWnd, TB_SETDRAWTEXTFLAGS, dwMask, dwFlags );
+			return (DWORD) SendMessage(m_hWnd, TB_SETDRAWTEXTFLAGS, dwMask, dwFlags);
 		}
 
-		BOOL GetColorScheme( LPCOLORSCHEME lpcs ) const
+		BOOL GetColorScheme(LPCOLORSCHEME lpcs) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_GETCOLORSCHEME, 0, (LPARAM) lpcs );
+			return (BOOL) SendMessage(m_hWnd, TB_GETCOLORSCHEME, 0, (LPARAM) lpcs);
 		}
 
-		void SetColorScheme( LPCOLORSCHEME lpcs )
+		void SetColorScheme(LPCOLORSCHEME lpcs)
 		{
-			SendMessage( m_hWnd, TB_SETCOLORSCHEME, 0, (LPARAM) lpcs );
+			SendMessage(m_hWnd, TB_SETCOLORSCHEME, 0, (LPARAM) lpcs);
 		}
 
-		DWORD GetExtendedStyle( ) const
+		DWORD GetExtendedStyle() const
 		{
-			return (DWORD) SendMessage( m_hWnd, TB_GETEXTENDEDSTYLE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, TB_GETEXTENDEDSTYLE, 0, 0L);
 		}
 
-		DWORD SetExtendedStyle( DWORD dwStyle )
+		DWORD SetExtendedStyle(DWORD dwStyle)
 		{
-			return (DWORD) SendMessage( m_hWnd, TB_SETEXTENDEDSTYLE, 0, dwStyle );
+			return (DWORD) SendMessage(m_hWnd, TB_SETEXTENDEDSTYLE, 0, dwStyle);
 		}
 
-		void GetInsertMark( LPTBINSERTMARK lptbim ) const
+		void GetInsertMark(LPTBINSERTMARK lptbim) const
 		{
-			SendMessage( m_hWnd, TB_GETINSERTMARK, 0, (LPARAM) lptbim );
+			SendMessage(m_hWnd, TB_GETINSERTMARK, 0, (LPARAM) lptbim);
 		}
 
-		void SetInsertMark( LPTBINSERTMARK lptbim )
+		void SetInsertMark(LPTBINSERTMARK lptbim)
 		{
-			SendMessage( m_hWnd, TB_SETINSERTMARK, 0, (LPARAM) lptbim );
+			SendMessage(m_hWnd, TB_SETINSERTMARK, 0, (LPARAM) lptbim);
 		}
 
-		COLORREF GetInsertMarkColor( ) const
+		COLORREF GetInsertMarkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, TB_GETINSERTMARKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, TB_GETINSERTMARKCOLOR, 0, 0L);
 		}
 
-		COLORREF SetInsertMarkColor( COLORREF clr )
+		COLORREF SetInsertMarkColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, TB_SETINSERTMARKCOLOR, 0, (LPARAM) clr );
+			return (COLORREF) SendMessage(m_hWnd, TB_SETINSERTMARKCOLOR, 0, (LPARAM) clr);
 		}
 
-		BOOL GetMaxSize( LPSIZE lpSize ) const
+		BOOL GetMaxSize(LPSIZE lpSize) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_GETMAXSIZE, 0, (LPARAM) lpSize );
+			return (BOOL) SendMessage(m_hWnd, TB_GETMAXSIZE, 0, (LPARAM) lpSize);
 		}
 
-		void GetPadding( LPSIZE lpSizePadding ) const
+		void GetPadding(LPSIZE lpSizePadding) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, TB_GETPADDING, 0, 0L );
-			lpSizePadding->cx = GET_X_LPARAM( dwRet );
-			lpSizePadding->cy = GET_Y_LPARAM( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, TB_GETPADDING, 0, 0L);
+			lpSizePadding->cx = GET_X_LPARAM(dwRet);
+			lpSizePadding->cy = GET_Y_LPARAM(dwRet);
 		}
 
-		void SetPadding( int cx, int cy, LPSIZE lpSizePadding = NULL )
+		void SetPadding(int cx, int cy, LPSIZE lpSizePadding = NULL)
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, TB_SETPADDING, 0, MAKELPARAM( cx, cy ) );
-			if ( lpSizePadding != NULL )
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, TB_SETPADDING, 0, MAKELPARAM(cx, cy));
+			if (lpSizePadding != NULL)
 			{
-				lpSizePadding->cx = GET_X_LPARAM( dwRet );
-				lpSizePadding->cy = GET_Y_LPARAM( dwRet );
+				lpSizePadding->cx = GET_X_LPARAM(dwRet);
+				lpSizePadding->cy = GET_Y_LPARAM(dwRet);
 			}
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		int GetString( int nString, LPTSTR lpstrString, int cchMaxLen ) const
+		int GetString(int nString, LPTSTR lpstrString, int cchMaxLen) const
 		{
-			return (int) SendMessage( m_hWnd, TB_GETSTRING, MAKEWPARAM( cchMaxLen, nString ), (LPARAM) lpstrString );
+			return (int) SendMessage(m_hWnd, TB_GETSTRING, MAKEWPARAM(cchMaxLen, nString), (LPARAM) lpstrString);
 		}
 
-		void GetMetrics( LPTBMETRICS lptbm ) const
+		void GetMetrics(LPTBMETRICS lptbm) const
 		{
-			SendMessage( m_hWnd, TB_GETMETRICS, 0, (LPARAM) lptbm );
+			SendMessage(m_hWnd, TB_GETMETRICS, 0, (LPARAM) lptbm);
 		}
 
-		void SetMetrics( LPTBMETRICS lptbm )
+		void SetMetrics(LPTBMETRICS lptbm)
 		{
-			SendMessage( m_hWnd, TB_SETMETRICS, 0, (LPARAM) lptbm );
+			SendMessage(m_hWnd, TB_SETMETRICS, 0, (LPARAM) lptbm);
 		}
 
-		void SetWindowTheme( LPCWSTR lpstrTheme )
+		void SetWindowTheme(LPCWSTR lpstrTheme)
 		{
-			SendMessage( m_hWnd, TB_SETWINDOWTHEME, 0, (LPARAM) lpstrTheme );
+			SendMessage(m_hWnd, TB_SETWINDOWTHEME, 0, (LPARAM) lpstrTheme);
 		}
 
-		ImageList GetPressedImageList( int nIndex = 0 ) const
+		ImageList GetPressedImageList(int nIndex = 0) const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_GETPRESSEDIMAGELIST, nIndex, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_GETPRESSEDIMAGELIST, nIndex, 0L));
 		}
 
-		ImageList SetPressedImageList( HIMAGELIST hImageList, int nIndex = 0 )
+		ImageList SetPressedImageList(HIMAGELIST hImageList, int nIndex = 0)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TB_SETPRESSEDIMAGELIST, nIndex, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TB_SETPRESSEDIMAGELIST, nIndex, (LPARAM) hImageList));
 		}
 
-		void GetItemDropDownRect( int nIndex, LPRECT lpRect ) const
+		void GetItemDropDownRect(int nIndex, LPRECT lpRect) const
 		{
-			BOOL bRet = (BOOL) SendMessage( m_hWnd, TB_GETITEMDROPDOWNRECT, nIndex, (LPARAM) lpRect );
+			BOOL bRet = (BOOL) SendMessage(m_hWnd, TB_GETITEMDROPDOWNRECT, nIndex, (LPARAM) lpRect);
 		}
 
-		BOOL EnableButton( int nID, BOOL bEnable = TRUE )
+		BOOL EnableButton(int nID, BOOL bEnable = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_ENABLEBUTTON, nID, MAKELPARAM( bEnable, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_ENABLEBUTTON, nID, MAKELPARAM(bEnable, 0));
 		}
 
-		BOOL CheckButton( int nID, BOOL bCheck = TRUE )
+		BOOL CheckButton(int nID, BOOL bCheck = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_CHECKBUTTON, nID, MAKELPARAM( bCheck, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_CHECKBUTTON, nID, MAKELPARAM(bCheck, 0));
 		}
 
-		BOOL PressButton( int nID, BOOL bPress = TRUE )
+		BOOL PressButton(int nID, BOOL bPress = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_PRESSBUTTON, nID, MAKELPARAM( bPress, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_PRESSBUTTON, nID, MAKELPARAM(bPress, 0));
 		}
 
-		BOOL HideButton( int nID, BOOL bHide = TRUE )
+		BOOL HideButton(int nID, BOOL bHide = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_HIDEBUTTON, nID, MAKELPARAM( bHide, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_HIDEBUTTON, nID, MAKELPARAM(bHide, 0));
 		}
 
-		BOOL Indeterminate( int nID, BOOL bIndeterminate = TRUE )
+		BOOL Indeterminate(int nID, BOOL bIndeterminate = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_INDETERMINATE, nID, MAKELPARAM( bIndeterminate, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_INDETERMINATE, nID, MAKELPARAM(bIndeterminate, 0));
 		}
 
-		int AddBitmap( int nNumButtons, UINT nBitmapID )
+		int AddBitmap(int nNumButtons, UINT nBitmapID)
 		{
-			TBADDBITMAP tbab = { 0 };
-			tbab.hInst = GetModuleHandle( 0 );
+			TBADDBITMAP tbab = {0};
+			tbab.hInst = GetModuleHandle(0);
 			tbab.nID = nBitmapID;
-			return (int) SendMessage( m_hWnd, TB_ADDBITMAP, (WPARAM) nNumButtons, (LPARAM) &tbab );
+			return (int) SendMessage(m_hWnd, TB_ADDBITMAP, (WPARAM) nNumButtons, (LPARAM) &tbab);
 		}
 
-		int AddBitmap( int nNumButtons, HBITMAP hBitmap )
+		int AddBitmap(int nNumButtons, HBITMAP hBitmap)
 		{
-			TBADDBITMAP tbab = { 0 };
+			TBADDBITMAP tbab = {0};
 			tbab.hInst = NULL;
 			tbab.nID = (UINT_PTR) hBitmap;
-			return (int) SendMessage( m_hWnd, TB_ADDBITMAP, (WPARAM) nNumButtons, (LPARAM) &tbab );
+			return (int) SendMessage(m_hWnd, TB_ADDBITMAP, (WPARAM) nNumButtons, (LPARAM) &tbab);
 		}
 
-		BOOL AddButtons( int nNumButtons, LPTBBUTTON lpButtons )
+		BOOL AddButtons(int nNumButtons, LPTBBUTTON lpButtons)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_ADDBUTTONS, nNumButtons, (LPARAM) lpButtons );
+			return (BOOL) SendMessage(m_hWnd, TB_ADDBUTTONS, nNumButtons, (LPARAM) lpButtons);
 		}
 
-		BOOL InsertButton( int nIndex, LPTBBUTTON lpButton )
+		BOOL InsertButton(int nIndex, LPTBBUTTON lpButton)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_INSERTBUTTON, nIndex, (LPARAM) lpButton );
+			return (BOOL) SendMessage(m_hWnd, TB_INSERTBUTTON, nIndex, (LPARAM) lpButton);
 		}
 
-		BOOL InsertButton( int nIndex, int iCommand, BYTE Style, BYTE State, int iBitmap,
-						   INT_PTR iString, DWORD_PTR lParam )
+		BOOL InsertButton(int nIndex, int iCommand, BYTE Style, BYTE State, int iBitmap,
+						  INT_PTR iString, DWORD_PTR lParam)
 		{
-			TBBUTTON tbb = { 0 };
+			TBBUTTON tbb = {0};
 			tbb.fsStyle = Style;
 			tbb.fsState = State;
 			tbb.idCommand = iCommand;
 			tbb.iBitmap = iBitmap;
 			tbb.iString = iString;
 			tbb.dwData = lParam;
-			return (BOOL) SendMessage( m_hWnd, TB_INSERTBUTTON, nIndex, (LPARAM) &tbb );
+			return (BOOL) SendMessage(m_hWnd, TB_INSERTBUTTON, nIndex, (LPARAM) &tbb);
 		}
 
-		BOOL InsertButton( int nIndex, int iCommand, BYTE Style, BYTE State, int iBitmap,
-						   LPCTSTR lpszItem, DWORD_PTR lParam )
+		BOOL InsertButton(int nIndex, int iCommand, BYTE Style, BYTE State, int iBitmap,
+						  LPCTSTR lpszItem, DWORD_PTR lParam)
 		{
-			return InsertButton( nIndex, iCommand, Style, State, iBitmap, (INT_PTR) lpszItem, lParam );
+			return InsertButton(nIndex, iCommand, Style, State, iBitmap, (INT_PTR) lpszItem, lParam);
 		}
 
-		BOOL AddButton( LPTBBUTTON lpButton )
+		BOOL AddButton(LPTBBUTTON lpButton)
 		{
-			return InsertButton( -1, lpButton );
+			return InsertButton(-1, lpButton);
 		}
 
-		BOOL AddButton( int iCommand, BYTE Style, BYTE State, int iBitmap, INT_PTR iString, DWORD_PTR lParam )
+		BOOL AddButton(int iCommand, BYTE Style, BYTE State, int iBitmap, INT_PTR iString, DWORD_PTR lParam)
 		{
-			return InsertButton( -1, iCommand, Style, State, iBitmap, iString, lParam );
+			return InsertButton(-1, iCommand, Style, State, iBitmap, iString, lParam);
 		}
 
-		BOOL AddButton( int iCommand, BYTE Style, BYTE State, int iBitmap, LPCTSTR lpszItem, DWORD_PTR lParam )
+		BOOL AddButton(int iCommand, BYTE Style, BYTE State, int iBitmap, LPCTSTR lpszItem, DWORD_PTR lParam)
 		{
-			return InsertButton( -1, iCommand, Style, State, iBitmap, lpszItem, lParam );
+			return InsertButton(-1, iCommand, Style, State, iBitmap, lpszItem, lParam);
 		}
 
-		BOOL DeleteButton( int nIndex )
+		BOOL DeleteButton(int nIndex)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_DELETEBUTTON, nIndex, 0L );
+			return (BOOL) SendMessage(m_hWnd, TB_DELETEBUTTON, nIndex, 0L);
 		}
 
-		BOOL InsertSeparator( int nIndex, int cxWidth = 8 )
+		BOOL InsertSeparator(int nIndex, int cxWidth = 8)
 		{
-			return InsertButton( nIndex, 0, BTNS_SEP, 0, cxWidth, (INT_PTR) 0, 0 );
+			return InsertButton(nIndex, 0, BTNS_SEP, 0, cxWidth, (INT_PTR) 0, 0);
 		}
 
-		BOOL AddSeparator( int cxWidth = 8 )
+		BOOL AddSeparator(int cxWidth = 8)
 		{
-			return AddButton( 0, BTNS_SEP, 0, cxWidth, (INT_PTR) 0, 0 );
+			return AddButton(0, BTNS_SEP, 0, cxWidth, (INT_PTR) 0, 0);
 		}
 
-		int CommandToIndex( UINT nID ) const
+		int CommandToIndex(UINT nID) const
 		{
-			return (int) SendMessage( m_hWnd, TB_COMMANDTOINDEX, nID, 0L );
+			return (int) SendMessage(m_hWnd, TB_COMMANDTOINDEX, nID, 0L);
 		}
 
-		void SaveState( HKEY hKeyRoot, LPCTSTR lpszSubKey, LPCTSTR lpszValueName )
+		void SaveState(HKEY hKeyRoot, LPCTSTR lpszSubKey, LPCTSTR lpszValueName)
 		{
-			TBSAVEPARAMS tbs = { 0 };
+			TBSAVEPARAMS tbs = {0};
 			tbs.hkr = hKeyRoot;
 			tbs.pszSubKey = lpszSubKey;
 			tbs.pszValueName = lpszValueName;
-			SendMessage( m_hWnd, TB_SAVERESTORE, (WPARAM) TRUE, (LPARAM) &tbs );
+			SendMessage(m_hWnd, TB_SAVERESTORE, (WPARAM) TRUE, (LPARAM) &tbs);
 		}
 
-		void RestoreState( HKEY hKeyRoot, LPCTSTR lpszSubKey, LPCTSTR lpszValueName )
+		void RestoreState(HKEY hKeyRoot, LPCTSTR lpszSubKey, LPCTSTR lpszValueName)
 		{
-			TBSAVEPARAMS tbs = { 0 };
+			TBSAVEPARAMS tbs = {0};
 			tbs.hkr = hKeyRoot;
 			tbs.pszSubKey = lpszSubKey;
 			tbs.pszValueName = lpszValueName;
-			SendMessage( m_hWnd, TB_SAVERESTORE, (WPARAM) FALSE, (LPARAM) &tbs );
+			SendMessage(m_hWnd, TB_SAVERESTORE, (WPARAM) FALSE, (LPARAM) &tbs);
 		}
 
-		void Customize( )
+		void Customize()
 		{
-			SendMessage( m_hWnd, TB_CUSTOMIZE, 0, 0L );
+			SendMessage(m_hWnd, TB_CUSTOMIZE, 0, 0L);
 		}
 
-		int AddString( UINT nStringID )
+		int AddString(UINT nStringID)
 		{
-			return (int) SendMessage( m_hWnd, TB_ADDSTRING, (WPARAM) GetModuleHandle( NULL ), (LPARAM) nStringID );
+			return (int) SendMessage(m_hWnd, TB_ADDSTRING, (WPARAM) GetModuleHandle(NULL), (LPARAM) nStringID);
 		}
 
-		int AddStrings( LPCTSTR lpszStrings )
+		int AddStrings(LPCTSTR lpszStrings)
 		{
-			return (int) SendMessage( m_hWnd, TB_ADDSTRING, 0, (LPARAM) lpszStrings );
+			return (int) SendMessage(m_hWnd, TB_ADDSTRING, 0, (LPARAM) lpszStrings);
 		}
 
-		void AutoSize( )
+		void AutoSize()
 		{
-			SendMessage( m_hWnd, TB_AUTOSIZE, 0, 0L );
+			SendMessage(m_hWnd, TB_AUTOSIZE, 0, 0L);
 		}
 
-		BOOL ChangeBitmap( int nID, int nBitmap )
+		BOOL ChangeBitmap(int nID, int nBitmap)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_CHANGEBITMAP, nID, MAKELPARAM( nBitmap, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_CHANGEBITMAP, nID, MAKELPARAM(nBitmap, 0));
 		}
 
-		int LoadImages( int nBitmapID )
+		int LoadImages(int nBitmapID)
 		{
-			return (int) SendMessage( m_hWnd, TB_LOADIMAGES, nBitmapID, (LPARAM) GetModuleHandle( NULL ) );
+			return (int) SendMessage(m_hWnd, TB_LOADIMAGES, nBitmapID, (LPARAM) GetModuleHandle(NULL));
 		}
 
-		int LoadStdImages( int nBitmapID )
+		int LoadStdImages(int nBitmapID)
 		{
-			return (int) SendMessage( m_hWnd, TB_LOADIMAGES, nBitmapID, (LPARAM) HINST_COMMCTRL );
+			return (int) SendMessage(m_hWnd, TB_LOADIMAGES, nBitmapID, (LPARAM) HINST_COMMCTRL);
 		}
 
-		BOOL ReplaceBitmap( LPTBREPLACEBITMAP ptbrb )
+		BOOL ReplaceBitmap(LPTBREPLACEBITMAP ptbrb)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_REPLACEBITMAP, 0, (LPARAM) ptbrb );
+			return (BOOL) SendMessage(m_hWnd, TB_REPLACEBITMAP, 0, (LPARAM) ptbrb);
 		}
 
-		int HitTest( LPPOINT lpPoint ) const
+		int HitTest(LPPOINT lpPoint) const
 		{
-			return (int) SendMessage( m_hWnd, TB_HITTEST, 0, (LPARAM) lpPoint );
+			return (int) SendMessage(m_hWnd, TB_HITTEST, 0, (LPARAM) lpPoint);
 		}
 
-		BOOL InsertMarkHitTest( LPPOINT lpPoint, LPTBINSERTMARK lptbim ) const
+		BOOL InsertMarkHitTest(LPPOINT lpPoint, LPTBINSERTMARK lptbim) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_INSERTMARKHITTEST, (WPARAM) lpPoint, (LPARAM) lptbim );
+			return (BOOL) SendMessage(m_hWnd, TB_INSERTMARKHITTEST, (WPARAM) lpPoint, (LPARAM) lptbim);
 		}
 
-		BOOL InsertMarkHitTest( int x, int y, LPTBINSERTMARK lptbim ) const
+		BOOL InsertMarkHitTest(int x, int y, LPTBINSERTMARK lptbim) const
 		{
-			POINT pt = { x, y };
-			return (BOOL) SendMessage( m_hWnd, TB_INSERTMARKHITTEST, (WPARAM) &pt, (LPARAM) lptbim );
+			POINT pt = {x, y};
+			return (BOOL) SendMessage(m_hWnd, TB_INSERTMARKHITTEST, (WPARAM) &pt, (LPARAM) lptbim);
 		}
 
-		BOOL MapAccelerator( TCHAR chAccel, int& nID ) const
+		BOOL MapAccelerator(TCHAR chAccel, int& nID) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_MAPACCELERATOR, (WPARAM) chAccel, (LPARAM) &nID );
+			return (BOOL) SendMessage(m_hWnd, TB_MAPACCELERATOR, (WPARAM) chAccel, (LPARAM) &nID);
 		}
 
-		BOOL MarkButton( int nID, BOOL bHighlight = TRUE )
+		BOOL MarkButton(int nID, BOOL bHighlight = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_MARKBUTTON, nID, MAKELPARAM( bHighlight, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TB_MARKBUTTON, nID, MAKELPARAM(bHighlight, 0));
 		}
 
-		BOOL MoveButton( int nOldPos, int nNewPos )
+		BOOL MoveButton(int nOldPos, int nNewPos)
 		{
-			return (BOOL) SendMessage( m_hWnd, TB_MOVEBUTTON, nOldPos, nNewPos );
+			return (BOOL) SendMessage(m_hWnd, TB_MOVEBUTTON, nOldPos, nNewPos);
 		}
 
-		HRESULT GetObject( REFIID iid, LPVOID* ppvObject )
+		HRESULT GetObject(REFIID iid, LPVOID* ppvObject)
 		{
-			return (HRESULT) SendMessage( m_hWnd, TB_GETOBJECT, (WPARAM) &iid, (LPARAM) ppvObject );
+			return (HRESULT) SendMessage(m_hWnd, TB_GETOBJECT, (WPARAM) &iid, (LPARAM) ppvObject);
 		}
 	};
 
@@ -3709,108 +3709,108 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetParts( int nParts, int* pParts ) const
+		int GetParts(int nParts, int* pParts) const
 		{
-			return (int) SendMessage( m_hWnd, SB_GETPARTS, nParts, (LPARAM) pParts );
+			return (int) SendMessage(m_hWnd, SB_GETPARTS, nParts, (LPARAM) pParts);
 		}
 
-		BOOL SetParts( int nParts, int* pWidths )
+		BOOL SetParts(int nParts, int* pWidths)
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_SETPARTS, nParts, (LPARAM) pWidths );
+			return (BOOL) SendMessage(m_hWnd, SB_SETPARTS, nParts, (LPARAM) pWidths);
 		}
 
-		int GetTextLength( int nPane, int* pType = NULL ) const
+		int GetTextLength(int nPane, int* pType = NULL) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, SB_GETTEXTLENGTH, (WPARAM) nPane, 0L );
-			if ( pType != NULL )
-				*pType = (int) (short) HIWORD( dwRet );
-			return (int) (short) LOWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, SB_GETTEXTLENGTH, (WPARAM) nPane, 0L);
+			if (pType != NULL)
+				*pType = (int) (short) HIWORD(dwRet);
+			return (int) (short) LOWORD(dwRet);
 		}
 
-		int GetText( int nPane, LPTSTR lpszText, int* pType = NULL ) const
+		int GetText(int nPane, LPTSTR lpszText, int* pType = NULL) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, SB_GETTEXT, (WPARAM) nPane, (LPARAM) lpszText );
-			if ( pType != NULL )
-				*pType = (int) (short) HIWORD( dwRet );
-			return (int) (short) LOWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, SB_GETTEXT, (WPARAM) nPane, (LPARAM) lpszText);
+			if (pType != NULL)
+				*pType = (int) (short) HIWORD(dwRet);
+			return (int) (short) LOWORD(dwRet);
 		}
 
-		BOOL SetText( int nPane, LPCTSTR lpszText, int nType = 0 )
+		BOOL SetText(int nPane, LPCTSTR lpszText, int nType = 0)
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_SETTEXT, ( nPane | nType ), (LPARAM) lpszText );
+			return (BOOL) SendMessage(m_hWnd, SB_SETTEXT, (nPane | nType), (LPARAM) lpszText);
 		}
 
-		BOOL GetRect( int nPane, LPRECT lpRect ) const
+		BOOL GetRect(int nPane, LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_GETRECT, nPane, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, SB_GETRECT, nPane, (LPARAM) lpRect);
 		}
 
-		BOOL GetBorders( int* pBorders ) const
+		BOOL GetBorders(int* pBorders) const
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_GETBORDERS, 0, (LPARAM) pBorders );
+			return (BOOL) SendMessage(m_hWnd, SB_GETBORDERS, 0, (LPARAM) pBorders);
 		}
 
-		BOOL GetBorders( int& nHorz, int& nVert, int& nSpacing ) const
+		BOOL GetBorders(int& nHorz, int& nVert, int& nSpacing) const
 		{
-			int borders[ 3 ] = { 0, 0, 0 };
-			BOOL bResult = (BOOL) SendMessage( m_hWnd, SB_GETBORDERS, 0, (LPARAM) &borders );
-			if ( bResult )
+			int borders[3] = {0, 0, 0};
+			BOOL bResult = (BOOL) SendMessage(m_hWnd, SB_GETBORDERS, 0, (LPARAM) &borders);
+			if (bResult)
 			{
-				nHorz = borders[ 0 ];
-				nVert = borders[ 1 ];
-				nSpacing = borders[ 2 ];
+				nHorz = borders[0];
+				nVert = borders[1];
+				nSpacing = borders[2];
 			}
 			return bResult;
 		}
 
-		void SetMinHeight( int nMin )
+		void SetMinHeight(int nMin)
 		{
-			SendMessage( m_hWnd, SB_SETMINHEIGHT, nMin, 0L );
+			SendMessage(m_hWnd, SB_SETMINHEIGHT, nMin, 0L);
 		}
 
-		BOOL SetSimple( BOOL bSimple = TRUE )
+		BOOL SetSimple(BOOL bSimple = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_SIMPLE, bSimple, 0L );
+			return (BOOL) SendMessage(m_hWnd, SB_SIMPLE, bSimple, 0L);
 		}
 
-		BOOL IsSimple( ) const
+		BOOL IsSimple() const
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_ISSIMPLE, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, SB_ISSIMPLE, 0, 0L);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, SB_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, SB_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		void GetTipText( int nPane, LPTSTR lpstrText, int nSize ) const
+		void GetTipText(int nPane, LPTSTR lpstrText, int nSize) const
 		{
-			SendMessage( m_hWnd, SB_GETTIPTEXT, MAKEWPARAM( nPane, nSize ), (LPARAM) lpstrText );
+			SendMessage(m_hWnd, SB_GETTIPTEXT, MAKEWPARAM(nPane, nSize), (LPARAM) lpstrText);
 		}
 
-		void SetTipText( int nPane, LPCTSTR lpstrText )
+		void SetTipText(int nPane, LPCTSTR lpstrText)
 		{
-			SendMessage( m_hWnd, SB_SETTIPTEXT, nPane, (LPARAM) lpstrText );
+			SendMessage(m_hWnd, SB_SETTIPTEXT, nPane, (LPARAM) lpstrText);
 		}
 
-		COLORREF SetBkColor( COLORREF clrBk )
+		COLORREF SetBkColor(COLORREF clrBk)
 		{
-			return (COLORREF) SendMessage( m_hWnd, SB_SETBKCOLOR, 0, (LPARAM) clrBk );
+			return (COLORREF) SendMessage(m_hWnd, SB_SETBKCOLOR, 0, (LPARAM) clrBk);
 		}
 
-		HICON GetIcon( int nPane ) const
+		HICON GetIcon(int nPane) const
 		{
-			return (HICON) SendMessage( m_hWnd, SB_GETICON, nPane, 0L );
+			return (HICON) SendMessage(m_hWnd, SB_GETICON, nPane, 0L);
 		}
 
-		BOOL SetIcon( int nPane, HICON hIcon )
+		BOOL SetIcon(int nPane, HICON hIcon)
 		{
-			return (BOOL) SendMessage( m_hWnd, SB_SETICON, nPane, (LPARAM) hIcon );
+			return (BOOL) SendMessage(m_hWnd, SB_SETICON, nPane, (LPARAM) hIcon);
 		}
 	};
 
@@ -3819,201 +3819,201 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		ImageList GetImageList( ) const
+		ImageList GetImageList() const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TCM_GETIMAGELIST, 0, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TCM_GETIMAGELIST, 0, 0L));
 		}
 
-		ImageList SetImageList( HIMAGELIST hImageList )
+		ImageList SetImageList(HIMAGELIST hImageList)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, TCM_SETIMAGELIST, 0, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, TCM_SETIMAGELIST, 0, (LPARAM) hImageList));
 		}
 
-		int GetItemCount( ) const
+		int GetItemCount() const
 		{
-			return (int) SendMessage( m_hWnd, TCM_GETITEMCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, TCM_GETITEMCOUNT, 0, 0L);
 		}
 
-		BOOL GetItem( int nItem, LPTCITEM pTabCtrlItem ) const
+		BOOL GetItem(int nItem, LPTCITEM pTabCtrlItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_GETITEM, nItem, (LPARAM) pTabCtrlItem );
+			return (BOOL) SendMessage(m_hWnd, TCM_GETITEM, nItem, (LPARAM) pTabCtrlItem);
 		}
 
-		BOOL SetItem( int nItem, LPTCITEM pTabCtrlItem )
+		BOOL SetItem(int nItem, LPTCITEM pTabCtrlItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_SETITEM, nItem, (LPARAM) pTabCtrlItem );
+			return (BOOL) SendMessage(m_hWnd, TCM_SETITEM, nItem, (LPARAM) pTabCtrlItem);
 		}
 
-		int SetItem( int nItem, UINT mask, LPCTSTR lpszItem, DWORD dwState, DWORD dwStateMask, int iImage, LPARAM lParam )
+		int SetItem(int nItem, UINT mask, LPCTSTR lpszItem, DWORD dwState, DWORD dwStateMask, int iImage, LPARAM lParam)
 		{
-			TCITEM tci = { 0 };
+			TCITEM tci = {0};
 			tci.mask = mask;
 			tci.pszText = (LPTSTR) lpszItem;
 			tci.dwState = dwState;
 			tci.dwStateMask = dwStateMask;
 			tci.iImage = iImage;
 			tci.lParam = lParam;
-			return (int) SendMessage( m_hWnd, TCM_SETITEM, nItem, (LPARAM) &tci );
+			return (int) SendMessage(m_hWnd, TCM_SETITEM, nItem, (LPARAM) &tci);
 		}
 
-		BOOL GetItemRect( int nItem, LPRECT lpRect ) const
+		BOOL GetItemRect(int nItem, LPRECT lpRect) const
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_GETITEMRECT, nItem, (LPARAM) lpRect );
+			return (BOOL) SendMessage(m_hWnd, TCM_GETITEMRECT, nItem, (LPARAM) lpRect);
 		}
 
-		int GetCurSel( ) const
+		int GetCurSel() const
 		{
-			return (int) SendMessage( m_hWnd, TCM_GETCURSEL, 0, 0L );
+			return (int) SendMessage(m_hWnd, TCM_GETCURSEL, 0, 0L);
 		}
 
-		int SetCurSel( int nItem )
+		int SetCurSel(int nItem)
 		{
-			return (int) SendMessage( m_hWnd, TCM_SETCURSEL, nItem, 0L );
+			return (int) SendMessage(m_hWnd, TCM_SETCURSEL, nItem, 0L);
 		}
 
-		SIZE SetItemSize( SIZE size )
+		SIZE SetItemSize(SIZE size)
 		{
-			DWORD dwSize = (DWORD) SendMessage( m_hWnd, TCM_SETITEMSIZE, 0, MAKELPARAM( size.cx, size.cy ) );
-			SIZE sizeRet = { GET_X_LPARAM( dwSize ), GET_Y_LPARAM( dwSize ) };
+			DWORD dwSize = (DWORD) SendMessage(m_hWnd, TCM_SETITEMSIZE, 0, MAKELPARAM(size.cx, size.cy));
+			SIZE sizeRet = {GET_X_LPARAM(dwSize), GET_Y_LPARAM(dwSize)};
 			return sizeRet;
 		}
 
-		void SetItemSize( int cx, int cy )
+		void SetItemSize(int cx, int cy)
 		{
-			SendMessage( m_hWnd, TCM_SETITEMSIZE, 0, MAKELPARAM( cx, cy ) );
+			SendMessage(m_hWnd, TCM_SETITEMSIZE, 0, MAKELPARAM(cx, cy));
 		}
 
-		void SetPadding( SIZE size )
+		void SetPadding(SIZE size)
 		{
-			SendMessage( m_hWnd, TCM_SETPADDING, 0, MAKELPARAM( size.cx, size.cy ) );
+			SendMessage(m_hWnd, TCM_SETPADDING, 0, MAKELPARAM(size.cx, size.cy));
 		}
 
-		int GetRowCount( ) const
+		int GetRowCount() const
 		{
-			return (int) SendMessage( m_hWnd, TCM_GETROWCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, TCM_GETROWCOUNT, 0, 0L);
 		}
 
-		ToolTip GetToolTips( ) const
+		ToolTip GetToolTips() const
 		{
-			return ToolTip( (HWND) SendMessage( m_hWnd, TCM_GETTOOLTIPS, 0, 0L ) );
+			return ToolTip((HWND) SendMessage(m_hWnd, TCM_GETTOOLTIPS, 0, 0L));
 		}
 
-		void SetToolTips( HWND hWndToolTip )
+		void SetToolTips(HWND hWndToolTip)
 		{
-			SendMessage( m_hWnd, TCM_SETTOOLTIPS, (WPARAM) hWndToolTip, 0L );
+			SendMessage(m_hWnd, TCM_SETTOOLTIPS, (WPARAM) hWndToolTip, 0L);
 		}
 
-		int GetCurFocus( ) const
+		int GetCurFocus() const
 		{
-			return (int) SendMessage( m_hWnd, TCM_GETCURFOCUS, 0, 0L );
+			return (int) SendMessage(m_hWnd, TCM_GETCURFOCUS, 0, 0L);
 		}
 
-		void SetCurFocus( int nItem )
+		void SetCurFocus(int nItem)
 		{
-			SendMessage( m_hWnd, TCM_SETCURFOCUS, nItem, 0L );
+			SendMessage(m_hWnd, TCM_SETCURFOCUS, nItem, 0L);
 		}
 
-		BOOL SetItemExtra( int cbExtra )
+		BOOL SetItemExtra(int cbExtra)
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_SETITEMEXTRA, cbExtra, 0L );
+			return (BOOL) SendMessage(m_hWnd, TCM_SETITEMEXTRA, cbExtra, 0L);
 		}
 
-		int SetMinTabWidth( int nWidth = -1 )
+		int SetMinTabWidth(int nWidth = -1)
 		{
-			return (int) SendMessage( m_hWnd, TCM_SETMINTABWIDTH, 0, nWidth );
+			return (int) SendMessage(m_hWnd, TCM_SETMINTABWIDTH, 0, nWidth);
 		}
 
-		DWORD GetExtendedStyle( ) const
+		DWORD GetExtendedStyle() const
 		{
-			return (DWORD) SendMessage( m_hWnd, TCM_GETEXTENDEDSTYLE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, TCM_GETEXTENDEDSTYLE, 0, 0L);
 		}
 
-		DWORD SetExtendedStyle( DWORD dwExMask, DWORD dwExStyle )
+		DWORD SetExtendedStyle(DWORD dwExMask, DWORD dwExStyle)
 		{
-			return (DWORD) SendMessage( m_hWnd, TCM_SETEXTENDEDSTYLE, dwExMask, dwExStyle );
+			return (DWORD) SendMessage(m_hWnd, TCM_SETEXTENDEDSTYLE, dwExMask, dwExStyle);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, TCM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, TCM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		int InsertItem( int nItem, LPTCITEM pTabCtrlItem )
+		int InsertItem(int nItem, LPTCITEM pTabCtrlItem)
 		{
-			return (int) SendMessage( m_hWnd, TCM_INSERTITEM, nItem, (LPARAM) pTabCtrlItem );
+			return (int) SendMessage(m_hWnd, TCM_INSERTITEM, nItem, (LPARAM) pTabCtrlItem);
 		}
 
-		int InsertItem( int nItem, UINT mask, LPCTSTR lpszItem, int iImage, LPARAM lParam )
+		int InsertItem(int nItem, UINT mask, LPCTSTR lpszItem, int iImage, LPARAM lParam)
 		{
-			TCITEM tci = { 0 };
+			TCITEM tci = {0};
 			tci.mask = mask;
 			tci.pszText = (LPTSTR) lpszItem;
 			tci.iImage = iImage;
 			tci.lParam = lParam;
-			return (int) SendMessage( m_hWnd, TCM_INSERTITEM, nItem, (LPARAM) &tci );
+			return (int) SendMessage(m_hWnd, TCM_INSERTITEM, nItem, (LPARAM) &tci);
 		}
 
-		int InsertItem( int nItem, LPCTSTR lpszItem )
+		int InsertItem(int nItem, LPCTSTR lpszItem)
 		{
-			TCITEM tci = { 0 };
+			TCITEM tci = {0};
 			tci.mask = TCIF_TEXT;
 			tci.pszText = (LPTSTR) lpszItem;
-			return (int) SendMessage( m_hWnd, TCM_INSERTITEM, nItem, (LPARAM) &tci );
+			return (int) SendMessage(m_hWnd, TCM_INSERTITEM, nItem, (LPARAM) &tci);
 		}
 
-		int AddItem( LPTCITEM pTabCtrlItem )
+		int AddItem(LPTCITEM pTabCtrlItem)
 		{
-			return InsertItem( GetItemCount( ), pTabCtrlItem );
+			return InsertItem(GetItemCount(), pTabCtrlItem);
 		}
 
-		int AddItem( UINT mask, LPCTSTR lpszItem, int iImage, LPARAM lParam )
+		int AddItem(UINT mask, LPCTSTR lpszItem, int iImage, LPARAM lParam)
 		{
-			return InsertItem( GetItemCount( ), mask, lpszItem, iImage, lParam );
+			return InsertItem(GetItemCount(), mask, lpszItem, iImage, lParam);
 		}
 
-		int AddItem( LPCTSTR lpszItem )
+		int AddItem(LPCTSTR lpszItem)
 		{
-			return InsertItem( GetItemCount( ), lpszItem );
+			return InsertItem(GetItemCount(), lpszItem);
 		}
 
-		BOOL DeleteItem( int nItem )
+		BOOL DeleteItem(int nItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_DELETEITEM, nItem, 0L );
+			return (BOOL) SendMessage(m_hWnd, TCM_DELETEITEM, nItem, 0L);
 		}
 
-		BOOL DeleteAllItems( )
+		BOOL DeleteAllItems()
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_DELETEALLITEMS, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, TCM_DELETEALLITEMS, 0, 0L);
 		}
 
-		void AdjustRect( BOOL bLarger, LPRECT lpRect )
+		void AdjustRect(BOOL bLarger, LPRECT lpRect)
 		{
-			SendMessage( m_hWnd, TCM_ADJUSTRECT, bLarger, (LPARAM) lpRect );
+			SendMessage(m_hWnd, TCM_ADJUSTRECT, bLarger, (LPARAM) lpRect);
 		}
 
-		void RemoveImage( int nImage )
+		void RemoveImage(int nImage)
 		{
-			SendMessage( m_hWnd, TCM_REMOVEIMAGE, nImage, 0L );
+			SendMessage(m_hWnd, TCM_REMOVEIMAGE, nImage, 0L);
 		}
 
-		int HitTest( TC_HITTESTINFO* pHitTestInfo ) const
+		int HitTest(TC_HITTESTINFO* pHitTestInfo) const
 		{
-			return (int) SendMessage( m_hWnd, TCM_HITTEST, 0, (LPARAM) pHitTestInfo );
+			return (int) SendMessage(m_hWnd, TCM_HITTEST, 0, (LPARAM) pHitTestInfo);
 		}
 
-		void DeselectAll( BOOL bExcludeFocus = TRUE )
+		void DeselectAll(BOOL bExcludeFocus = TRUE)
 		{
-			SendMessage( m_hWnd, TCM_DESELECTALL, bExcludeFocus, 0L );
+			SendMessage(m_hWnd, TCM_DESELECTALL, bExcludeFocus, 0L);
 		}
 
-		BOOL HighlightItem( int nIndex, BOOL bHighlight = TRUE )
+		BOOL HighlightItem(int nIndex, BOOL bHighlight = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TCM_HIGHLIGHTITEM, nIndex, MAKELPARAM( bHighlight, 0 ) );
+			return (BOOL) SendMessage(m_hWnd, TCM_HIGHLIGHTITEM, nIndex, MAKELPARAM(bHighlight, 0));
 		}
 	};
 
@@ -4022,202 +4022,202 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetLineSize( ) const
+		int GetLineSize() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETLINESIZE, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETLINESIZE, 0, 0L);
 		}
 
-		int SetLineSize( int nSize )
+		int SetLineSize(int nSize)
 		{
-			return (int) SendMessage( m_hWnd, TBM_SETLINESIZE, 0, nSize );
+			return (int) SendMessage(m_hWnd, TBM_SETLINESIZE, 0, nSize);
 		}
 
-		int GetPageSize( ) const
+		int GetPageSize() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETPAGESIZE, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETPAGESIZE, 0, 0L);
 		}
 
-		int SetPageSize( int nSize )
+		int SetPageSize(int nSize)
 		{
-			return (int) SendMessage( m_hWnd, TBM_SETPAGESIZE, 0, nSize );
+			return (int) SendMessage(m_hWnd, TBM_SETPAGESIZE, 0, nSize);
 		}
 
-		int GetRangeMin( ) const
+		int GetRangeMin() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETRANGEMIN, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETRANGEMIN, 0, 0L);
 		}
 
-		void SetRangeMin( int nMin, BOOL bRedraw = FALSE )
+		void SetRangeMin(int nMin, BOOL bRedraw = FALSE)
 		{
-			SendMessage( m_hWnd, TBM_SETRANGEMIN, bRedraw, nMin );
+			SendMessage(m_hWnd, TBM_SETRANGEMIN, bRedraw, nMin);
 		}
 
-		int GetRangeMax( ) const
+		int GetRangeMax() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETRANGEMAX, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETRANGEMAX, 0, 0L);
 		}
 
-		void SetRangeMax( int nMax, BOOL bRedraw = FALSE )
+		void SetRangeMax(int nMax, BOOL bRedraw = FALSE)
 		{
-			SendMessage( m_hWnd, TBM_SETRANGEMAX, bRedraw, nMax );
+			SendMessage(m_hWnd, TBM_SETRANGEMAX, bRedraw, nMax);
 		}
 
-		void GetRange( int& nMin, int& nMax ) const
+		void GetRange(int& nMin, int& nMax) const
 		{
-			nMin = GetRangeMin( );
-			nMax = GetRangeMax( );
+			nMin = GetRangeMin();
+			nMax = GetRangeMax();
 		}
 
-		void SetRange( int nMin, int nMax, BOOL bRedraw = TRUE )
+		void SetRange(int nMin, int nMax, BOOL bRedraw = TRUE)
 		{
-			SendMessage( m_hWnd, TBM_SETRANGE, bRedraw, MAKELPARAM( nMin, nMax ) );
+			SendMessage(m_hWnd, TBM_SETRANGE, bRedraw, MAKELPARAM(nMin, nMax));
 		}
 
-		int GetSelStart( ) const
+		int GetSelStart() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETSELSTART, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETSELSTART, 0, 0L);
 		}
 
-		void SetSelStart( int nMin, BOOL bRedraw = FALSE )
+		void SetSelStart(int nMin, BOOL bRedraw = FALSE)
 		{
-			SendMessage( m_hWnd, TBM_SETSELSTART, bRedraw, (LPARAM) nMin );
+			SendMessage(m_hWnd, TBM_SETSELSTART, bRedraw, (LPARAM) nMin);
 		}
 
-		int GetSelEnd( ) const
+		int GetSelEnd() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETSELEND, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETSELEND, 0, 0L);
 		}
 
-		void SetSelEnd( int nMax, BOOL bRedraw = FALSE )
+		void SetSelEnd(int nMax, BOOL bRedraw = FALSE)
 		{
-			SendMessage( m_hWnd, TBM_SETSELEND, bRedraw, (LPARAM) nMax );
+			SendMessage(m_hWnd, TBM_SETSELEND, bRedraw, (LPARAM) nMax);
 		}
 
-		void GetSelection( int& nMin, int& nMax ) const
+		void GetSelection(int& nMin, int& nMax) const
 		{
-			nMin = GetSelStart( );
-			nMax = GetSelEnd( );
+			nMin = GetSelStart();
+			nMax = GetSelEnd();
 		}
 
-		void SetSelection( int nMin, int nMax, BOOL bRedraw = TRUE )
+		void SetSelection(int nMin, int nMax, BOOL bRedraw = TRUE)
 		{
-			SetSelStart( nMin, FALSE );
-			SetSelEnd( nMax, bRedraw );
+			SetSelStart(nMin, FALSE);
+			SetSelEnd(nMax, bRedraw);
 		}
 
-		void GetChannelRect( LPRECT lprc ) const
+		void GetChannelRect(LPRECT lprc) const
 		{
-			SendMessage( m_hWnd, TBM_GETCHANNELRECT, 0, (LPARAM) lprc );
+			SendMessage(m_hWnd, TBM_GETCHANNELRECT, 0, (LPARAM) lprc);
 		}
 
-		void GetThumbRect( LPRECT lprc ) const
+		void GetThumbRect(LPRECT lprc) const
 		{
-			SendMessage( m_hWnd, TBM_GETTHUMBRECT, 0, (LPARAM) lprc );
+			SendMessage(m_hWnd, TBM_GETTHUMBRECT, 0, (LPARAM) lprc);
 		}
 
-		int GetPos( ) const
+		int GetPos() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETPOS, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETPOS, 0, 0L);
 		}
 
-		void SetPos( int nPos )
+		void SetPos(int nPos)
 		{
-			SendMessage( m_hWnd, TBM_SETPOS, TRUE, nPos );
+			SendMessage(m_hWnd, TBM_SETPOS, TRUE, nPos);
 		}
 
-		UINT GetNumTics( ) const
+		UINT GetNumTics() const
 		{
-			return (UINT) SendMessage( m_hWnd, TBM_GETNUMTICS, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, TBM_GETNUMTICS, 0, 0L);
 		}
 
-		DWORD* GetTicArray( ) const
+		DWORD* GetTicArray() const
 		{
-			return (DWORD*) SendMessage( m_hWnd, TBM_GETPTICS, 0, 0L );
+			return (DWORD*) SendMessage(m_hWnd, TBM_GETPTICS, 0, 0L);
 		}
 
-		int GetTic( int nTic ) const
+		int GetTic(int nTic) const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETTIC, nTic, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETTIC, nTic, 0L);
 		}
 
-		BOOL SetTic( int nTic )
+		BOOL SetTic(int nTic)
 		{
-			return (BOOL) SendMessage( m_hWnd, TBM_SETTIC, 0, nTic );
+			return (BOOL) SendMessage(m_hWnd, TBM_SETTIC, 0, nTic);
 		}
 
-		int GetTicPos( int nTic ) const
+		int GetTicPos(int nTic) const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETTICPOS, nTic, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETTICPOS, nTic, 0L);
 		}
 
-		void SetTicFreq( int nFreq )
+		void SetTicFreq(int nFreq)
 		{
-			SendMessage( m_hWnd, TBM_SETTICFREQ, nFreq, 0L );
+			SendMessage(m_hWnd, TBM_SETTICFREQ, nFreq, 0L);
 		}
 
-		int GetThumbLength( ) const
+		int GetThumbLength() const
 		{
-			return (int) SendMessage( m_hWnd, TBM_GETTHUMBLENGTH, 0, 0L );
+			return (int) SendMessage(m_hWnd, TBM_GETTHUMBLENGTH, 0, 0L);
 		}
 
-		void SetThumbLength( int nLength )
+		void SetThumbLength(int nLength)
 		{
-			SendMessage( m_hWnd, TBM_SETTHUMBLENGTH, nLength, 0L );
+			SendMessage(m_hWnd, TBM_SETTHUMBLENGTH, nLength, 0L);
 		}
 
-		void SetSel( int nStart, int nEnd, BOOL bRedraw = TRUE )
+		void SetSel(int nStart, int nEnd, BOOL bRedraw = TRUE)
 		{
-			SendMessage( m_hWnd, TBM_SETSEL, bRedraw, MAKELPARAM( nStart, nEnd ) );
+			SendMessage(m_hWnd, TBM_SETSEL, bRedraw, MAKELPARAM(nStart, nEnd));
 		}
 
-		HWND GetBuddy( BOOL bLeft = TRUE ) const
+		HWND GetBuddy(BOOL bLeft = TRUE) const
 		{
-			return  (HWND) SendMessage( m_hWnd, TBM_GETBUDDY, bLeft, 0L );
+			return  (HWND) SendMessage(m_hWnd, TBM_GETBUDDY, bLeft, 0L);
 		}
 
-		HWND SetBuddy( HWND hWndBuddy, BOOL bLeft = TRUE )
+		HWND SetBuddy(HWND hWndBuddy, BOOL bLeft = TRUE)
 		{
-			return (HWND) SendMessage( m_hWnd, TBM_SETBUDDY, bLeft, (LPARAM) hWndBuddy );
+			return (HWND) SendMessage(m_hWnd, TBM_SETBUDDY, bLeft, (LPARAM) hWndBuddy);
 		}
 
-		ToolTip GetToolTips( ) const
+		ToolTip GetToolTips() const
 		{
-			return ToolTip( (HWND) SendMessage( m_hWnd, TBM_GETTOOLTIPS, 0, 0L ) );
+			return ToolTip((HWND) SendMessage(m_hWnd, TBM_GETTOOLTIPS, 0, 0L));
 		}
 
-		void SetToolTips( HWND hWndTT )
+		void SetToolTips(HWND hWndTT)
 		{
-			SendMessage( m_hWnd, TBM_SETTOOLTIPS, (WPARAM) hWndTT, 0L );
+			SendMessage(m_hWnd, TBM_SETTOOLTIPS, (WPARAM) hWndTT, 0L);
 		}
 
-		int SetTipSide( int nSide )
+		int SetTipSide(int nSide)
 		{
-			return (int) SendMessage( m_hWnd, TBM_SETTIPSIDE, nSide, 0L );
+			return (int) SendMessage(m_hWnd, TBM_SETTIPSIDE, nSide, 0L);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, TBM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, TBM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, TBM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, TBM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		void ClearSel( BOOL bRedraw = FALSE )
+		void ClearSel(BOOL bRedraw = FALSE)
 		{
-			SendMessage( m_hWnd, TBM_CLEARSEL, bRedraw, 0L );
+			SendMessage(m_hWnd, TBM_CLEARSEL, bRedraw, 0L);
 		}
 
-		void VerifyPos( )
+		void VerifyPos()
 		{
-			SendMessage( m_hWnd, TBM_SETPOS, FALSE, 0L );
+			SendMessage(m_hWnd, TBM_SETPOS, FALSE, 0L);
 		}
 
-		void ClearTics( BOOL bRedraw = FALSE )
+		void ClearTics(BOOL bRedraw = FALSE)
 		{
-			SendMessage( m_hWnd, TBM_CLEARTICS, bRedraw, 0L );
+			SendMessage(m_hWnd, TBM_CLEARTICS, bRedraw, 0L);
 		}
 	};
 
@@ -4226,93 +4226,93 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		UINT GetAccel( int nAccel, UDACCEL* pAccel ) const
+		UINT GetAccel(int nAccel, UDACCEL* pAccel) const
 		{
-			return (UINT) LOWORD( SendMessage( m_hWnd, UDM_GETACCEL, nAccel, (LPARAM) pAccel ) );
+			return (UINT) LOWORD(SendMessage(m_hWnd, UDM_GETACCEL, nAccel, (LPARAM) pAccel));
 		}
 
-		BOOL SetAccel( int nAccel, UDACCEL* pAccel )
+		BOOL SetAccel(int nAccel, UDACCEL* pAccel)
 		{
-			return (BOOL) LOWORD( SendMessage( m_hWnd, UDM_SETACCEL, nAccel, (LPARAM) pAccel ) );
+			return (BOOL) LOWORD(SendMessage(m_hWnd, UDM_SETACCEL, nAccel, (LPARAM) pAccel));
 		}
 
-		UINT GetBase( ) const
+		UINT GetBase() const
 		{
-			return (UINT) LOWORD( SendMessage( m_hWnd, UDM_GETBASE, 0, 0L ) );
+			return (UINT) LOWORD(SendMessage(m_hWnd, UDM_GETBASE, 0, 0L));
 		}
 
-		int SetBase( int nBase )
+		int SetBase(int nBase)
 		{
-			return (int) SendMessage( m_hWnd, UDM_SETBASE, nBase, 0L );
+			return (int) SendMessage(m_hWnd, UDM_SETBASE, nBase, 0L);
 		}
 
-		HWND GetBuddy( ) const
+		HWND GetBuddy() const
 		{
-			return (HWND) SendMessage( m_hWnd, UDM_GETBUDDY, 0, 0L );
+			return (HWND) SendMessage(m_hWnd, UDM_GETBUDDY, 0, 0L);
 		}
 
-		HWND SetBuddy( HWND hWndBuddy )
+		HWND SetBuddy(HWND hWndBuddy)
 		{
-			return (HWND) SendMessage( m_hWnd, UDM_SETBUDDY, (WPARAM) hWndBuddy, 0L );
+			return (HWND) SendMessage(m_hWnd, UDM_SETBUDDY, (WPARAM) hWndBuddy, 0L);
 		}
 
-		int GetPos( LPBOOL lpbError = NULL ) const
+		int GetPos(LPBOOL lpbError = NULL) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, UDM_GETPOS, 0, 0L );
-			if ( lpbError != NULL ) *lpbError = ( HIWORD( dwRet ) != 0 ) ? TRUE : FALSE;
-			return (int) (short) LOWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, UDM_GETPOS, 0, 0L);
+			if (lpbError != NULL) *lpbError = (HIWORD(dwRet) != 0) ? TRUE : FALSE;
+			return (int) (short) LOWORD(dwRet);
 		}
 
-		int SetPos( int nPos )
+		int SetPos(int nPos)
 		{
-			return (int) (short) LOWORD( SendMessage( m_hWnd, UDM_SETPOS, 0, MAKELPARAM( nPos, 0 ) ) );
+			return (int) (short) LOWORD(SendMessage(m_hWnd, UDM_SETPOS, 0, MAKELPARAM(nPos, 0)));
 		}
 
-		DWORD GetRange( ) const
+		DWORD GetRange() const
 		{
-			return (DWORD) SendMessage( m_hWnd, UDM_GETRANGE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, UDM_GETRANGE, 0, 0L);
 		}
 
-		void GetRange( int& nLower, int& nUpper ) const
+		void GetRange(int& nLower, int& nUpper) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, UDM_GETRANGE, 0, 0L );
-			nLower = (int) (short) HIWORD( dwRet );
-			nUpper = (int) (short) LOWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, UDM_GETRANGE, 0, 0L);
+			nLower = (int) (short) HIWORD(dwRet);
+			nUpper = (int) (short) LOWORD(dwRet);
 		}
 
-		void SetRange( int nLower, int nUpper )
+		void SetRange(int nLower, int nUpper)
 		{
-			SendMessage( m_hWnd, UDM_SETRANGE, 0, MAKELPARAM( nUpper, nLower ) );
+			SendMessage(m_hWnd, UDM_SETRANGE, 0, MAKELPARAM(nUpper, nLower));
 		}
 
-		void SetRange32( int nLower, int nUpper )
+		void SetRange32(int nLower, int nUpper)
 		{
-			SendMessage( m_hWnd, UDM_SETRANGE32, nLower, nUpper );
+			SendMessage(m_hWnd, UDM_SETRANGE32, nLower, nUpper);
 		}
 
-		void GetRange32( int& nLower, int& nUpper ) const
+		void GetRange32(int& nLower, int& nUpper) const
 		{
-			SendMessage( m_hWnd, UDM_GETRANGE32, (WPARAM) &nLower, (LPARAM) &nUpper );
+			SendMessage(m_hWnd, UDM_GETRANGE32, (WPARAM) &nLower, (LPARAM) &nUpper);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, UDM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, UDM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, UDM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, UDM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		int GetPos32( LPBOOL lpbError = NULL ) const
+		int GetPos32(LPBOOL lpbError = NULL) const
 		{
-			return (int) SendMessage( m_hWnd, UDM_GETPOS32, 0, (LPARAM) lpbError );
+			return (int) SendMessage(m_hWnd, UDM_GETPOS32, 0, (LPARAM) lpbError);
 		}
 
-		int SetPos32( int nPos )
+		int SetPos32(int nPos)
 		{
-			return (int) SendMessage( m_hWnd, UDM_SETPOS32, 0, (LPARAM) nPos );
+			return (int) SendMessage(m_hWnd, UDM_SETPOS32, 0, (LPARAM) nPos);
 		}
 	};
 
@@ -4321,98 +4321,98 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		DWORD SetRange( int nLower, int nUpper )
+		DWORD SetRange(int nLower, int nUpper)
 		{
-			return (DWORD) SendMessage( m_hWnd, PBM_SETRANGE, 0, MAKELPARAM( nLower, nUpper ) );
+			return (DWORD) SendMessage(m_hWnd, PBM_SETRANGE, 0, MAKELPARAM(nLower, nUpper));
 		}
 
-		int SetPos( int nPos )
+		int SetPos(int nPos)
 		{
-			return (int) (short) LOWORD( SendMessage( m_hWnd, PBM_SETPOS, nPos, 0L ) );
+			return (int) (short) LOWORD(SendMessage(m_hWnd, PBM_SETPOS, nPos, 0L));
 		}
 
-		int OffsetPos( int nPos )
+		int OffsetPos(int nPos)
 		{
-			return (int) (short) LOWORD( SendMessage( m_hWnd, PBM_DELTAPOS, nPos, 0L ) );
+			return (int) (short) LOWORD(SendMessage(m_hWnd, PBM_DELTAPOS, nPos, 0L));
 		}
 
-		int SetStep( int nStep )
+		int SetStep(int nStep)
 		{
-			return (int) (short) LOWORD( SendMessage( m_hWnd, PBM_SETSTEP, nStep, 0L ) );
+			return (int) (short) LOWORD(SendMessage(m_hWnd, PBM_SETSTEP, nStep, 0L));
 		}
 
-		UINT GetPos( ) const
+		UINT GetPos() const
 		{
-			return (UINT) SendMessage( m_hWnd, PBM_GETPOS, 0, 0L );
+			return (UINT) SendMessage(m_hWnd, PBM_GETPOS, 0, 0L);
 		}
 
-		void GetRange( PPBRANGE pPBRange ) const
+		void GetRange(PPBRANGE pPBRange) const
 		{
-			SendMessage( m_hWnd, PBM_GETRANGE, TRUE, (LPARAM) pPBRange );
+			SendMessage(m_hWnd, PBM_GETRANGE, TRUE, (LPARAM) pPBRange);
 		}
 
-		void GetRange( int& nLower, int& nUpper ) const
+		void GetRange(int& nLower, int& nUpper) const
 		{
-			PBRANGE range = { 0 };
-			SendMessage( m_hWnd, PBM_GETRANGE, TRUE, (LPARAM) &range );
+			PBRANGE range = {0};
+			SendMessage(m_hWnd, PBM_GETRANGE, TRUE, (LPARAM) &range);
 			nLower = range.iLow;
 			nUpper = range.iHigh;
 		}
 
-		int GetRangeLimit( BOOL bLowLimit ) const
+		int GetRangeLimit(BOOL bLowLimit) const
 		{
-			return (int) SendMessage( m_hWnd, PBM_GETRANGE, bLowLimit, 0L );
+			return (int) SendMessage(m_hWnd, PBM_GETRANGE, bLowLimit, 0L);
 		}
 
-		DWORD SetRange32( int nMin, int nMax )
+		DWORD SetRange32(int nMin, int nMax)
 		{
-			return (DWORD) SendMessage( m_hWnd, PBM_SETRANGE32, nMin, nMax );
+			return (DWORD) SendMessage(m_hWnd, PBM_SETRANGE32, nMin, nMax);
 		}
 
-		COLORREF SetBarColor( COLORREF clr )
+		COLORREF SetBarColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, PBM_SETBARCOLOR, 0, (LPARAM) clr );
+			return (COLORREF) SendMessage(m_hWnd, PBM_SETBARCOLOR, 0, (LPARAM) clr);
 		}
 
-		COLORREF SetBkColor( COLORREF clr )
+		COLORREF SetBkColor(COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, PBM_SETBKCOLOR, 0, (LPARAM) clr );
+			return (COLORREF) SendMessage(m_hWnd, PBM_SETBKCOLOR, 0, (LPARAM) clr);
 		}
 
-		BOOL SetMarquee( BOOL bMarquee, UINT uUpdateTime = 0U )
+		BOOL SetMarquee(BOOL bMarquee, UINT uUpdateTime = 0U)
 		{
-			if ( bMarquee && ( GetStyle( ) & PBS_MARQUEE ) == 0 ) AddStyle( PBS_MARQUEE );
-			return (BOOL) SendMessage( m_hWnd, PBM_SETMARQUEE, (WPARAM) bMarquee, (LPARAM) uUpdateTime );
+			if (bMarquee && (GetStyle() & PBS_MARQUEE) == 0) AddStyle(PBS_MARQUEE);
+			return (BOOL) SendMessage(m_hWnd, PBM_SETMARQUEE, (WPARAM) bMarquee, (LPARAM) uUpdateTime);
 		}
 
-		int GetStep( ) const
+		int GetStep() const
 		{
-			return (int) SendMessage( m_hWnd, PBM_GETSTEP, 0, 0L );
+			return (int) SendMessage(m_hWnd, PBM_GETSTEP, 0, 0L);
 		}
 
-		COLORREF GetBkColor( ) const
+		COLORREF GetBkColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, PBM_GETBKCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, PBM_GETBKCOLOR, 0, 0L);
 		}
 
-		COLORREF GetBarColor( ) const
+		COLORREF GetBarColor() const
 		{
-			return (COLORREF) SendMessage( m_hWnd, PBM_GETBARCOLOR, 0, 0L );
+			return (COLORREF) SendMessage(m_hWnd, PBM_GETBARCOLOR, 0, 0L);
 		}
 
-		int GetState( ) const
+		int GetState() const
 		{
-			return (int) SendMessage( m_hWnd, PBM_GETSTATE, 0, 0L );
+			return (int) SendMessage(m_hWnd, PBM_GETSTATE, 0, 0L);
 		}
 
-		int SetState( int nState )
+		int SetState(int nState)
 		{
-			return (int) SendMessage( m_hWnd, PBM_SETSTATE, nState, 0L );
+			return (int) SendMessage(m_hWnd, PBM_SETSTATE, nState, 0L);
 		}
 
-		int StepIt( )
+		int StepIt()
 		{
-			return (int) (short) LOWORD( SendMessage( m_hWnd, PBM_STEPIT, 0, 0L ) );
+			return (int) (short) LOWORD(SendMessage(m_hWnd, PBM_STEPIT, 0, 0L));
 		}
 	};
 
@@ -4421,26 +4421,26 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		DWORD GetHotKey( ) const
+		DWORD GetHotKey() const
 		{
-			return (DWORD) SendMessage( m_hWnd, HKM_GETHOTKEY, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, HKM_GETHOTKEY, 0, 0L);
 		}
 
-		void GetHotKey( WORD &wVirtualKeyCode, WORD &wModifiers ) const
+		void GetHotKey(WORD &wVirtualKeyCode, WORD &wModifiers) const
 		{
-			DWORD dw = (DWORD) SendMessage( m_hWnd, HKM_GETHOTKEY, 0, 0L );
-			wVirtualKeyCode = LOBYTE( LOWORD( dw ) );
-			wModifiers = HIBYTE( LOWORD( dw ) );
+			DWORD dw = (DWORD) SendMessage(m_hWnd, HKM_GETHOTKEY, 0, 0L);
+			wVirtualKeyCode = LOBYTE(LOWORD(dw));
+			wModifiers = HIBYTE(LOWORD(dw));
 		}
 
-		void SetHotKey( WORD wVirtualKeyCode, WORD wModifiers )
+		void SetHotKey(WORD wVirtualKeyCode, WORD wModifiers)
 		{
-			SendMessage( m_hWnd, HKM_SETHOTKEY, MAKEWORD( wVirtualKeyCode, wModifiers ), 0L );
+			SendMessage(m_hWnd, HKM_SETHOTKEY, MAKEWORD(wVirtualKeyCode, wModifiers), 0L);
 		}
 
-		void SetRules( WORD wInvalidComb, WORD wModifiers )
+		void SetRules(WORD wInvalidComb, WORD wModifiers)
 		{
-			SendMessage( m_hWnd, HKM_SETRULES, wInvalidComb, MAKELPARAM( wModifiers, 0 ) );
+			SendMessage(m_hWnd, HKM_SETRULES, wInvalidComb, MAKELPARAM(wModifiers, 0));
 		}
 	};
 
@@ -4449,34 +4449,34 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		BOOL Open( LPCTSTR FileName )
+		BOOL Open(LPCTSTR FileName)
 		{
-			return (BOOL) SendMessage( m_hWnd, ACM_OPEN, 0, (LPARAM) FileName );
+			return (BOOL) SendMessage(m_hWnd, ACM_OPEN, 0, (LPARAM) FileName);
 		}
 
-		BOOL Play( UINT nFrom, UINT nTo, UINT nRep )
+		BOOL Play(UINT nFrom, UINT nTo, UINT nRep)
 		{
-			return (BOOL) SendMessage( m_hWnd, ACM_PLAY, nRep, MAKELPARAM( nFrom, nTo ) );
+			return (BOOL) SendMessage(m_hWnd, ACM_PLAY, nRep, MAKELPARAM(nFrom, nTo));
 		}
 
-		BOOL Stop( )
+		BOOL Stop()
 		{
-			return (BOOL) SendMessage( m_hWnd, ACM_STOP, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, ACM_STOP, 0, 0L);
 		}
 
-		BOOL Close( )
+		BOOL Close()
 		{
-			return (BOOL) SendMessage( m_hWnd, ACM_OPEN, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, ACM_OPEN, 0, 0L);
 		}
 
-		BOOL Seek( UINT nTo )
+		BOOL Seek(UINT nTo)
 		{
-			return (BOOL) SendMessage( m_hWnd, ACM_PLAY, 0, MAKELPARAM( nTo, nTo ) );
+			return (BOOL) SendMessage(m_hWnd, ACM_PLAY, 0, MAKELPARAM(nTo, nTo));
 		}
 
-		BOOL IsPlaying( ) const
+		BOOL IsPlaying() const
 		{
-			return (BOOL) SendMessage( m_hWnd, ACM_ISPLAYING, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, ACM_ISPLAYING, 0, 0L);
 		}
 	};
 
@@ -4485,681 +4485,681 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetLineCount( ) const
+		int GetLineCount() const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETLINECOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETLINECOUNT, 0, 0L);
 		}
 
-		BOOL GetModify( ) const
+		BOOL GetModify() const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_GETMODIFY, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_GETMODIFY, 0, 0L);
 		}
 
-		void SetModify( BOOL bModified = TRUE )
+		void SetModify(BOOL bModified = TRUE)
 		{
-			SendMessage( m_hWnd, EM_SETMODIFY, bModified, 0L );
+			SendMessage(m_hWnd, EM_SETMODIFY, bModified, 0L);
 		}
 
-		void GetRect( LPRECT lpRect ) const
+		void GetRect(LPRECT lpRect) const
 		{
-			SendMessage( m_hWnd, EM_GETRECT, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, EM_GETRECT, 0, (LPARAM) lpRect);
 		}
 
-		DWORD GetOptions( ) const
+		DWORD GetOptions() const
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_GETOPTIONS, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, EM_GETOPTIONS, 0, 0L);
 		}
 
-		DWORD SetOptions( WORD wOperation, DWORD dwOptions )
+		DWORD SetOptions(WORD wOperation, DWORD dwOptions)
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_SETOPTIONS, wOperation, dwOptions );
+			return (DWORD) SendMessage(m_hWnd, EM_SETOPTIONS, wOperation, dwOptions);
 		}
 
-		int GetLine( int nIndex, LPTSTR lpszBuffer, int nMaxLength ) const
+		int GetLine(int nIndex, LPTSTR lpszBuffer, int nMaxLength) const
 		{
 			*(LPWORD) lpszBuffer = (WORD) nMaxLength;
-			return (int) SendMessage( m_hWnd, EM_GETLINE, nIndex, (LPARAM) lpszBuffer );
+			return (int) SendMessage(m_hWnd, EM_GETLINE, nIndex, (LPARAM) lpszBuffer);
 		}
 
-		BOOL CanUndo( ) const
+		BOOL CanUndo() const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_CANUNDO, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_CANUNDO, 0, 0L);
 		}
 
-		BOOL CanPaste( UINT nFormat = 0 ) const
+		BOOL CanPaste(UINT nFormat = 0) const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_CANPASTE, nFormat, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_CANPASTE, nFormat, 0L);
 		}
 
-		void GetSel( LONG& nStartChar, LONG& nEndChar ) const
+		void GetSel(LONG& nStartChar, LONG& nEndChar) const
 		{
-			CHARRANGE cr = { 0, 0 };
-			SendMessage( m_hWnd, EM_EXGETSEL, 0, (LPARAM) &cr );
+			CHARRANGE cr = {0, 0};
+			SendMessage(m_hWnd, EM_EXGETSEL, 0, (LPARAM) &cr);
 			nStartChar = cr.cpMin;
 			nEndChar = cr.cpMax;
 		}
 
-		void GetSel( CHARRANGE &cr ) const
+		void GetSel(CHARRANGE &cr) const
 		{
-			SendMessage( m_hWnd, EM_EXGETSEL, 0, (LPARAM) &cr );
+			SendMessage(m_hWnd, EM_EXGETSEL, 0, (LPARAM) &cr);
 		}
 
-		int SetSel( LONG nStartChar, LONG nEndChar )
+		int SetSel(LONG nStartChar, LONG nEndChar)
 		{
-			CHARRANGE cr = { nStartChar, nEndChar };
-			return (int) SendMessage( m_hWnd, EM_EXSETSEL, 0, (LPARAM) &cr );
+			CHARRANGE cr = {nStartChar, nEndChar};
+			return (int) SendMessage(m_hWnd, EM_EXSETSEL, 0, (LPARAM) &cr);
 		}
 
-		int SetSel( CHARRANGE &cr )
+		int SetSel(CHARRANGE &cr)
 		{
-			return (int) SendMessage( m_hWnd, EM_EXSETSEL, 0, (LPARAM) &cr );
+			return (int) SendMessage(m_hWnd, EM_EXSETSEL, 0, (LPARAM) &cr);
 		}
 
-		int SetSelAll( )
+		int SetSelAll()
 		{
-			return SetSel( 0, -1 );
+			return SetSel(0, -1);
 		}
 
-		int SetSelNone( )
+		int SetSelNone()
 		{
-			return SetSel( -1, 0 );
+			return SetSel(-1, 0);
 		}
 
-		DWORD GetDefaultCharFormat( CHARFORMAT& cf ) const
+		DWORD GetDefaultCharFormat(CHARFORMAT& cf) const
 		{
-			cf.cbSize = sizeof( CHARFORMAT );
-			return (DWORD) SendMessage( m_hWnd, EM_GETCHARFORMAT, 0, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT);
+			return (DWORD) SendMessage(m_hWnd, EM_GETCHARFORMAT, 0, (LPARAM) &cf);
 		}
 
-		DWORD GetSelectionCharFormat( CHARFORMAT& cf ) const
+		DWORD GetSelectionCharFormat(CHARFORMAT& cf) const
 		{
-			cf.cbSize = sizeof( CHARFORMAT );
-			return (DWORD) SendMessage( m_hWnd, EM_GETCHARFORMAT, 1, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT);
+			return (DWORD) SendMessage(m_hWnd, EM_GETCHARFORMAT, 1, (LPARAM) &cf);
 		}
 
-		DWORD GetEventMask( ) const
+		DWORD GetEventMask() const
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_GETEVENTMASK, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, EM_GETEVENTMASK, 0, 0L);
 		}
 
-		LONG GetLimitText( ) const
+		LONG GetLimitText() const
 		{
-			return (LONG) SendMessage( m_hWnd, EM_GETLIMITTEXT, 0, 0L );
+			return (LONG) SendMessage(m_hWnd, EM_GETLIMITTEXT, 0, 0L);
 		}
 
-		DWORD GetParaFormat( PARAFORMAT& pf ) const
+		DWORD GetParaFormat(PARAFORMAT& pf) const
 		{
-			pf.cbSize = sizeof( PARAFORMAT );
-			return (DWORD) SendMessage( m_hWnd, EM_GETPARAFORMAT, 0, (LPARAM) &pf );
+			pf.cbSize = sizeof(PARAFORMAT);
+			return (DWORD) SendMessage(m_hWnd, EM_GETPARAFORMAT, 0, (LPARAM) &pf);
 		}
 
-		LONG GetSelText( LPTSTR lpstrBuff ) const
+		LONG GetSelText(LPTSTR lpstrBuff) const
 		{
-			return (LONG) SendMessage( m_hWnd, EM_GETSELTEXT, 0, (LPARAM) lpstrBuff );
+			return (LONG) SendMessage(m_hWnd, EM_GETSELTEXT, 0, (LPARAM) lpstrBuff);
 		}
 
-		WORD GetSelectionType( ) const
+		WORD GetSelectionType() const
 		{
-			return (WORD) SendMessage( m_hWnd, EM_SELECTIONTYPE, 0, 0L );
+			return (WORD) SendMessage(m_hWnd, EM_SELECTIONTYPE, 0, 0L);
 		}
 
-		COLORREF SetBackgroundColor( COLORREF cr )
+		COLORREF SetBackgroundColor(COLORREF cr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, EM_SETBKGNDCOLOR, 0, cr );
+			return (COLORREF) SendMessage(m_hWnd, EM_SETBKGNDCOLOR, 0, cr);
 		}
 
-		COLORREF SetBackgroundColor( )
+		COLORREF SetBackgroundColor()
 		{
-			return (COLORREF) SendMessage( m_hWnd, EM_SETBKGNDCOLOR, 1, 0 );
+			return (COLORREF) SendMessage(m_hWnd, EM_SETBKGNDCOLOR, 1, 0);
 		}
 
-		BOOL SetCharFormat( CHARFORMAT& cf, WORD wFlags )
+		BOOL SetCharFormat(CHARFORMAT& cf, WORD wFlags)
 		{
-			cf.cbSize = sizeof( CHARFORMAT );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, (WPARAM) wFlags, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, (WPARAM) wFlags, (LPARAM) &cf);
 		}
 
-		BOOL SetDefaultCharFormat( CHARFORMAT& cf )
+		BOOL SetDefaultCharFormat(CHARFORMAT& cf)
 		{
-			cf.cbSize = sizeof( CHARFORMAT );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, 0, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, 0, (LPARAM) &cf);
 		}
 
-		BOOL SetSelectionCharFormat( CHARFORMAT& cf )
+		BOOL SetSelectionCharFormat(CHARFORMAT& cf)
 		{
-			cf.cbSize = sizeof( CHARFORMAT );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf);
 		}
 
-		BOOL SetWordCharFormat( CHARFORMAT& cf )
+		BOOL SetWordCharFormat(CHARFORMAT& cf)
 		{
-			cf.cbSize = sizeof( CHARFORMAT );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION | SCF_WORD, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION | SCF_WORD, (LPARAM) &cf);
 		}
 
-		DWORD SetEventMask( DWORD dwEventMask )
+		DWORD SetEventMask(DWORD dwEventMask)
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_SETEVENTMASK, 0, dwEventMask );
+			return (DWORD) SendMessage(m_hWnd, EM_SETEVENTMASK, 0, dwEventMask);
 		}
 
-		BOOL SetParaFormat( PARAFORMAT& pf )
+		BOOL SetParaFormat(PARAFORMAT& pf)
 		{
-			pf.cbSize = sizeof( PARAFORMAT );
-			return (BOOL) SendMessage( m_hWnd, EM_SETPARAFORMAT, 0, (LPARAM) &pf );
+			pf.cbSize = sizeof(PARAFORMAT);
+			return (BOOL) SendMessage(m_hWnd, EM_SETPARAFORMAT, 0, (LPARAM) &pf);
 		}
 
-		BOOL SetTargetDevice( HDC hDC, int cxLineWidth )
+		BOOL SetTargetDevice(HDC hDC, int cxLineWidth)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETTARGETDEVICE, (WPARAM) hDC, cxLineWidth );
+			return (BOOL) SendMessage(m_hWnd, EM_SETTARGETDEVICE, (WPARAM) hDC, cxLineWidth);
 		}
 
-		int GetTextLength( ) const
+		int GetTextLength() const
 		{
-			return (int) SendMessage( m_hWnd, WM_GETTEXTLENGTH, 0, 0L );
+			return (int) SendMessage(m_hWnd, WM_GETTEXTLENGTH, 0, 0L);
 		}
 
-		BOOL SetReadOnly( BOOL bReadOnly = TRUE )
+		BOOL SetReadOnly(BOOL bReadOnly = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETREADONLY, bReadOnly, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_SETREADONLY, bReadOnly, 0L);
 		}
 
-		int GetFirstVisibleLine( ) const
+		int GetFirstVisibleLine() const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETFIRSTVISIBLELINE, 0, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETFIRSTVISIBLELINE, 0, 0L);
 		}
 
-		int GetTextRange( TEXTRANGE* pTextRange ) const
+		int GetTextRange(TEXTRANGE* pTextRange) const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETTEXTRANGE, 0, (LPARAM) pTextRange );
+			return (int) SendMessage(m_hWnd, EM_GETTEXTRANGE, 0, (LPARAM) pTextRange);
 		}
 
-		int GetTextRange( LONG nStartChar, LONG nEndChar, LPTSTR lpstrText ) const
+		int GetTextRange(LONG nStartChar, LONG nEndChar, LPTSTR lpstrText) const
 		{
-			TEXTRANGE tr = { 0 };
+			TEXTRANGE tr = {0};
 			tr.chrg.cpMin = nStartChar;
 			tr.chrg.cpMax = nEndChar;
 			tr.lpstrText = lpstrText;
-			return (int) SendMessage( m_hWnd, EM_GETTEXTRANGE, 0, (LPARAM) &tr );
+			return (int) SendMessage(m_hWnd, EM_GETTEXTRANGE, 0, (LPARAM) &tr);
 		}
 
-		DWORD GetDefaultCharFormat( CHARFORMAT2& cf ) const
+		DWORD GetDefaultCharFormat(CHARFORMAT2& cf) const
 		{
-			cf.cbSize = sizeof( CHARFORMAT2 );
-			return (DWORD) SendMessage( m_hWnd, EM_GETCHARFORMAT, 0, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT2);
+			return (DWORD) SendMessage(m_hWnd, EM_GETCHARFORMAT, 0, (LPARAM) &cf);
 		}
 
-		BOOL SetCharFormat( CHARFORMAT2& cf, WORD wFlags )
+		BOOL SetCharFormat(CHARFORMAT2& cf, WORD wFlags)
 		{
-			cf.cbSize = sizeof( CHARFORMAT2 );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, (WPARAM) wFlags, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT2);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, (WPARAM) wFlags, (LPARAM) &cf);
 		}
 
-		BOOL SetDefaultCharFormat( CHARFORMAT2& cf )
+		BOOL SetDefaultCharFormat(CHARFORMAT2& cf)
 		{
-			cf.cbSize = sizeof( CHARFORMAT2 );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, 0, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT2);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, 0, (LPARAM) &cf);
 		}
 
-		DWORD GetSelectionCharFormat( CHARFORMAT2& cf ) const
+		DWORD GetSelectionCharFormat(CHARFORMAT2& cf) const
 		{
-			cf.cbSize = sizeof( CHARFORMAT2 );
-			return (DWORD) SendMessage( m_hWnd, EM_GETCHARFORMAT, 1, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT2);
+			return (DWORD) SendMessage(m_hWnd, EM_GETCHARFORMAT, 1, (LPARAM) &cf);
 		}
 
-		BOOL SetSelectionCharFormat( CHARFORMAT2& cf )
+		BOOL SetSelectionCharFormat(CHARFORMAT2& cf)
 		{
-			cf.cbSize = sizeof( CHARFORMAT2 );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT2);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf);
 		}
 
-		BOOL SetWordCharFormat( CHARFORMAT2& cf )
+		BOOL SetWordCharFormat(CHARFORMAT2& cf)
 		{
-			cf.cbSize = sizeof( CHARFORMAT2 );
-			return (BOOL) SendMessage( m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION | SCF_WORD, (LPARAM) &cf );
+			cf.cbSize = sizeof(CHARFORMAT2);
+			return (BOOL) SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION | SCF_WORD, (LPARAM) &cf);
 		}
 
-		DWORD GetParaFormat( PARAFORMAT2& pf ) const
+		DWORD GetParaFormat(PARAFORMAT2& pf) const
 		{
-			pf.cbSize = sizeof( PARAFORMAT2 );
-			return (DWORD) SendMessage( m_hWnd, EM_GETPARAFORMAT, 0, (LPARAM) &pf );
+			pf.cbSize = sizeof(PARAFORMAT2);
+			return (DWORD) SendMessage(m_hWnd, EM_GETPARAFORMAT, 0, (LPARAM) &pf);
 		}
 
-		BOOL SetParaFormat( PARAFORMAT2& pf )
+		BOOL SetParaFormat(PARAFORMAT2& pf)
 		{
-			pf.cbSize = sizeof( PARAFORMAT2 );
-			return (BOOL) SendMessage( m_hWnd, EM_SETPARAFORMAT, 0, (LPARAM) &pf );
+			pf.cbSize = sizeof(PARAFORMAT2);
+			return (BOOL) SendMessage(m_hWnd, EM_SETPARAFORMAT, 0, (LPARAM) &pf);
 		}
 
-		TEXTMODE GetTextMode( ) const
+		TEXTMODE GetTextMode() const
 		{
-			return (TEXTMODE) SendMessage( m_hWnd, EM_GETTEXTMODE, 0, 0L );
+			return (TEXTMODE) SendMessage(m_hWnd, EM_GETTEXTMODE, 0, 0L);
 		}
 
-		BOOL SetTextMode( TEXTMODE enumTextMode )
+		BOOL SetTextMode(TEXTMODE enumTextMode)
 		{
-			return !(BOOL) SendMessage( m_hWnd, EM_SETTEXTMODE, enumTextMode, 0L );
+			return !(BOOL) SendMessage(m_hWnd, EM_SETTEXTMODE, enumTextMode, 0L);
 		}
 
-		UNDONAMEID GetUndoName( ) const
+		UNDONAMEID GetUndoName() const
 		{
-			return (UNDONAMEID) SendMessage( m_hWnd, EM_GETUNDONAME, 0, 0L );
+			return (UNDONAMEID) SendMessage(m_hWnd, EM_GETUNDONAME, 0, 0L);
 		}
 
-		UNDONAMEID GetRedoName( ) const
+		UNDONAMEID GetRedoName() const
 		{
-			return (UNDONAMEID) SendMessage( m_hWnd, EM_GETREDONAME, 0, 0L );
+			return (UNDONAMEID) SendMessage(m_hWnd, EM_GETREDONAME, 0, 0L);
 		}
 
-		BOOL CanRedo( ) const
+		BOOL CanRedo() const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_CANREDO, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_CANREDO, 0, 0L);
 		}
 
-		BOOL GetAutoURLDetect( ) const
+		BOOL GetAutoURLDetect() const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_GETAUTOURLDETECT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_GETAUTOURLDETECT, 0, 0L);
 		}
 
-		BOOL SetAutoURLDetect( BOOL bAutoDetect = TRUE )
+		BOOL SetAutoURLDetect(BOOL bAutoDetect = TRUE)
 		{
-			return !(BOOL) SendMessage( m_hWnd, EM_AUTOURLDETECT, bAutoDetect, 0L );
+			return !(BOOL) SendMessage(m_hWnd, EM_AUTOURLDETECT, bAutoDetect, 0L);
 		}
 
-		UINT SetUndoLimit( UINT uUndoLimit )
+		UINT SetUndoLimit(UINT uUndoLimit)
 		{
-			return (UINT) SendMessage( m_hWnd, EM_SETUNDOLIMIT, uUndoLimit, 0L );
+			return (UINT) SendMessage(m_hWnd, EM_SETUNDOLIMIT, uUndoLimit, 0L);
 		}
 
-		void SetPalette( HPALETTE hPalette )
+		void SetPalette(HPALETTE hPalette)
 		{
-			SendMessage( m_hWnd, EM_SETPALETTE, (WPARAM) hPalette, 0L );
+			SendMessage(m_hWnd, EM_SETPALETTE, (WPARAM) hPalette, 0L);
 		}
 
-		int GetTextEx( GETTEXTEX* pGetTextEx, LPTSTR lpstrText ) const
+		int GetTextEx(GETTEXTEX* pGetTextEx, LPTSTR lpstrText) const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETTEXTEX, (WPARAM) pGetTextEx, (LPARAM) lpstrText );
+			return (int) SendMessage(m_hWnd, EM_GETTEXTEX, (WPARAM) pGetTextEx, (LPARAM) lpstrText);
 		}
 
-		int GetTextEx( LPTSTR lpstrText, int nTextLen, DWORD dwFlags = GT_DEFAULT, UINT uCodePage = CP_ACP, LPCSTR lpDefaultChar = NULL, LPBOOL lpUsedDefChar = NULL ) const
+		int GetTextEx(LPTSTR lpstrText, int nTextLen, DWORD dwFlags = GT_DEFAULT, UINT uCodePage = CP_ACP, LPCSTR lpDefaultChar = NULL, LPBOOL lpUsedDefChar = NULL) const
 		{
-			GETTEXTEX gte = { 0 };
-			gte.cb = nTextLen * sizeof( TCHAR );
+			GETTEXTEX gte = {0};
+			gte.cb = nTextLen * sizeof(TCHAR);
 			gte.codepage = uCodePage;
 			gte.flags = dwFlags;
 			gte.lpDefaultChar = lpDefaultChar;
 			gte.lpUsedDefChar = lpUsedDefChar;
-			return (int) SendMessage( m_hWnd, EM_GETTEXTEX, (WPARAM) &gte, (LPARAM) lpstrText );
+			return (int) SendMessage(m_hWnd, EM_GETTEXTEX, (WPARAM) &gte, (LPARAM) lpstrText);
 		}
 
-		int GetTextLengthEx( GETTEXTLENGTHEX* pGetTextLengthEx ) const
+		int GetTextLengthEx(GETTEXTLENGTHEX* pGetTextLengthEx) const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETTEXTLENGTHEX, (WPARAM) pGetTextLengthEx, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETTEXTLENGTHEX, (WPARAM) pGetTextLengthEx, 0L);
 		}
 
-		int GetTextLengthEx( DWORD dwFlags = GTL_DEFAULT, UINT uCodePage = CP_ACP ) const
+		int GetTextLengthEx(DWORD dwFlags = GTL_DEFAULT, UINT uCodePage = CP_ACP) const
 		{
-			GETTEXTLENGTHEX gtle = { 0 };
+			GETTEXTLENGTHEX gtle = {0};
 			gtle.codepage = uCodePage;
 			gtle.flags = dwFlags;
-			return (int) SendMessage( m_hWnd, EM_GETTEXTLENGTHEX, (WPARAM) &gtle, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETTEXTLENGTHEX, (WPARAM) &gtle, 0L);
 		}
 
-		EDITWORDBREAKPROC GetWordBreakProc( ) const
+		EDITWORDBREAKPROC GetWordBreakProc() const
 		{
-			return (EDITWORDBREAKPROC) SendMessage( m_hWnd, EM_GETWORDBREAKPROC, 0, 0L );
+			return (EDITWORDBREAKPROC) SendMessage(m_hWnd, EM_GETWORDBREAKPROC, 0, 0L);
 		}
 
-		void SetWordBreakProc( EDITWORDBREAKPROC ewbprc )
+		void SetWordBreakProc(EDITWORDBREAKPROC ewbprc)
 		{
-			SendMessage( m_hWnd, EM_SETWORDBREAKPROC, 0, (LPARAM) ewbprc );
+			SendMessage(m_hWnd, EM_SETWORDBREAKPROC, 0, (LPARAM) ewbprc);
 		}
 
-		int SetTextEx( SETTEXTEX* pSetTextEx, LPCTSTR lpstrText )
+		int SetTextEx(SETTEXTEX* pSetTextEx, LPCTSTR lpstrText)
 		{
-			return (int) SendMessage( m_hWnd, EM_SETTEXTEX, (WPARAM) pSetTextEx, (LPARAM) lpstrText );
+			return (int) SendMessage(m_hWnd, EM_SETTEXTEX, (WPARAM) pSetTextEx, (LPARAM) lpstrText);
 		}
 
-		int SetTextEx( LPCTSTR lpstrText, DWORD dwFlags = ST_DEFAULT, UINT uCodePage = CP_ACP )
+		int SetTextEx(LPCTSTR lpstrText, DWORD dwFlags = ST_DEFAULT, UINT uCodePage = CP_ACP)
 		{
-			SETTEXTEX ste = { 0 };
+			SETTEXTEX ste = {0};
 			ste.flags = dwFlags;
 			ste.codepage = uCodePage;
-			return (int) SendMessage( m_hWnd, EM_SETTEXTEX, (WPARAM) &ste, (LPARAM) lpstrText );
+			return (int) SendMessage(m_hWnd, EM_SETTEXTEX, (WPARAM) &ste, (LPARAM) lpstrText);
 		}
 
-		int GetEditStyle( ) const
+		int GetEditStyle() const
 		{
-			return (int) SendMessage( m_hWnd, EM_GETEDITSTYLE, 0, 0L );
+			return (int) SendMessage(m_hWnd, EM_GETEDITSTYLE, 0, 0L);
 		}
 
-		int SetEditStyle( int nStyle, int nMask = -1 )
+		int SetEditStyle(int nStyle, int nMask = -1)
 		{
-			if ( nMask == -1 ) nMask = nStyle;
-			return (int) SendMessage( m_hWnd, EM_SETEDITSTYLE, nStyle, nMask );
+			if (nMask == -1) nMask = nStyle;
+			return (int) SendMessage(m_hWnd, EM_SETEDITSTYLE, nStyle, nMask);
 		}
 
-		BOOL SetFontSize( int nFontSizeDelta )
+		BOOL SetFontSize(int nFontSizeDelta)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETFONTSIZE, nFontSizeDelta, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_SETFONTSIZE, nFontSizeDelta, 0L);
 		}
 
-		void GetScrollPos( LPPOINT lpPoint ) const
+		void GetScrollPos(LPPOINT lpPoint) const
 		{
-			SendMessage( m_hWnd, EM_GETSCROLLPOS, 0, (LPARAM) lpPoint );
+			SendMessage(m_hWnd, EM_GETSCROLLPOS, 0, (LPARAM) lpPoint);
 		}
 
-		void SetScrollPos( LPPOINT lpPoint )
+		void SetScrollPos(LPPOINT lpPoint)
 		{
-			SendMessage( m_hWnd, EM_SETSCROLLPOS, 0, (LPARAM) lpPoint );
+			SendMessage(m_hWnd, EM_SETSCROLLPOS, 0, (LPARAM) lpPoint);
 		}
 
-		BOOL GetZoom( int& nNum, int& nDen ) const
+		BOOL GetZoom(int& nNum, int& nDen) const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_GETZOOM, (WPARAM) &nNum, (LPARAM) &nDen );
+			return (BOOL) SendMessage(m_hWnd, EM_GETZOOM, (WPARAM) &nNum, (LPARAM) &nDen);
 		}
 
-		BOOL SetZoom( int nNum, int nDen )
+		BOOL SetZoom(int nNum, int nDen)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETZOOM, nNum, nDen );
+			return (BOOL) SendMessage(m_hWnd, EM_SETZOOM, nNum, nDen);
 		}
 
-		BOOL SetZoomOff( )
+		BOOL SetZoomOff()
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETZOOM, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_SETZOOM, 0, 0L);
 		}
 
-		void SetMargins( UINT nLeft, UINT nRight, WORD wFlags = EC_LEFTMARGIN | EC_RIGHTMARGIN )
+		void SetMargins(UINT nLeft, UINT nRight, WORD wFlags = EC_LEFTMARGIN | EC_RIGHTMARGIN)
 		{
-			SendMessage( m_hWnd, EM_SETMARGINS, wFlags, MAKELONG( nLeft, nRight ) );
+			SendMessage(m_hWnd, EM_SETMARGINS, wFlags, MAKELONG(nLeft, nRight));
 		}
 
-		void LimitText( LONG nChars = 0 )
+		void LimitText(LONG nChars = 0)
 		{
-			SendMessage( m_hWnd, EM_EXLIMITTEXT, 0, nChars );
+			SendMessage(m_hWnd, EM_EXLIMITTEXT, 0, nChars);
 		}
 
-		int LineFromChar( LONG nIndex ) const
+		int LineFromChar(LONG nIndex) const
 		{
-			return (int) SendMessage( m_hWnd, EM_EXLINEFROMCHAR, 0, nIndex );
+			return (int) SendMessage(m_hWnd, EM_EXLINEFROMCHAR, 0, nIndex);
 		}
 
-		POINT PosFromChar( LONG nChar ) const
+		POINT PosFromChar(LONG nChar) const
 		{
-			POINT point = { 0, 0 };
-			SendMessage( m_hWnd, EM_POSFROMCHAR, (WPARAM) &point, nChar );
+			POINT point = {0, 0};
+			SendMessage(m_hWnd, EM_POSFROMCHAR, (WPARAM) &point, nChar);
 			return point;
 		}
 
-		int CharFromPos( POINT pt ) const
+		int CharFromPos(POINT pt) const
 		{
-			POINTL ptl = { pt.x, pt.y };
-			return (int) SendMessage( m_hWnd, EM_CHARFROMPOS, 0, (LPARAM) &ptl );
+			POINTL ptl = {pt.x, pt.y};
+			return (int) SendMessage(m_hWnd, EM_CHARFROMPOS, 0, (LPARAM) &ptl);
 		}
 
-		void EmptyUndoBuffer( )
+		void EmptyUndoBuffer()
 		{
-			SendMessage( m_hWnd, EM_EMPTYUNDOBUFFER, 0, 0L );
+			SendMessage(m_hWnd, EM_EMPTYUNDOBUFFER, 0, 0L);
 		}
 
-		int LineIndex( int nLine = -1 ) const
+		int LineIndex(int nLine = -1) const
 		{
-			return (int) SendMessage( m_hWnd, EM_LINEINDEX, nLine, 0L );
+			return (int) SendMessage(m_hWnd, EM_LINEINDEX, nLine, 0L);
 		}
 
-		int LineLength( int nLine = -1 ) const
+		int LineLength(int nLine = -1) const
 		{
-			return (int) SendMessage( m_hWnd, EM_LINELENGTH, nLine, 0L );
+			return (int) SendMessage(m_hWnd, EM_LINELENGTH, nLine, 0L);
 		}
 
-		BOOL LineScroll( int nLines )
+		BOOL LineScroll(int nLines)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_LINESCROLL, 0, nLines );
+			return (BOOL) SendMessage(m_hWnd, EM_LINESCROLL, 0, nLines);
 		}
 
-		void ReplaceSel( LPCTSTR lpszNewText, BOOL bCanUndo = FALSE )
+		void ReplaceSel(LPCTSTR lpszNewText, BOOL bCanUndo = FALSE)
 		{
-			SendMessage( m_hWnd, EM_REPLACESEL, (WPARAM) bCanUndo, (LPARAM) lpszNewText );
+			SendMessage(m_hWnd, EM_REPLACESEL, (WPARAM) bCanUndo, (LPARAM) lpszNewText);
 		}
 
-		void SetRect( LPCRECT lpRect )
+		void SetRect(LPCRECT lpRect)
 		{
-			SendMessage( m_hWnd, EM_SETRECT, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, EM_SETRECT, 0, (LPARAM) lpRect);
 		}
 
-		BOOL DisplayBand( LPRECT pDisplayRect )
+		BOOL DisplayBand(LPRECT pDisplayRect)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_DISPLAYBAND, 0, (LPARAM) pDisplayRect );
+			return (BOOL) SendMessage(m_hWnd, EM_DISPLAYBAND, 0, (LPARAM) pDisplayRect);
 		}
 
-		LONG FindText( DWORD dwFlags, FINDTEXT& ft ) const
+		LONG FindText(DWORD dwFlags, FINDTEXT& ft) const
 		{
 #if defined(_UNICODE)
-			return (LONG) SendMessage( m_hWnd, EM_FINDTEXTW, dwFlags, (LPARAM) &ft );
+			return (LONG) SendMessage(m_hWnd, EM_FINDTEXTW, dwFlags, (LPARAM) &ft);
 #else
-			return (LONG) SendMessage( m_hWnd, EM_FINDTEXT, dwFlags, (LPARAM) &ft );
+			return (LONG) SendMessage(m_hWnd, EM_FINDTEXT, dwFlags, (LPARAM) &ft);
 #endif
 		}
 
-		LONG FindText( DWORD dwFlags, FINDTEXTEX& ft ) const
+		LONG FindText(DWORD dwFlags, FINDTEXTEX& ft) const
 		{
 #if defined(_UNICODE)
-			return (LONG) SendMessage( m_hWnd, EM_FINDTEXTEXW, dwFlags, (LPARAM) &ft );
+			return (LONG) SendMessage(m_hWnd, EM_FINDTEXTEXW, dwFlags, (LPARAM) &ft);
 #else
-			return (LONG) SendMessage( m_hWnd, EM_FINDTEXTEX, dwFlags, (LPARAM) &ft );
+			return (LONG) SendMessage(m_hWnd, EM_FINDTEXTEX, dwFlags, (LPARAM) &ft);
 #endif
 		}
 
-		LONG FormatRange( FORMATRANGE& fr, BOOL bDisplay = TRUE )
+		LONG FormatRange(FORMATRANGE& fr, BOOL bDisplay = TRUE)
 		{
-			return (LONG) SendMessage( m_hWnd, EM_FORMATRANGE, bDisplay, (LPARAM) &fr );
+			return (LONG) SendMessage(m_hWnd, EM_FORMATRANGE, bDisplay, (LPARAM) &fr);
 		}
 
-		LONG FormatRange( FORMATRANGE* pFormatRange, BOOL bDisplay = TRUE )
+		LONG FormatRange(FORMATRANGE* pFormatRange, BOOL bDisplay = TRUE)
 		{
-			return (LONG) SendMessage( m_hWnd, EM_FORMATRANGE, bDisplay, (LPARAM) pFormatRange );
+			return (LONG) SendMessage(m_hWnd, EM_FORMATRANGE, bDisplay, (LPARAM) pFormatRange);
 		}
 
-		void HideSelection( BOOL bHide = TRUE, BOOL bChangeStyle = FALSE )
+		void HideSelection(BOOL bHide = TRUE, BOOL bChangeStyle = FALSE)
 		{
-			SendMessage( m_hWnd, EM_HIDESELECTION, bHide, bChangeStyle );
+			SendMessage(m_hWnd, EM_HIDESELECTION, bHide, bChangeStyle);
 		}
 
-		void PasteSpecial( UINT uClipFormat, DWORD dwAspect = 0, HMETAFILE hMF = 0 )
+		void PasteSpecial(UINT uClipFormat, DWORD dwAspect = 0, HMETAFILE hMF = 0)
 		{
-			REPASTESPECIAL reps = { dwAspect, (DWORD_PTR) hMF };
-			SendMessage( m_hWnd, EM_PASTESPECIAL, uClipFormat, (LPARAM) &reps );
+			REPASTESPECIAL reps = {dwAspect, (DWORD_PTR) hMF};
+			SendMessage(m_hWnd, EM_PASTESPECIAL, uClipFormat, (LPARAM) &reps);
 		}
 
-		void RequestResize( )
+		void RequestResize()
 		{
-			SendMessage( m_hWnd, EM_REQUESTRESIZE, 0, 0L );
+			SendMessage(m_hWnd, EM_REQUESTRESIZE, 0, 0L);
 		}
 
-		LONG StreamIn( UINT uFormat, EDITSTREAM& es )
+		LONG StreamIn(UINT uFormat, EDITSTREAM& es)
 		{
-			return (LONG) SendMessage( m_hWnd, EM_STREAMIN, uFormat, (LPARAM) &es );
+			return (LONG) SendMessage(m_hWnd, EM_STREAMIN, uFormat, (LPARAM) &es);
 		}
 
-		LONG StreamOut( UINT uFormat, EDITSTREAM& es )
+		LONG StreamOut(UINT uFormat, EDITSTREAM& es)
 		{
-			return (LONG) SendMessage( m_hWnd, EM_STREAMOUT, uFormat, (LPARAM) &es );
+			return (LONG) SendMessage(m_hWnd, EM_STREAMOUT, uFormat, (LPARAM) &es);
 		}
 
-		DWORD FindWordBreak( int nCode, LONG nStartChar )
+		DWORD FindWordBreak(int nCode, LONG nStartChar)
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_FINDWORDBREAK, nCode, nStartChar );
+			return (DWORD) SendMessage(m_hWnd, EM_FINDWORDBREAK, nCode, nStartChar);
 		}
 
-		void ScrollCaret( )
+		void ScrollCaret()
 		{
-			SendMessage( m_hWnd, EM_SCROLLCARET, 0, 0L );
+			SendMessage(m_hWnd, EM_SCROLLCARET, 0, 0L);
 		}
 
-		int InsertText( long nInsertAfterChar, LPCTSTR lpstrText, BOOL bCanUndo = FALSE )
+		int InsertText(long nInsertAfterChar, LPCTSTR lpstrText, BOOL bCanUndo = FALSE)
 		{
-			int nRet = SetSel( nInsertAfterChar, nInsertAfterChar );
-			ReplaceSel( lpstrText, bCanUndo );
+			int nRet = SetSel(nInsertAfterChar, nInsertAfterChar);
+			ReplaceSel(lpstrText, bCanUndo);
 			return nRet;
 		}
 
-		int AppendText( LPCTSTR lpstrText, BOOL bCanUndo = FALSE )
+		int AppendText(LPCTSTR lpstrText, BOOL bCanUndo = FALSE)
 		{
-			return InsertText( GetTextLength( ), lpstrText, bCanUndo );
+			return InsertText(GetTextLength(), lpstrText, bCanUndo);
 		}
 
-		BOOL Undo( )
+		BOOL Undo()
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_UNDO, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_UNDO, 0, 0L);
 		}
 
-		void Clear( )
+		void Clear()
 		{
-			SendMessage( m_hWnd, WM_CLEAR, 0, 0L );
+			SendMessage(m_hWnd, WM_CLEAR, 0, 0L);
 		}
 
-		void Copy( )
+		void Copy()
 		{
-			SendMessage( m_hWnd, WM_COPY, 0, 0L );
+			SendMessage(m_hWnd, WM_COPY, 0, 0L);
 		}
 
-		void Cut( )
+		void Cut()
 		{
-			SendMessage( m_hWnd, WM_CUT, 0, 0L );
+			SendMessage(m_hWnd, WM_CUT, 0, 0L);
 		}
 
-		void Paste( )
+		void Paste()
 		{
-			SendMessage( m_hWnd, WM_PASTE, 0, 0L );
+			SendMessage(m_hWnd, WM_PASTE, 0, 0L);
 		}
 
-		IRichEditOle* GetOleInterface( ) const
+		IRichEditOle* GetOleInterface() const
 		{
 			IRichEditOle *pRichEditOle = NULL;
-			SendMessage( m_hWnd, EM_GETOLEINTERFACE, 0, (LPARAM) &pRichEditOle );
+			SendMessage(m_hWnd, EM_GETOLEINTERFACE, 0, (LPARAM) &pRichEditOle);
 			return pRichEditOle;
 		}
 
-		BOOL SetOleCallback( IRichEditOleCallback* pCallback )
+		BOOL SetOleCallback(IRichEditOleCallback* pCallback)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETOLECALLBACK, 0, (LPARAM) pCallback );
+			return (BOOL) SendMessage(m_hWnd, EM_SETOLECALLBACK, 0, (LPARAM) pCallback);
 		}
 
-		BOOL Redo( )
+		BOOL Redo()
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_REDO, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_REDO, 0, 0L);
 		}
 
-		void StopGroupTyping( )
+		void StopGroupTyping()
 		{
-			SendMessage( m_hWnd, EM_STOPGROUPTYPING, 0, 0L );
+			SendMessage(m_hWnd, EM_STOPGROUPTYPING, 0, 0L);
 		}
 
-		void ShowScrollBar( int nBarType, BOOL bVisible = TRUE )
+		void ShowScrollBar(int nBarType, BOOL bVisible = TRUE)
 		{
-			SendMessage( m_hWnd, EM_SHOWSCROLLBAR, nBarType, bVisible );
+			SendMessage(m_hWnd, EM_SHOWSCROLLBAR, nBarType, bVisible);
 		}
 
-		BOOL SetTabStops( int nTabStops, LPINT rgTabStops )
+		BOOL SetTabStops(int nTabStops, LPINT rgTabStops)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETTABSTOPS, nTabStops, (LPARAM) rgTabStops );
+			return (BOOL) SendMessage(m_hWnd, EM_SETTABSTOPS, nTabStops, (LPARAM) rgTabStops);
 		}
 
-		BOOL SetTabStops( )
+		BOOL SetTabStops()
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETTABSTOPS, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_SETTABSTOPS, 0, 0L);
 		}
 
-		BOOL SetTabStops( const int& cxEachStop )
+		BOOL SetTabStops(const int& cxEachStop)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETTABSTOPS, 1, (LPARAM) (LPINT) &cxEachStop );
+			return (BOOL) SendMessage(m_hWnd, EM_SETTABSTOPS, 1, (LPARAM) (LPINT) &cxEachStop);
 		}
 
-		AutoCorrectProc GetAutoCorrectProc( ) const
+		::AutoCorrectProc GetAutoCorrectProc() const
 		{
-			return (AutoCorrectProc) SendMessage( m_hWnd, EM_GETAUTOCORRECTPROC, 0, 0L );
+			return (::AutoCorrectProc) SendMessage(m_hWnd, EM_GETAUTOCORRECTPROC, 0, 0L);
 		}
 
-		BOOL SetAutoCorrectProc( AutoCorrectProc pfn )
+		BOOL SetAutoCorrectProc(::AutoCorrectProc pfn)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETAUTOCORRECTPROC, (WPARAM) pfn, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_SETAUTOCORRECTPROC, (WPARAM) pfn, 0L);
 		}
 
-		BOOL CallAutoCorrectProc( WCHAR ch )
+		BOOL CallAutoCorrectProc(WCHAR ch)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_CALLAUTOCORRECTPROC, (WPARAM) ch, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_CALLAUTOCORRECTPROC, (WPARAM) ch, 0L);
 		}
 
-		DWORD GetEditStyleEx( ) const
+		DWORD GetEditStyleEx() const
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_GETEDITSTYLEEX, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, EM_GETEDITSTYLEEX, 0, 0L);
 		}
 
-		DWORD SetEditStyleEx( DWORD dwStyleEx, DWORD dwMask )
+		DWORD SetEditStyleEx(DWORD dwStyleEx, DWORD dwMask)
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_SETEDITSTYLEEX, dwStyleEx, dwMask );
+			return (DWORD) SendMessage(m_hWnd, EM_SETEDITSTYLEEX, dwStyleEx, dwMask);
 		}
 
-		DWORD GetStoryType( int nStoryIndex ) const
+		DWORD GetStoryType(int nStoryIndex) const
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_GETSTORYTYPE, nStoryIndex, 0L );
+			return (DWORD) SendMessage(m_hWnd, EM_GETSTORYTYPE, nStoryIndex, 0L);
 		}
 
-		DWORD SetStoryType( int nStoryIndex, DWORD dwStoryType )
+		DWORD SetStoryType(int nStoryIndex, DWORD dwStoryType)
 		{
-			return (DWORD) SendMessage( m_hWnd, EM_SETSTORYTYPE, nStoryIndex, dwStoryType );
+			return (DWORD) SendMessage(m_hWnd, EM_SETSTORYTYPE, nStoryIndex, dwStoryType);
 		}
 
-		DWORD GetEllipsisMode( ) const
+		DWORD GetEllipsisMode() const
 		{
 			DWORD dwMode = 0;
-			BOOL bRet = (BOOL) SendMessage( m_hWnd, EM_GETELLIPSISMODE, 0, (LPARAM) &dwMode );
+			BOOL bRet = (BOOL) SendMessage(m_hWnd, EM_GETELLIPSISMODE, 0, (LPARAM) &dwMode);
 			bRet;
 			return dwMode;
 		}
 
-		BOOL SetEllipsisMode( DWORD dwEllipsisMode )
+		BOOL SetEllipsisMode(DWORD dwEllipsisMode)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETELLIPSISMODE, 0, dwEllipsisMode );
+			return (BOOL) SendMessage(m_hWnd, EM_SETELLIPSISMODE, 0, dwEllipsisMode);
 		}
 
-		BOOL GetEllipsisState( ) const
+		BOOL GetEllipsisState() const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_GETELLIPSISSTATE, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_GETELLIPSISSTATE, 0, 0L);
 		}
 
-		BOOL GetTouchOptions( int nTouchOptions ) const
+		BOOL GetTouchOptions(int nTouchOptions) const
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_GETTOUCHOPTIONS, nTouchOptions, 0L );
+			return (BOOL) SendMessage(m_hWnd, EM_GETTOUCHOPTIONS, nTouchOptions, 0L);
 		}
 
-		void SetTouchOptions( int nTouchOptions, BOOL bEnable )
+		void SetTouchOptions(int nTouchOptions, BOOL bEnable)
 		{
-			SendMessage( m_hWnd, EM_SETTOUCHOPTIONS, nTouchOptions, bEnable );
+			SendMessage(m_hWnd, EM_SETTOUCHOPTIONS, nTouchOptions, bEnable);
 		}
 
-		HRESULT InsertTable( TABLEROWPARMS* pRowParams, TABLECELLPARMS* pCellParams )
+		HRESULT InsertTable(TABLEROWPARMS* pRowParams, TABLECELLPARMS* pCellParams)
 		{
-			return (HRESULT) SendMessage( m_hWnd, EM_INSERTTABLE, (WPARAM) pRowParams, (LPARAM) pCellParams );
+			return (HRESULT) SendMessage(m_hWnd, EM_INSERTTABLE, (WPARAM) pRowParams, (LPARAM) pCellParams);
 		}
 
-		HRESULT GetTableParams( TABLEROWPARMS* pRowParams, TABLECELLPARMS* pCellParams ) const
+		HRESULT GetTableParams(TABLEROWPARMS* pRowParams, TABLECELLPARMS* pCellParams) const
 		{
-			return (HRESULT) SendMessage( m_hWnd, EM_GETTABLEPARMS, (WPARAM) pRowParams, (LPARAM) pCellParams );
+			return (HRESULT) SendMessage(m_hWnd, EM_GETTABLEPARMS, (WPARAM) pRowParams, (LPARAM) pCellParams);
 		}
 
-		HRESULT SetTableParams( TABLEROWPARMS* pRowParams, TABLECELLPARMS* pCellParams )
+		HRESULT SetTableParams(TABLEROWPARMS* pRowParams, TABLECELLPARMS* pCellParams)
 		{
-			return (HRESULT) SendMessage( m_hWnd, EM_SETTABLEPARMS, (WPARAM) pRowParams, (LPARAM) pCellParams );
+			return (HRESULT) SendMessage(m_hWnd, EM_SETTABLEPARMS, (WPARAM) pRowParams, (LPARAM) pCellParams);
 		}
 
-		HRESULT InsertImage( RICHEDIT_IMAGE_PARAMETERS* pParams )
+		HRESULT InsertImage(RICHEDIT_IMAGE_PARAMETERS* pParams)
 		{
-			return (HRESULT) SendMessage( m_hWnd, EM_INSERTIMAGE, 0, (LPARAM) pParams );
+			return (HRESULT) SendMessage(m_hWnd, EM_INSERTIMAGE, 0, (LPARAM) pParams);
 		}
 
-		BOOL SetUiaName( LPCTSTR lpstrName )
+		BOOL SetUiaName(LPCTSTR lpstrName)
 		{
-			return (BOOL) SendMessage( m_hWnd, EM_SETUIANAME, 0, (LPARAM) lpstrName );
+			return (BOOL) SendMessage(m_hWnd, EM_SETUIANAME, 0, (LPARAM) lpstrName);
 		}
 	};
 
@@ -5168,50 +5168,50 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		ImageList GetImageList( ) const
+		ImageList GetImageList() const
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, CBEM_GETIMAGELIST, 0, 0L ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, CBEM_GETIMAGELIST, 0, 0L));
 		}
 
-		ImageList SetImageList( HIMAGELIST hImageList )
+		ImageList SetImageList(HIMAGELIST hImageList)
 		{
-			return ImageList((HIMAGELIST) SendMessage( m_hWnd, CBEM_SETIMAGELIST, 0, (LPARAM) hImageList ));
+			return ImageList((HIMAGELIST) SendMessage(m_hWnd, CBEM_SETIMAGELIST, 0, (LPARAM) hImageList));
 		}
 
-		DWORD GetExtendedStyle( ) const
+		DWORD GetExtendedStyle() const
 		{
-			return (DWORD) SendMessage( m_hWnd, CBEM_GETEXTENDEDSTYLE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, CBEM_GETEXTENDEDSTYLE, 0, 0L);
 		}
 
-		DWORD SetExtendedStyle( DWORD dwExMask, DWORD dwExStyle )
+		DWORD SetExtendedStyle(DWORD dwExMask, DWORD dwExStyle)
 		{
-			return (DWORD) SendMessage( m_hWnd, CBEM_SETEXTENDEDSTYLE, dwExMask, dwExStyle );
+			return (DWORD) SendMessage(m_hWnd, CBEM_SETEXTENDEDSTYLE, dwExMask, dwExStyle);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, CBEM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, CBEM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, CBEM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, CBEM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		void SetWindowTheme( LPCWSTR lpstrTheme )
+		void SetWindowTheme(LPCWSTR lpstrTheme)
 		{
-			SendMessage( m_hWnd, CBEM_SETWINDOWTHEME, 0, (LPARAM) lpstrTheme );
+			SendMessage(m_hWnd, CBEM_SETWINDOWTHEME, 0, (LPARAM) lpstrTheme);
 		}
 
-		int InsertItem( const COMBOBOXEXITEM* lpcCBItem )
+		int InsertItem(const COMBOBOXEXITEM* lpcCBItem)
 		{
-			return (int) SendMessage( m_hWnd, CBEM_INSERTITEM, 0, (LPARAM) lpcCBItem );
+			return (int) SendMessage(m_hWnd, CBEM_INSERTITEM, 0, (LPARAM) lpcCBItem);
 		}
 
-		int InsertItem( UINT nMask, int nIndex, LPCTSTR lpszItem, int nImage, int nSelImage,
-						int iIndent, int iOverlay, LPARAM lParam )
+		int InsertItem(UINT nMask, int nIndex, LPCTSTR lpszItem, int nImage, int nSelImage,
+					   int iIndent, int iOverlay, LPARAM lParam)
 		{
-			COMBOBOXEXITEM cbex = { 0 };
+			COMBOBOXEXITEM cbex = {0};
 			cbex.mask = nMask;
 			cbex.iItem = nIndex;
 			cbex.pszText = (LPTSTR) lpszItem;
@@ -5220,12 +5220,12 @@ namespace WPP
 			cbex.iIndent = iIndent;
 			cbex.iOverlay = iOverlay;
 			cbex.lParam = lParam;
-			return (int) SendMessage( m_hWnd, CBEM_INSERTITEM, 0, (LPARAM) &cbex );
+			return (int) SendMessage(m_hWnd, CBEM_INSERTITEM, 0, (LPARAM) &cbex);
 		}
 
-		int InsertItem( int nIndex, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, LPARAM lParam = 0 )
+		int InsertItem(int nIndex, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, LPARAM lParam = 0)
 		{
-			COMBOBOXEXITEM cbex = { 0 };
+			COMBOBOXEXITEM cbex = {0};
 			cbex.mask = CBEIF_TEXT | CBEIF_IMAGE | CBEIF_SELECTEDIMAGE | CBEIF_INDENT | CBEIF_LPARAM;
 			cbex.iItem = nIndex;
 			cbex.pszText = (LPTSTR) lpszItem;
@@ -5233,38 +5233,38 @@ namespace WPP
 			cbex.iSelectedImage = nSelImage;
 			cbex.iIndent = iIndent;
 			cbex.lParam = lParam;
-			return (int) SendMessage( m_hWnd, CBEM_INSERTITEM, 0, (LPARAM) &cbex );
+			return (int) SendMessage(m_hWnd, CBEM_INSERTITEM, 0, (LPARAM) &cbex);
 		}
 
-		int AddItem( UINT nMask, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, int iOverlay, LPARAM lParam )
+		int AddItem(UINT nMask, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, int iOverlay, LPARAM lParam)
 		{
-			return InsertItem( nMask, -1, lpszItem, nImage, nSelImage, iIndent, iOverlay, lParam );
+			return InsertItem(nMask, -1, lpszItem, nImage, nSelImage, iIndent, iOverlay, lParam);
 		}
 
-		int AddItem( LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, LPARAM lParam = 0 )
+		int AddItem(LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, LPARAM lParam = 0)
 		{
-			return InsertItem( -1, lpszItem, nImage, nSelImage, iIndent, lParam );
+			return InsertItem(-1, lpszItem, nImage, nSelImage, iIndent, lParam);
 		}
 
-		int DeleteItem( int nIndex )
+		int DeleteItem(int nIndex)
 		{
-			return (int) SendMessage( m_hWnd, CBEM_DELETEITEM, nIndex, 0L );
+			return (int) SendMessage(m_hWnd, CBEM_DELETEITEM, nIndex, 0L);
 		}
 
-		BOOL GetItem( PCOMBOBOXEXITEM pCBItem ) const
+		BOOL GetItem(PCOMBOBOXEXITEM pCBItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, CBEM_GETITEM, 0, (LPARAM) pCBItem );
+			return (BOOL) SendMessage(m_hWnd, CBEM_GETITEM, 0, (LPARAM) pCBItem);
 		}
 
-		BOOL SetItem( const COMBOBOXEXITEM* lpcCBItem )
+		BOOL SetItem(const COMBOBOXEXITEM* lpcCBItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, CBEM_SETITEM, 0, (LPARAM) lpcCBItem );
+			return (BOOL) SendMessage(m_hWnd, CBEM_SETITEM, 0, (LPARAM) lpcCBItem);
 		}
 
-		int SetItem( int nIndex, UINT nMask, LPCTSTR lpszItem, int nImage, int nSelImage,
-					 int iIndent, int iOverlay, LPARAM lParam )
+		int SetItem(int nIndex, UINT nMask, LPCTSTR lpszItem, int nImage, int nSelImage,
+					int iIndent, int iOverlay, LPARAM lParam)
 		{
-			COMBOBOXEXITEM cbex = { 0 };
+			COMBOBOXEXITEM cbex = {0};
 			cbex.mask = nMask;
 			cbex.iItem = nIndex;
 			cbex.pszText = (LPTSTR) lpszItem;
@@ -5273,38 +5273,38 @@ namespace WPP
 			cbex.iIndent = iIndent;
 			cbex.iOverlay = iOverlay;
 			cbex.lParam = lParam;
-			return (int) SendMessage( m_hWnd, CBEM_SETITEM, 0, (LPARAM) &cbex );
+			return (int) SendMessage(m_hWnd, CBEM_SETITEM, 0, (LPARAM) &cbex);
 		}
 
-		BOOL GetItemText( int nIndex, LPTSTR lpszItem, int nLen ) const
+		BOOL GetItemText(int nIndex, LPTSTR lpszItem, int nLen) const
 		{
-			COMBOBOXEXITEM cbex = { 0 };
+			COMBOBOXEXITEM cbex = {0};
 			cbex.mask = CBEIF_TEXT;
 			cbex.iItem = nIndex;
 			cbex.pszText = lpszItem;
 			cbex.cchTextMax = nLen;
 
-			return (BOOL) SendMessage( m_hWnd, CBEM_GETITEM, 0, (LPARAM) &cbex );
+			return (BOOL) SendMessage(m_hWnd, CBEM_GETITEM, 0, (LPARAM) &cbex);
 		}
 
-		BOOL SetItemText( int nIndex, LPCTSTR lpszItem )
+		BOOL SetItemText(int nIndex, LPCTSTR lpszItem)
 		{
-			return SetItem( nIndex, CBEIF_TEXT, lpszItem, 0, 0, 0, 0, 0 );
+			return SetItem(nIndex, CBEIF_TEXT, lpszItem, 0, 0, 0, 0, 0);
 		}
 
-		ComboBox GetComboCtrl( ) const
+		ComboBox GetComboCtrl() const
 		{
-			return ComboBox( (HWND) SendMessage( m_hWnd, CBEM_GETCOMBOCONTROL, 0, 0L ) );
+			return ComboBox((HWND) SendMessage(m_hWnd, CBEM_GETCOMBOCONTROL, 0, 0L));
 		}
 
-		EditText GetEditCtrl( ) const
+		EditText GetEditCtrl() const
 		{
-			return EditText( (HWND) SendMessage( m_hWnd, CBEM_GETEDITCONTROL, 0, 0L ) );
+			return EditText((HWND) SendMessage(m_hWnd, CBEM_GETEDITCONTROL, 0, 0L));
 		}
 
-		BOOL HasEditChanged( ) const
+		BOOL HasEditChanged() const
 		{
-			return (BOOL) SendMessage( m_hWnd, CBEM_HASEDITCHANGED, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, CBEM_HASEDITCHANGED, 0, 0L);
 		}
 	};
 
@@ -5313,168 +5313,168 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		COLORREF GetColor( int nColorType ) const
+		COLORREF GetColor(int nColorType) const
 		{
-			return (COLORREF) SendMessage( m_hWnd, MCM_GETCOLOR, nColorType, 0L );
+			return (COLORREF) SendMessage(m_hWnd, MCM_GETCOLOR, nColorType, 0L);
 		}
 
-		COLORREF SetColor( int nColorType, COLORREF clr )
+		COLORREF SetColor(int nColorType, COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, MCM_SETCOLOR, nColorType, clr );
+			return (COLORREF) SendMessage(m_hWnd, MCM_SETCOLOR, nColorType, clr);
 		}
 
-		BOOL GetCurSel( LPSYSTEMTIME lpSysTime ) const
+		BOOL GetCurSel(LPSYSTEMTIME lpSysTime) const
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_GETCURSEL, 0, (LPARAM) lpSysTime );
+			return (BOOL) SendMessage(m_hWnd, MCM_GETCURSEL, 0, (LPARAM) lpSysTime);
 		}
 
-		BOOL SetCurSel( LPSYSTEMTIME lpSysTime )
+		BOOL SetCurSel(LPSYSTEMTIME lpSysTime)
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_SETCURSEL, 0, (LPARAM) lpSysTime );
+			return (BOOL) SendMessage(m_hWnd, MCM_SETCURSEL, 0, (LPARAM) lpSysTime);
 		}
 
-		int GetFirstDayOfWeek( BOOL* pbLocaleVal = NULL ) const
+		int GetFirstDayOfWeek(BOOL* pbLocaleVal = NULL) const
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, MCM_GETFIRSTDAYOFWEEK, 0, 0L );
-			if ( pbLocaleVal != NULL ) *pbLocaleVal = (BOOL) HIWORD( dwRet );
-			return (int) (short) LOWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, MCM_GETFIRSTDAYOFWEEK, 0, 0L);
+			if (pbLocaleVal != NULL) *pbLocaleVal = (BOOL) HIWORD(dwRet);
+			return (int) (short) LOWORD(dwRet);
 		}
 
-		int SetFirstDayOfWeek( int nDay, BOOL* pbLocaleVal = NULL )
+		int SetFirstDayOfWeek(int nDay, BOOL* pbLocaleVal = NULL)
 		{
-			DWORD dwRet = (DWORD) SendMessage( m_hWnd, MCM_SETFIRSTDAYOFWEEK, 0, nDay );
-			if ( pbLocaleVal != NULL ) *pbLocaleVal = (BOOL) HIWORD( dwRet );
-			return (int) (short) LOWORD( dwRet );
+			DWORD dwRet = (DWORD) SendMessage(m_hWnd, MCM_SETFIRSTDAYOFWEEK, 0, nDay);
+			if (pbLocaleVal != NULL) *pbLocaleVal = (BOOL) HIWORD(dwRet);
+			return (int) (short) LOWORD(dwRet);
 		}
 
-		int GetMaxSelCount( ) const
+		int GetMaxSelCount() const
 		{
-			return (int) SendMessage( m_hWnd, MCM_GETMAXSELCOUNT, 0, 0L );
+			return (int) SendMessage(m_hWnd, MCM_GETMAXSELCOUNT, 0, 0L);
 		}
 
-		BOOL SetMaxSelCount( int nMax )
+		BOOL SetMaxSelCount(int nMax)
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_SETMAXSELCOUNT, nMax, 0L );
+			return (BOOL) SendMessage(m_hWnd, MCM_SETMAXSELCOUNT, nMax, 0L);
 		}
 
-		int GetMonthDelta( ) const
+		int GetMonthDelta() const
 		{
-			return (int) SendMessage( m_hWnd, MCM_GETMONTHDELTA, 0, 0L );
+			return (int) SendMessage(m_hWnd, MCM_GETMONTHDELTA, 0, 0L);
 		}
 
-		int SetMonthDelta( int nDelta )
+		int SetMonthDelta(int nDelta)
 		{
-			return (int) SendMessage( m_hWnd, MCM_SETMONTHDELTA, nDelta, 0L );
+			return (int) SendMessage(m_hWnd, MCM_SETMONTHDELTA, nDelta, 0L);
 		}
 
-		DWORD GetRange( LPSYSTEMTIME lprgSysTimeArray ) const
+		DWORD GetRange(LPSYSTEMTIME lprgSysTimeArray) const
 		{
-			return (DWORD) SendMessage( m_hWnd, MCM_GETRANGE, 0, (LPARAM) lprgSysTimeArray );
+			return (DWORD) SendMessage(m_hWnd, MCM_GETRANGE, 0, (LPARAM) lprgSysTimeArray);
 		}
 
-		BOOL SetRange( DWORD dwFlags, LPSYSTEMTIME lprgSysTimeArray )
+		BOOL SetRange(DWORD dwFlags, LPSYSTEMTIME lprgSysTimeArray)
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_SETRANGE, dwFlags, (LPARAM) lprgSysTimeArray );
+			return (BOOL) SendMessage(m_hWnd, MCM_SETRANGE, dwFlags, (LPARAM) lprgSysTimeArray);
 		}
 
-		BOOL GetSelRange( LPSYSTEMTIME lprgSysTimeArray ) const
+		BOOL GetSelRange(LPSYSTEMTIME lprgSysTimeArray) const
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_GETSELRANGE, 0, (LPARAM) lprgSysTimeArray );
+			return (BOOL) SendMessage(m_hWnd, MCM_GETSELRANGE, 0, (LPARAM) lprgSysTimeArray);
 		}
 
-		BOOL SetSelRange( LPSYSTEMTIME lprgSysTimeArray )
+		BOOL SetSelRange(LPSYSTEMTIME lprgSysTimeArray)
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_SETSELRANGE, 0, (LPARAM) lprgSysTimeArray );
+			return (BOOL) SendMessage(m_hWnd, MCM_SETSELRANGE, 0, (LPARAM) lprgSysTimeArray);
 		}
 
-		BOOL GetToday( LPSYSTEMTIME lpSysTime ) const
+		BOOL GetToday(LPSYSTEMTIME lpSysTime) const
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_GETTODAY, 0, (LPARAM) lpSysTime );
+			return (BOOL) SendMessage(m_hWnd, MCM_GETTODAY, 0, (LPARAM) lpSysTime);
 		}
 
-		void SetToday( LPSYSTEMTIME lpSysTime )
+		void SetToday(LPSYSTEMTIME lpSysTime)
 		{
-			SendMessage( m_hWnd, MCM_SETTODAY, 0, (LPARAM) lpSysTime );
+			SendMessage(m_hWnd, MCM_SETTODAY, 0, (LPARAM) lpSysTime);
 		}
 
-		BOOL GetMinReqRect( LPRECT lpRectInfo ) const
+		BOOL GetMinReqRect(LPRECT lpRectInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_GETMINREQRECT, 0, (LPARAM) lpRectInfo );
+			return (BOOL) SendMessage(m_hWnd, MCM_GETMINREQRECT, 0, (LPARAM) lpRectInfo);
 		}
 
-		int GetMaxTodayWidth( ) const
+		int GetMaxTodayWidth() const
 		{
-			return (int) SendMessage( m_hWnd, MCM_GETMAXTODAYWIDTH, 0, 0L );
+			return (int) SendMessage(m_hWnd, MCM_GETMAXTODAYWIDTH, 0, 0L);
 		}
 
-		BOOL GetUnicodeFormat( ) const
+		BOOL GetUnicodeFormat() const
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_GETUNICODEFORMAT, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, MCM_GETUNICODEFORMAT, 0, 0L);
 		}
 
-		BOOL SetUnicodeFormat( BOOL bUnicode = TRUE )
+		BOOL SetUnicodeFormat(BOOL bUnicode = TRUE)
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_SETUNICODEFORMAT, bUnicode, 0L );
+			return (BOOL) SendMessage(m_hWnd, MCM_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
-		DWORD GetCurrentView( ) const
+		DWORD GetCurrentView() const
 		{
-			return (DWORD) SendMessage( m_hWnd, MCM_GETCURRENTVIEW, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, MCM_GETCURRENTVIEW, 0, 0L);
 		}
 
-		BOOL SetCurrentView( DWORD dwView )
+		BOOL SetCurrentView(DWORD dwView)
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_SETCURRENTVIEW, 0, dwView );
+			return (BOOL) SendMessage(m_hWnd, MCM_SETCURRENTVIEW, 0, dwView);
 		}
 
-		DWORD GetCalendarCount( ) const
+		DWORD GetCalendarCount() const
 		{
-			return (DWORD) SendMessage( m_hWnd, MCM_GETCALENDARCOUNT, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, MCM_GETCALENDARCOUNT, 0, 0L);
 		}
 
-		BOOL GetCalendarGridInfo( PMCGRIDINFO pGridInfo ) const
+		BOOL GetCalendarGridInfo(PMCGRIDINFO pGridInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_GETCALENDARGRIDINFO, 0, (LPARAM) pGridInfo );
+			return (BOOL) SendMessage(m_hWnd, MCM_GETCALENDARGRIDINFO, 0, (LPARAM) pGridInfo);
 		}
 
-		CALID GetCALID( ) const
+		CALID GetCALID() const
 		{
-			return (CALID) SendMessage( m_hWnd, MCM_GETCALID, 0, 0L );
+			return (CALID) SendMessage(m_hWnd, MCM_GETCALID, 0, 0L);
 		}
 
-		void SetCALID( CALID calid )
+		void SetCALID(CALID calid)
 		{
-			SendMessage( m_hWnd, MCM_SETCALID, (LPARAM) calid, 0L );
+			SendMessage(m_hWnd, MCM_SETCALID, (LPARAM) calid, 0L);
 		}
 
-		int GetCalendarBorder( ) const
+		int GetCalendarBorder() const
 		{
-			return (int) SendMessage( m_hWnd, MCM_GETCALENDARBORDER, 0, 0L );
+			return (int) SendMessage(m_hWnd, MCM_GETCALENDARBORDER, 0, 0L);
 		}
 
-		void SetCalendarBorder( int cxyBorder, BOOL bSet = TRUE )
+		void SetCalendarBorder(int cxyBorder, BOOL bSet = TRUE)
 		{
-			SendMessage( m_hWnd, MCM_SETCALENDARBORDER, (WPARAM) bSet, (LPARAM) cxyBorder );
+			SendMessage(m_hWnd, MCM_SETCALENDARBORDER, (WPARAM) bSet, (LPARAM) cxyBorder);
 		}
 
-		int GetMonthRange( DWORD dwFlags, LPSYSTEMTIME lprgSysTimeArray ) const
+		int GetMonthRange(DWORD dwFlags, LPSYSTEMTIME lprgSysTimeArray) const
 		{
-			return (int) SendMessage( m_hWnd, MCM_GETMONTHRANGE, dwFlags, (LPARAM) lprgSysTimeArray );
+			return (int) SendMessage(m_hWnd, MCM_GETMONTHRANGE, dwFlags, (LPARAM) lprgSysTimeArray);
 		}
 
-		BOOL SetDayState( int nMonths, LPMONTHDAYSTATE lpDayStateArray )
+		BOOL SetDayState(int nMonths, LPMONTHDAYSTATE lpDayStateArray)
 		{
-			return (BOOL) SendMessage( m_hWnd, MCM_SETDAYSTATE, nMonths, (LPARAM) lpDayStateArray );
+			return (BOOL) SendMessage(m_hWnd, MCM_SETDAYSTATE, nMonths, (LPARAM) lpDayStateArray);
 		}
 
-		DWORD HitTest( PMCHITTESTINFO pMCHitTest ) const
+		DWORD HitTest(PMCHITTESTINFO pMCHitTest) const
 		{
-			return (DWORD) SendMessage( m_hWnd, MCM_HITTEST, 0, (LPARAM) pMCHitTest );
+			return (DWORD) SendMessage(m_hWnd, MCM_HITTEST, 0, (LPARAM) pMCHitTest);
 		}
 
-		void SizeRectToMin( LPRECT lpRect )
+		void SizeRectToMin(LPRECT lpRect)
 		{
-			SendMessage( m_hWnd, MCM_SIZERECTTOMIN, 0, (LPARAM) lpRect );
+			SendMessage(m_hWnd, MCM_SIZERECTTOMIN, 0, (LPARAM) lpRect);
 		}
 	};
 
@@ -5483,79 +5483,79 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		BOOL SetFormat( LPCTSTR lpszFormat )
+		BOOL SetFormat(LPCTSTR lpszFormat)
 		{
-			return (BOOL) SendMessage( m_hWnd, DTM_SETFORMAT, 0, (LPARAM) lpszFormat );
+			return (BOOL) SendMessage(m_hWnd, DTM_SETFORMAT, 0, (LPARAM) lpszFormat);
 		}
 
-		COLORREF GetMonthCalColor( int nColorType ) const
+		COLORREF GetMonthCalColor(int nColorType) const
 		{
-			return (COLORREF) SendMessage( m_hWnd, DTM_GETMCCOLOR, nColorType, 0L );
+			return (COLORREF) SendMessage(m_hWnd, DTM_GETMCCOLOR, nColorType, 0L);
 		}
 
-		COLORREF SetMonthCalColor( int nColorType, COLORREF clr )
+		COLORREF SetMonthCalColor(int nColorType, COLORREF clr)
 		{
-			return (COLORREF) SendMessage( m_hWnd, DTM_SETMCCOLOR, nColorType, clr );
+			return (COLORREF) SendMessage(m_hWnd, DTM_SETMCCOLOR, nColorType, clr);
 		}
 
-		DWORD GetRange( LPSYSTEMTIME lpSysTimeArray ) const
+		DWORD GetRange(LPSYSTEMTIME lpSysTimeArray) const
 		{
-			return (DWORD) SendMessage( m_hWnd, DTM_GETRANGE, 0, (LPARAM) lpSysTimeArray );
+			return (DWORD) SendMessage(m_hWnd, DTM_GETRANGE, 0, (LPARAM) lpSysTimeArray);
 		}
 
-		BOOL SetRange( DWORD dwFlags, LPSYSTEMTIME lpSysTimeArray )
+		BOOL SetRange(DWORD dwFlags, LPSYSTEMTIME lpSysTimeArray)
 		{
-			return (BOOL) SendMessage( m_hWnd, DTM_SETRANGE, dwFlags, (LPARAM) lpSysTimeArray );
+			return (BOOL) SendMessage(m_hWnd, DTM_SETRANGE, dwFlags, (LPARAM) lpSysTimeArray);
 		}
 
-		DWORD GetSystemTime( LPSYSTEMTIME lpSysTime ) const
+		DWORD GetSystemTime(LPSYSTEMTIME lpSysTime) const
 		{
-			return (DWORD) SendMessage( m_hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM) lpSysTime );
+			return (DWORD) SendMessage(m_hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM) lpSysTime);
 		}
 
-		BOOL SetSystemTime( DWORD dwFlags, LPSYSTEMTIME lpSysTime )
+		BOOL SetSystemTime(DWORD dwFlags, LPSYSTEMTIME lpSysTime)
 		{
-			return (BOOL) SendMessage( m_hWnd, DTM_SETSYSTEMTIME, dwFlags, (LPARAM) lpSysTime );
+			return (BOOL) SendMessage(m_hWnd, DTM_SETSYSTEMTIME, dwFlags, (LPARAM) lpSysTime);
 		}
 
-		MonthCalendar GetMonthCal( ) const
+		MonthCalendar GetMonthCal() const
 		{
-			return MonthCalendar( (HWND) SendMessage( m_hWnd, DTM_GETMONTHCAL, 0, 0L ) );
+			return MonthCalendar((HWND) SendMessage(m_hWnd, DTM_GETMONTHCAL, 0, 0L));
 		}
 
-		HFONT GetMonthCalFont( ) const
+		HFONT GetMonthCalFont() const
 		{
-			return (HFONT) SendMessage( m_hWnd, DTM_GETMCFONT, 0, 0L );
+			return (HFONT) SendMessage(m_hWnd, DTM_GETMCFONT, 0, 0L);
 		}
 
-		void SetMonthCalFont( HFONT hFont, BOOL bRedraw = TRUE )
+		void SetMonthCalFont(HFONT hFont, BOOL bRedraw = TRUE)
 		{
-			SendMessage( m_hWnd, DTM_SETMCFONT, (WPARAM) hFont, MAKELPARAM( bRedraw, 0 ) );
+			SendMessage(m_hWnd, DTM_SETMCFONT, (WPARAM) hFont, MAKELPARAM(bRedraw, 0));
 		}
 
-		DWORD GetMonthCalStyle( ) const
+		DWORD GetMonthCalStyle() const
 		{
-			return (DWORD) SendMessage( m_hWnd, DTM_GETMCSTYLE, 0, 0L );
+			return (DWORD) SendMessage(m_hWnd, DTM_GETMCSTYLE, 0, 0L);
 		}
 
-		DWORD SetMonthCalStyle( DWORD dwStyle )
+		DWORD SetMonthCalStyle(DWORD dwStyle)
 		{
-			return (DWORD) SendMessage( m_hWnd, DTM_SETMCSTYLE, 0, (LPARAM) dwStyle );
+			return (DWORD) SendMessage(m_hWnd, DTM_SETMCSTYLE, 0, (LPARAM) dwStyle);
 		}
 
-		void GetDateTimePickerInfo( LPDATETIMEPICKERINFO lpPickerInfo ) const
+		void GetDateTimePickerInfo(LPDATETIMEPICKERINFO lpPickerInfo) const
 		{
-			SendMessage( m_hWnd, DTM_GETDATETIMEPICKERINFO, 0, (LPARAM) lpPickerInfo );
+			SendMessage(m_hWnd, DTM_GETDATETIMEPICKERINFO, 0, (LPARAM) lpPickerInfo);
 		}
 
-		BOOL GetIdealSize( LPSIZE lpSize ) const
+		BOOL GetIdealSize(LPSIZE lpSize) const
 		{
-			return (BOOL) SendMessage( m_hWnd, DTM_GETIDEALSIZE, 0, (LPARAM) lpSize );
+			return (BOOL) SendMessage(m_hWnd, DTM_GETIDEALSIZE, 0, (LPARAM) lpSize);
 		}
 
-		void CloseMonthCal( )
+		void CloseMonthCal()
 		{
-			SendMessage( m_hWnd, DTM_CLOSEMONTHCAL, 0, 0L );
+			SendMessage(m_hWnd, DTM_CLOSEMONTHCAL, 0, 0L);
 		}
 	};
 
@@ -5564,44 +5564,44 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		BOOL IsBlank( ) const
+		BOOL IsBlank() const
 		{
-			return (BOOL) SendMessage( m_hWnd, IPM_ISBLANK, 0, 0L );
+			return (BOOL) SendMessage(m_hWnd, IPM_ISBLANK, 0, 0L);
 		}
 
-		int GetAddress( LPDWORD lpdwAddress ) const
+		int GetAddress(LPDWORD lpdwAddress) const
 		{
-			return (int) SendMessage( m_hWnd, IPM_GETADDRESS, 0, (LPARAM) lpdwAddress );
+			return (int) SendMessage(m_hWnd, IPM_GETADDRESS, 0, (LPARAM) lpdwAddress);
 		}
 
-		void SetAddress( DWORD dwAddress )
+		void SetAddress(DWORD dwAddress)
 		{
-			SendMessage( m_hWnd, IPM_SETADDRESS, 0, dwAddress );
+			SendMessage(m_hWnd, IPM_SETADDRESS, 0, dwAddress);
 		}
 
-		void SetAddress( unsigned b1, unsigned b2, unsigned b3, unsigned b4 )
+		void SetAddress(unsigned b1, unsigned b2, unsigned b3, unsigned b4)
 		{
-			SendMessage( m_hWnd, IPM_SETADDRESS, 0, MAKEIPADDRESS( b1, b2, b3, b4 ) );
+			SendMessage(m_hWnd, IPM_SETADDRESS, 0, MAKEIPADDRESS(b1, b2, b3, b4));
 		}
 
-		void ClearAddress( )
+		void ClearAddress()
 		{
-			SendMessage( m_hWnd, IPM_CLEARADDRESS, 0, 0L );
+			SendMessage(m_hWnd, IPM_CLEARADDRESS, 0, 0L);
 		}
 
-		void SetRange( int nField, WORD wRange )
+		void SetRange(int nField, WORD wRange)
 		{
-			SendMessage( m_hWnd, IPM_SETRANGE, nField, wRange );
+			SendMessage(m_hWnd, IPM_SETRANGE, nField, wRange);
 		}
 
-		void SetRange( int nField, BYTE nMin, BYTE nMax )
+		void SetRange(int nField, BYTE nMin, BYTE nMax)
 		{
-			SendMessage( m_hWnd, IPM_SETRANGE, nField, MAKEIPRANGE( nMin, nMax ) );
+			SendMessage(m_hWnd, IPM_SETRANGE, nField, MAKEIPRANGE(nMin, nMax));
 		}
 
-		void SetFocus( int nField )
+		void SetFocus(int nField)
 		{
-			SendMessage( m_hWnd, IPM_SETFOCUS, nField, 0L );
+			SendMessage(m_hWnd, IPM_SETFOCUS, nField, 0L);
 		}
 	};
 
@@ -5610,29 +5610,29 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		int GetIdealHeight( int cxMaxWidth = 0 ) const
+		int GetIdealHeight(int cxMaxWidth = 0) const
 		{
-			return (int) SendMessage( m_hWnd, LM_GETIDEALHEIGHT, cxMaxWidth, 0L );
+			return (int) SendMessage(m_hWnd, LM_GETIDEALHEIGHT, cxMaxWidth, 0L);
 		}
 
-		BOOL GetItem( PLITEM pLItem ) const
+		BOOL GetItem(PLITEM pLItem) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LM_GETITEM, 0, (LPARAM) pLItem );
+			return (BOOL) SendMessage(m_hWnd, LM_GETITEM, 0, (LPARAM) pLItem);
 		}
 
-		BOOL SetItem( PLITEM pLItem )
+		BOOL SetItem(PLITEM pLItem)
 		{
-			return (BOOL) SendMessage( m_hWnd, LM_SETITEM, 0, (LPARAM) pLItem );
+			return (BOOL) SendMessage(m_hWnd, LM_SETITEM, 0, (LPARAM) pLItem);
 		}
 
-		int GetIdealSize( SIZE& size, int cxMaxWidth = 0 ) const
+		int GetIdealSize(SIZE& size, int cxMaxWidth = 0) const
 		{
-			return (int) SendMessage( m_hWnd, LM_GETIDEALSIZE, cxMaxWidth, (LPARAM) &size );
+			return (int) SendMessage(m_hWnd, LM_GETIDEALSIZE, cxMaxWidth, (LPARAM) &size);
 		}
 
-		BOOL HitTest( PLHITTESTINFO pLHitTestInfo ) const
+		BOOL HitTest(PLHITTESTINFO pLHitTestInfo) const
 		{
-			return (BOOL) SendMessage( m_hWnd, LM_HITTEST, 0, (LPARAM) pLHitTestInfo );
+			return (BOOL) SendMessage(m_hWnd, LM_HITTEST, 0, (LPARAM) pLHitTestInfo);
 		}
 	};
 }
