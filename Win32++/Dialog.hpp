@@ -3,9 +3,10 @@
 
 #include "winplusplus.h"
 
-#define MESSAGE_HANDLER( X ) virtual INT_PTR CALLBACK X (HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define TIMER_HANDLER(X) virtual void CALLBACK X()
+#define MESSAGE_HANDLER( X ) virtual INT_PTR CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
-#define MESSAGE_ONCREATE() virtual INT_PTR CALLBACK OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define MESSAGE_ONINITDIALOG() virtual INT_PTR CALLBACK OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #define MESSAGE_ONCLOSE() virtual INT_PTR CALLBACK OnClose(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #define MESSAGE_ONMENUCOMMAND() virtual INT_PTR CALLBACK OnMenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #define MESSAGE_ONCOMMAND() virtual INT_PTR CALLBACK OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
@@ -35,7 +36,7 @@ namespace WPP
 		Dialog(int resource_id, int menu_id = -1);
 		virtual ~Dialog();
 
-		MESSAGE_ONCREATE();
+		MESSAGE_ONINITDIALOG();
 		MESSAGE_ONCLOSE();
 		MESSAGE_ONMENUCOMMAND();
 		MESSAGE_ONCOMMAND();

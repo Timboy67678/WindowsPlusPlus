@@ -2508,6 +2508,11 @@ namespace WPP
 			return (int) SendMessage(m_hWnd, LVM_SUBITEMHITTEST, 0, (LPARAM) lpInfo);
 		}
 
+		int AddColumn(int sub_item, LVCOLUMN column)
+		{
+			return InsertColumn(sub_item, &column);
+		}
+
 		int AddColumn(LPCTSTR strItem, int nItem, int nSubItem = -1,
 					  int nMask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
 					  int nFmt = LVCFMT_LEFT)
