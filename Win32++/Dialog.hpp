@@ -67,7 +67,7 @@ namespace WPP
 				m_TimerEvents[timer_id] = TIMER_REF(callback);
 		}
 
-		template < typename DC >
+		template <typename DC>
 		void AddCommandEvent(WORD id, DC pfn)
 		{
 			m_CommandEvents[id] = COMMAND_REF(pfn);
