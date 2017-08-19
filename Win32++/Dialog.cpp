@@ -111,7 +111,13 @@ namespace WPP
 
 	INT_PTR CALLBACK Dialog::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		return FALSE;
+		if (lParam) 
+		{
+			LPNMHDR nm = (LPNMHDR) lParam;
+			if (m_NotifyEvents.count(nm->idFrom) > 0)
+				return (this->*m_NotifyEvents[nm->idFrom])(hWnd, nm->idFrom, nm);
+		}
+		return TRUE;
 	}
 
 	INT_PTR CALLBACK Dialog::OnHScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)

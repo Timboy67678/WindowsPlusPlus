@@ -11,15 +11,15 @@
 
 #include "winplusplus.h"
 
-#define COMMAND_HANDLER( X ) virtual INT_PTR CALLBACK X ( WORD wControlID, HWND hWnd, WPARAM wParam, LPARAM lParam )
-#define COMMAND_REF( X ) static_cast<WPP::Wnd::COMMAND_MESSAGE_CALLBACK>( X )
+#define COMMAND_HANDLER(X) virtual INT_PTR CALLBACK X (INT wControlID, HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define COMMAND_REF(X) static_cast<WPP::Wnd::COMMAND_MESSAGE_CALLBACK>(X)
 
 namespace WPP
 {
 	class Wnd
 	{
 	public:
-		typedef INT_PTR(CALLBACK Wnd::*COMMAND_MESSAGE_CALLBACK)(WORD, HWND, WPARAM, LPARAM);
+		typedef INT_PTR(CALLBACK Wnd::*COMMAND_MESSAGE_CALLBACK)(INT, HWND, WPARAM, LPARAM);
 
 		Wnd(int resource_id, HWND parent = NULL)
 			: m_ItemID(resource_id), m_Parent(parent), m_hWnd(NULL)

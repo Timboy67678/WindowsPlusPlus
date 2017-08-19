@@ -4,7 +4,7 @@
 #include "winplusplus.h"
 
 #define TIMER_HANDLER(X) virtual void CALLBACK X()
-#define MESSAGE_HANDLER( X ) virtual INT_PTR CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define MESSAGE_HANDLER(X) virtual INT_PTR CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 #define MESSAGE_ONINITDIALOG() virtual INT_PTR CALLBACK OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #define MESSAGE_ONCLOSE() virtual INT_PTR CALLBACK OnClose(HWND hWnd, WPARAM wParam, LPARAM lParam)
@@ -20,7 +20,10 @@
 #define MESSAGE_ONVSCROLL() virtual INT_PTR CALLBACK OnVScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #define MESSAGE_ONDROPFILES() virtual INT_PTR CALLBACK OnDropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
+#define NOTIFY_HANDLER(X) virtual INT_PTR CALLBACK X(HWND hWnd, UINT_PTR control_id, LPNMHDR nm)
+
 #define MESSAGE_REF(X) static_cast<WPP::Dialog::DIALOG_MESSAGE_CALLBACK>(X)
+#define NOTIFY_REF(X) static_cast<WPP::Dialog::DIALOG_NOTIFY_CALLBACK>(X)
 #define TIMER_REF(X) static_cast<WPP::Dialog::TIMER_CALLBACK>(X)
 
 #define TIMER_OFFSET_START 0x1374
@@ -31,6 +34,7 @@ namespace WPP
 	{
 	public:
 		typedef INT_PTR(CALLBACK Dialog::*DIALOG_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
+		typedef INT_PTR(CALLBACK Dialog::*DIALOG_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
 		typedef void (CALLBACK Dialog::*TIMER_CALLBACK)();
 
 		Dialog(int resource_id, int menu_id = -1);
@@ -60,7 +64,7 @@ namespace WPP
 		void EnableDragDrop(BOOL state = TRUE);
 
 		template < typename DC >
-		void AddTimer(UINT timer_elapse, DC callback)
+		void AddTimer(INT timer_elapse, DC callback)
 		{
 			const UINT_PTR timer_id = ++m_InternalTimerID + TIMER_OFFSET_START;
 			if (::SetTimer(m_hWnd, timer_id, timer_elapse, NULL) != 0)
@@ -68,9 +72,15 @@ namespace WPP
 		}
 
 		template <typename DC>
-		void AddCommandEvent(WORD id, DC pfn)
+		void AddCommandEvent(INT id, DC callback)
 		{
-			m_CommandEvents[id] = COMMAND_REF(pfn);
+			m_CommandEvents[id] = COMMAND_REF(callback);
+		}
+
+		template<typename DC>
+		void AddNotifyMessage(INT id, DC callback)
+		{
+			m_NotifyEvents[id] = NOTIFY_REF(callback);
 		}
 
 		template <typename CtrlType = Control>
@@ -141,10 +151,11 @@ namespace WPP
 		}
 
 	protected:
-		std::map< UINT, DIALOG_MESSAGE_CALLBACK > m_MessageEvents;
-		std::map< WORD, COMMAND_MESSAGE_CALLBACK > m_CommandEvents;
-		std::map< UINT_PTR, TIMER_CALLBACK > m_TimerEvents;
-		std::map< UINT, Control* > m_MappedControls;
+		std::map<INT, DIALOG_MESSAGE_CALLBACK> m_MessageEvents;
+		std::map<INT, COMMAND_MESSAGE_CALLBACK> m_CommandEvents;
+		std::map<UINT_PTR, DIALOG_NOTIFY_CALLBACK> m_NotifyEvents;
+		std::map<UINT_PTR, TIMER_CALLBACK> m_TimerEvents;
+		std::map<UINT, Control*> m_MappedControls;
 
 		UINT_PTR m_InternalTimerID;
 
