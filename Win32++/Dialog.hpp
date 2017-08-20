@@ -38,6 +38,7 @@ namespace WPP
 		typedef void (CALLBACK Dialog::*TIMER_CALLBACK)();
 
 		Dialog(int resource_id, int menu_id = -1);
+		Dialog(HWND hWnd);
 		virtual ~Dialog();
 
 		MESSAGE_ONINITDIALOG();

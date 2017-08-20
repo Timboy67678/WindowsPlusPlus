@@ -20,6 +20,12 @@ namespace WPP
 		m_MessageEvents[WM_DROPFILES] = &Dialog::OnDropFiles;
 	}
 
+	Dialog::Dialog(HWND hWnd)
+		: Wnd(hWnd), m_InternalTimerID(0), m_MenuID(-1)
+	{
+		//there is nothing to set up, this is just reference stuff
+	}
+
 	Dialog::~Dialog()
 	{
 		for (auto& control_pair : m_MappedControls)

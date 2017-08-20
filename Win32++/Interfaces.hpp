@@ -45,6 +45,13 @@ namespace WPP
 			return ::GetWindowTextLength(m_hWnd);
 		}
 
+		virtual RECT GetRect()
+		{
+			RECT rc = {0};
+			::GetWindowRect(m_hWnd, &rc);
+			return rc;
+		}
+
 		virtual BOOL SetText(const std::tstring &text)
 		{
 			return ::SetWindowText(m_hWnd, text.c_str());
