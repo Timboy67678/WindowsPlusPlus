@@ -1,5 +1,5 @@
-#include "Dialog.hpp"
-#include "Thunk.hpp"
+#include "../Dialog.hpp"
+#include "../Thunk.hpp"
 
 namespace WPP
 {
