@@ -133,11 +133,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dialog.hpp" />
     <ClInclude Include="..\Interfaces.hpp" />
+    <ClInclude Include="..\Thunk.hpp" />
+    <ClInclude Include="..\Window.hpp" />
     <ClInclude Include="..\winplusplus.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,8 +3,8 @@
 
 namespace WPP
 {
-	Dialog::Dialog(int resource_id, int menu_id)
-		: Wnd(resource_id, NULL), m_InternalTimerID(0), m_MenuID(menu_id)
+	Dialog::Dialog(HINSTANCE instance, int resource_id, int menu_id)
+		: m_MainInstance(instance), Hwnd(resource_id, NULL), m_InternalTimerID(0), m_MenuID(menu_id), m_Menu(NULL)
 	{
 		m_MessageEvents[WM_INITDIALOG] = &Dialog::OnInitDialog;
 		m_MessageEvents[WM_COMMAND] = &Dialog::OnCommand;
@@ -21,9 +21,9 @@ namespace WPP
 	}
 
 	Dialog::Dialog(HWND hWnd)
-		: Wnd(hWnd), m_InternalTimerID(0), m_MenuID(-1)
+		: Hwnd(hWnd), m_InternalTimerID(0), m_MenuID(-1), m_Menu(NULL)
 	{
-		//there is nothing to set up, this is just reference stuff
+		m_MainInstance = (HINSTANCE) ::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
 	}
 
 	Dialog::~Dialog()
@@ -45,7 +45,7 @@ namespace WPP
 
 	void Dialog::EndDialog()
 	{
-		for (auto timer : m_TimerEvents)
+		for (auto& timer : m_TimerEvents)
 			::KillTimer(m_hWnd, timer.first);
 
 		for (auto& control_pair : m_MappedControls)
@@ -71,14 +71,14 @@ namespace WPP
 	{
 		m_Parent = parent;
 		Win32Thunk<DLGPROC, Dialog> thunk(&Dialog::DialogProc, this);
-		return ::DialogBoxParam(NULL, MAKEINTRESOURCE(m_ItemID), parent, thunk.GetThunk(), (LPARAM) param);
+		return ::DialogBoxParam(m_MainInstance, MAKEINTRESOURCE(m_ItemID), parent, thunk.GetThunk(), (LPARAM) param);
 	}
 
 #pragma region Overidables
 	INT_PTR CALLBACK Dialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		if (m_MenuID != -1) 
-			m_Menu = ::LoadMenu(NULL, MAKEINTRESOURCE(m_MenuID));
+			m_Menu = ::LoadMenu(m_MainInstance, MAKEINTRESOURCE(m_MenuID));
 		return TRUE;
 	}
 

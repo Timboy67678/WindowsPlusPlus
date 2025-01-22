@@ -41,18 +41,22 @@
 #include <functional>
 #include <map>
 
-namespace std 
-{ 
+namespace std
+{
 #ifdef _UNICODE
 	using tstring = wstring;
 
-	template <typename Type> std::tstring to_tstring( Type t )
-	{ return std::to_wstring( t ); }
+	template <typename Type> std::tstring to_tstring(Type t)
+	{
+		return std::to_wstring(t);
+	}
 #else
 	using tstring = string;
 
-	template <typename Type> std::tstring to_tstring( Type t )
-	{ return std::to_string( t ); }
+	template <typename Type> std::tstring to_tstring(Type t)
+	{
+		return std::to_string(t);
+	}
 #endif
 }
 
@@ -62,15 +66,15 @@ namespace COM
 	class SkeletonCOM : public BaseCom
 	{
 	public:
-		SkeletonCOM( ) : m_ref_count( 0 ) { }
+		SkeletonCOM() : m_ref_count(0) {}
 
-		STDMETHODIMP QueryInterface( REFIID riid, void** ppv )
+		STDMETHODIMP QueryInterface(REFIID riid, void** ppv)
 		{
-			if ( riid == IID_IUnknown ) {
-				*ppv = dynamic_cast<IUnknown*>( this );
+			if (riid == IID_IUnknown) {
+				*ppv = dynamic_cast<IUnknown*>(this);
 				return S_OK;
-			} else if ( riid == __uuidof( BaseCom ) ) {
-				*ppv = dynamic_cast<BaseCom*>( this );
+			} else if (riid == __uuidof(BaseCom)) {
+				*ppv = dynamic_cast<BaseCom*>(this);
 				return S_OK;
 			} else {
 				*ppv = NULL;
@@ -78,15 +82,15 @@ namespace COM
 			}
 		}
 
-		STDMETHODIMP_( ULONG ) AddRef( )
+		STDMETHODIMP_(ULONG) AddRef()
 		{
-			InterlockedIncrement( (LONG *) &m_ref_count );
+			InterlockedIncrement((LONG*)&m_ref_count);
 			return m_ref_count;
 		}
 
-		STDMETHODIMP_( ULONG ) Release( )
+		STDMETHODIMP_(ULONG) Release()
 		{
-			if ( InterlockedDecrement( (LONG *) &m_ref_count ) == 0 )
+			if (InterlockedDecrement((LONG*)&m_ref_count) == 0)
 				delete this;
 			return m_ref_count;
 		}
@@ -101,36 +105,36 @@ namespace COM
 		public IFileDialogEvents
 	{
 	public:
-		using FileOkCb = std::function<STDMETHODIMP( IFileDialog* )>;
-		using FolderChangingCb = std::function<STDMETHODIMP( IFileDialog* pfd, IShellItem* )>;
-		using FolderChangeCb = std::function<STDMETHODIMP( IFileDialog* )>;
-		using SelectionChangeCb = std::function<STDMETHODIMP( IFileDialog* )>;
-		using ShareViolationCb = std::function<STDMETHODIMP( IFileDialog*, IShellItem*, FDE_SHAREVIOLATION_RESPONSE* )>;
-		using TypeChangeCb = std::function<STDMETHODIMP( IFileDialog* )>;
-		using OverwriteCb = std::function<STDMETHODIMP( IFileDialog*, IShellItem*, FDE_OVERWRITE_RESPONSE* )>;
+		using FileOkCb = std::function<STDMETHODIMP(IFileDialog*)>;
+		using FolderChangingCb = std::function<STDMETHODIMP(IFileDialog* pfd, IShellItem*)>;
+		using FolderChangeCb = std::function<STDMETHODIMP(IFileDialog*)>;
+		using SelectionChangeCb = std::function<STDMETHODIMP(IFileDialog*)>;
+		using ShareViolationCb = std::function<STDMETHODIMP(IFileDialog*, IShellItem*, FDE_SHAREVIOLATION_RESPONSE*)>;
+		using TypeChangeCb = std::function<STDMETHODIMP(IFileDialog*)>;
+		using OverwriteCb = std::function<STDMETHODIMP(IFileDialog*, IShellItem*, FDE_OVERWRITE_RESPONSE*)>;
 
-		FileDialogEventsHandler( ) { }
-		~FileDialogEventsHandler( ) { };
+		FileDialogEventsHandler() {}
+		~FileDialogEventsHandler() {};
 
-		BEGIN_COM_MAP( FileDialogEventsHandler )
-			COM_INTERFACE_ENTRY( IFileDialogEvents )
-		END_COM_MAP( )
+		BEGIN_COM_MAP(FileDialogEventsHandler)
+			COM_INTERFACE_ENTRY(IFileDialogEvents)
+		END_COM_MAP()
 
-		STDOVERRIDEMETHODIMP OnFileOk( IFileDialog* pfd ) { return m_FileOkCb == nullptr ? E_NOTIMPL : m_FileOkCb( pfd ); }
-		STDOVERRIDEMETHODIMP OnFolderChanging( IFileDialog* pfd, IShellItem* psiFolder ) { return m_FolderChangingCb == nullptr ? E_NOTIMPL : m_FolderChangingCb( pfd, psiFolder ); }
-		STDOVERRIDEMETHODIMP OnFolderChange( IFileDialog* pfd ) { return m_FolderChangeCb == nullptr ? E_NOTIMPL : m_FolderChangeCb( pfd ); }
-		STDOVERRIDEMETHODIMP OnSelectionChange( IFileDialog* pfd ) { return m_SelectionChangeCb == nullptr ? E_NOTIMPL : m_SelectionChangeCb( pfd ); }
-		STDOVERRIDEMETHODIMP OnShareViolation( IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse ) { return m_ShareViolationCb == nullptr ? E_NOTIMPL : m_ShareViolationCb( pfd, psi, pResponse ); }
-		STDOVERRIDEMETHODIMP OnTypeChange( IFileDialog* pfd ) { return m_TypeChangeCb == nullptr ? E_NOTIMPL : m_TypeChangeCb( pfd ); }
-		STDOVERRIDEMETHODIMP OnOverwrite( IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse ) { return m_OverwriteCb == nullptr ? E_NOTIMPL : m_OverwriteCb( pfd, psi, pResponse ); }
+		STDOVERRIDEMETHODIMP OnFileOk(IFileDialog* pfd) { return m_FileOkCb == nullptr ? E_NOTIMPL : m_FileOkCb(pfd); }
+		STDOVERRIDEMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder) { return m_FolderChangingCb == nullptr ? E_NOTIMPL : m_FolderChangingCb(pfd, psiFolder); }
+		STDOVERRIDEMETHODIMP OnFolderChange(IFileDialog* pfd) { return m_FolderChangeCb == nullptr ? E_NOTIMPL : m_FolderChangeCb(pfd); }
+		STDOVERRIDEMETHODIMP OnSelectionChange(IFileDialog* pfd) { return m_SelectionChangeCb == nullptr ? E_NOTIMPL : m_SelectionChangeCb(pfd); }
+		STDOVERRIDEMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse) { return m_ShareViolationCb == nullptr ? E_NOTIMPL : m_ShareViolationCb(pfd, psi, pResponse); }
+		STDOVERRIDEMETHODIMP OnTypeChange(IFileDialog* pfd) { return m_TypeChangeCb == nullptr ? E_NOTIMPL : m_TypeChangeCb(pfd); }
+		STDOVERRIDEMETHODIMP OnOverwrite(IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse) { return m_OverwriteCb == nullptr ? E_NOTIMPL : m_OverwriteCb(pfd, psi, pResponse); }
 
-		FileOkCb& FileOk( ) { return m_FileOkCb; }
-		FolderChangingCb& FolderChanging( ) { return m_FolderChangingCb; }
-		FolderChangeCb& FolderChange( ) { return m_FolderChangeCb; }
-		SelectionChangeCb& SelectionChange( ) { return m_SelectionChangeCb; }
-		ShareViolationCb& ShareViolation( ) { return m_ShareViolationCb; }
-		TypeChangeCb& TypeChange( ) { return m_TypeChangeCb; }
-		OverwriteCb& Overwrite( ) { return m_OverwriteCb; }
+		FileOkCb& FileOk() { return m_FileOkCb; }
+		FolderChangingCb& FolderChanging() { return m_FolderChangingCb; }
+		FolderChangeCb& FolderChange() { return m_FolderChangeCb; }
+		SelectionChangeCb& SelectionChange() { return m_SelectionChangeCb; }
+		ShareViolationCb& ShareViolation() { return m_ShareViolationCb; }
+		TypeChangeCb& TypeChange() { return m_TypeChangeCb; }
+		OverwriteCb& Overwrite() { return m_OverwriteCb; }
 
 	private:
 		FileOkCb m_FileOkCb;
@@ -148,5 +152,7 @@ using StackFileDialogHandler = ATL::CComObjectStackEx<COM::FileDialogEventsHandl
 
 #include "Interfaces.hpp"
 #include "Dialog.hpp"
+#include "Window.hpp"
 
 #endif //__WINPLUSPLUS_H__
+

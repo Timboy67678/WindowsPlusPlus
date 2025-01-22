@@ -5,6 +5,8 @@ Blackbone is licensed under the MIT License. Dependencies are under their respec
 https://github.com/DarthTon/Blackbone/blob/master/src/BlackBone/Misc/Thunk.hpp
 */
 
+#pragma once
+
 #include <stdint.h>
 #include <winnt.h>
 

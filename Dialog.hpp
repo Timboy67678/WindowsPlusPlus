@@ -30,14 +30,14 @@
 
 namespace WPP
 {
-	class Dialog : public Wnd
+	class Dialog : public Hwnd
 	{
 	public:
 		typedef INT_PTR(CALLBACK Dialog::*DIALOG_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
 		typedef INT_PTR(CALLBACK Dialog::*DIALOG_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
 		typedef void (CALLBACK Dialog::*TIMER_CALLBACK)();
 
-		Dialog(int resource_id, int menu_id = -1);
+		Dialog(HINSTANCE instance, int resource_id, int menu_id = -1);
 		Dialog(HWND hWnd);
 		virtual ~Dialog();
 
@@ -159,6 +159,8 @@ namespace WPP
 		std::map<UINT, Control*> m_MappedControls;
 
 		UINT_PTR m_InternalTimerID;
+
+		HINSTANCE m_MainInstance;
 
 		int m_MenuID;
 
