@@ -11,15 +11,15 @@
 
 #include "winplusplus.h"
 
-#define COMMAND_HANDLER(X) virtual INT_PTR CALLBACK X (INT wControlID, HWND hWnd, WPARAM wParam, LPARAM lParam)
-#define COMMAND_REF(X) static_cast<WPP::Hwnd::COMMAND_MESSAGE_CALLBACK>(X)
+#define COMMAND_HANDLER(X) virtual INT_PTR CALLBACK X (INT controlId, HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define COMMAND_ID_REF(X) static_cast<WPP::Hwnd::COMMAND_ID_MESSAGE_CALLBACK>(X)
 
 namespace WPP
 {
 	class Hwnd
 	{
 	public:
-		typedef INT_PTR(CALLBACK Hwnd::* COMMAND_MESSAGE_CALLBACK)(INT, HWND, WPARAM, LPARAM);
+		typedef INT_PTR(CALLBACK Hwnd::*COMMAND_ID_MESSAGE_CALLBACK)(INT, HWND, WPARAM, LPARAM);
 
 		Hwnd(int resource_id, HWND parent = NULL)
 			: m_ItemID(resource_id), m_Parent(parent), m_hWnd(NULL)
@@ -462,11 +462,16 @@ namespace WPP
 	public:
 		using Control::Control;
 
-		void SetChecked(BOOL checked = FALSE)
+		int GetChecked()
 		{
-			Button_SetCheck(m_hWnd, checked ? BST_CHECKED : BST_UNCHECKED);
+			return Button_GetCheck(m_hWnd);
 		}
 
+		void SetChecked(int check)
+		{
+			Button_SetCheck(m_hWnd, check);
+		}
+		
 		int GetState()
 		{
 			return Button_GetState(m_hWnd);
@@ -475,11 +480,6 @@ namespace WPP
 		void SetState(int state)
 		{
 			Button_SetState(m_hWnd, state);
-		}
-
-		BOOL IsChecked()
-		{
-			return GetState() == BST_CHECKED;
 		}
 
 		void SetStyle(UINT style, BOOL redraw = TRUE)
@@ -514,6 +514,7 @@ namespace WPP
 
 		void EmulatePress()
 		{
+			::SetActiveWindow(GetParent());
 			SendMessage(m_hWnd, BM_CLICK, 0, 0L);
 		}
 	};

@@ -2,7 +2,7 @@
 
 namespace WPP 
 {
-	Window::Window(Class& wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style,
+	Window::Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style,
 				   int menu_id, HMENU menu, LPVOID param, DWORD style_ex)
 		: Hwnd(NULL), m_WindowClass(wnd_class), m_WindowName(window_name), m_XPos(x_pos), m_YPos(y_pos),
 		m_Width(width), m_Height(height), m_Style(style), m_MenuID(menu_id), m_Menu(menu), m_Param(param), m_StyleEx(style_ex)
@@ -39,6 +39,8 @@ namespace WPP
 	{
 		m_Parent = parent_window;
 		m_WindowProcThunk = std::make_unique<Win32Thunk<WNDPROC, Window>>(&Window::WindowProc, this);
+		if (m_WindowClass.atom() != NULL)
+			m_WindowClass.Unregister();
 		m_WindowClass.get().lpfnWndProc = m_WindowProcThunk->GetThunk();
 		m_WindowClass.Register();
 		m_hWnd = CreateWindowEx(m_StyleEx, m_WindowClass.class_name(), m_WindowName.c_str(), m_Style,
@@ -61,6 +63,31 @@ namespace WPP
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
+
+	Button* Window::CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
+	{
+		HWND button_handle = ::CreateWindowEx(0, _T("BUTTON"), text, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!button_handle)
+			return nullptr;
+		Button* button = new (std::nothrow) Button(control_id, m_hWnd);
+		if (button == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, button);
+		return button;
+	}
+
+	CheckBox* Window::CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
+	{
+		HWND checkbox_handle = ::CreateWindowEx(0, _T("BUTTON"), text, WS_CHILD | WS_VISIBLE | BS_CHECKBOX, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!checkbox_handle)
+			return nullptr;
+		CheckBox* checkbox = new (std::nothrow) CheckBox(control_id, m_hWnd);
+		if (checkbox == nullptr)
+			return nullptr;
+		checkbox->SetChecked(initial_state ? BST_CHECKED : BST_UNCHECKED);
+		m_MappedControls.emplace(control_id, checkbox);
+		return checkbox;
 	}
 
 	LRESULT Window::WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -121,7 +148,7 @@ namespace WPP
 
 	INT_PTR CALLBACK Window::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		if (lParam)
+		if (lParam) 
 		{
 			LPNMHDR nm = (LPNMHDR)lParam;
 			if (m_NotifyEvents.count(nm->idFrom) > 0)

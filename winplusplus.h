@@ -34,8 +34,6 @@
 #define UNICODE_NOCHAR 0xFFFF
 #endif
 
-#pragma comment(lib, "comctl32.lib")
-
 #include <string>
 #include <thread>
 #include <functional>

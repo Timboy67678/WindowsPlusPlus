@@ -75,7 +75,7 @@ namespace WPP
 		template <typename DC>
 		void AddCommandEvent(INT id, DC callback)
 		{
-			m_CommandEvents[id] = COMMAND_REF(callback);
+			m_CommandEvents[id] = COMMAND_ID_REF(callback);
 		}
 
 		template<typename DC>
@@ -153,7 +153,7 @@ namespace WPP
 
 	protected:
 		std::map<INT, DIALOG_MESSAGE_CALLBACK> m_MessageEvents;
-		std::map<INT, COMMAND_MESSAGE_CALLBACK> m_CommandEvents;
+		std::map<INT, COMMAND_ID_MESSAGE_CALLBACK> m_CommandEvents;
 		std::map<UINT_PTR, DIALOG_NOTIFY_CALLBACK> m_NotifyEvents;
 		std::map<UINT_PTR, TIMER_CALLBACK> m_TimerEvents;
 		std::map<UINT, Control*> m_MappedControls;

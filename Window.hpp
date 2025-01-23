@@ -21,10 +21,12 @@ namespace WPP
 	public:
 		typedef INT_PTR(CALLBACK Window::* WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
 		typedef INT_PTR(CALLBACK Window::* WINDOW_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
-		typedef void (CALLBACK Window::* TIMER_CALLBACK)();
+		typedef void (CALLBACK Window::*TIMER_CALLBACK)();
 
 		struct Class {
 			friend class Window;
+
+			Class() = default;
 
 			Class(LPCTSTR name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
 				  HBRUSH background = (HBRUSH)GetStockObject(WHITE_BRUSH), LPCTSTR menu = NULL, UINT style = 0, int extra = 0)
@@ -41,10 +43,6 @@ namespace WPP
 				m_window_class.lpszMenuName = menu;
 				m_window_class.lpszClassName = name;
 				m_window_class.hIconSm = icon;
-			}
-
-			~Class() {
-				Unregister();
 			}
 
 		protected:
@@ -68,7 +66,7 @@ namespace WPP
 			ATOM m_class_atom = NULL;
 		};
 
-		Window(Class& wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
+		Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
 			   int menu_id = -1, HMENU menu = NULL, LPVOID param = NULL, DWORD style_ex = WS_EX_OVERLAPPEDWINDOW);
 		virtual ~Window();
 
@@ -97,7 +95,10 @@ namespace WPP
 		void EnableDragDrop(BOOL state = TRUE);
 		BOOL CenterWindow(HWND hWndCenter = NULL);
 
-#pragma region Inline Register Events
+		//Create window controls
+		Button* CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
+		CheckBox* CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
+
 		template<typename DC>
 		void AddTimer(INT timer_elapse, DC callback)
 		{
@@ -107,9 +108,9 @@ namespace WPP
 		}
 
 		template<typename DC>
-		void AddCommandEvent(INT id, DC callback)
+		void AddCommandEvent(UINT control_id, DC callback)
 		{
-			m_CommandEvents[id] = COMMAND_REF(callback);
+			m_CommandEvents[control_id] = COMMAND_ID_REF(callback);
 		}
 
 		template<typename DC>
@@ -119,25 +120,10 @@ namespace WPP
 		}
 
 		template<typename CtrlType = Control>
-		bool RegisterControl(UINT control_id, CtrlType** control_out = nullptr)
+		CtrlType* GetControl(HWND hWnd)
 		{
-			CtrlType* ctrl = new (std::nothrow) CtrlType(control_id, m_hWnd);
-
-			if (ctrl != nullptr)
-				m_MappedControls.emplace(control_id, static_cast<Control*>(ctrl));
-
-			if (control_out != nullptr)
-				*control_out = ctrl;
-
-			return ctrl != nullptr;
+			return static_cast<CtrlType*>(m_MappedControls[hWnd]);
 		}
-
-		template<typename CtrlType = Control>
-		CtrlType* GetControl(UINT control_id)
-		{
-			return static_cast<CtrlType*>(m_MappedControls[control_id]);
-		}
-#pragma endregion
 
 		virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type);
 		virtual int MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...);
@@ -159,7 +145,7 @@ namespace WPP
 
 	private:
 		std::map<INT, WINDOW_MESSAGE_CALLBACK> m_MessageEvents;
-		std::map<INT, COMMAND_MESSAGE_CALLBACK> m_CommandEvents;
+		std::map<UINT, COMMAND_ID_MESSAGE_CALLBACK> m_CommandEvents;
 		std::map<UINT_PTR, WINDOW_NOTIFY_CALLBACK> m_NotifyEvents;
 		std::map<UINT_PTR, TIMER_CALLBACK> m_TimerEvents;
 		std::map<UINT, Control*> m_MappedControls;
