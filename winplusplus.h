@@ -12,7 +12,6 @@
 #include <richedit.h>
 #include <richole.h>
 #include <windowsx.h>
-#include <CommCtrl.h>
 #include <atlbase.h>
 #include <atlcom.h>
 #include <Shellapi.h>

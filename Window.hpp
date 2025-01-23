@@ -5,8 +5,8 @@
 #include "Thunk.hpp"
 
 #define WINDOW_TIMER_HANDLER(X) virtual void CALLBACK X()
-#define WINDOW_MESSAGE_HANDLER(X) virtual INT_PTR CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
-#define WINDOW_NOTIFY_HANDLER(X) virtual INT_PTR CALLBACK X(HWND hWnd, UINT_PTR control_id, LPNMHDR nm)
+#define WINDOW_MESSAGE_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define WINDOW_NOTIFY_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, UINT_PTR control_id, LPNMHDR nm)
 
 #define WINDOW_MESSAGE_REF(X) static_cast<WPP::Window::WINDOW_MESSAGE_CALLBACK>(X)
 #define WINDOW_NOTIFY_REF(X) static_cast<WPP::Window::WINDOW_NOTIFY_CALLBACK>(X)
@@ -19,8 +19,8 @@ namespace WPP
 	class Window : public Hwnd
 	{
 	public:
-		typedef INT_PTR(CALLBACK Window::* WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
-		typedef INT_PTR(CALLBACK Window::* WINDOW_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
+		typedef LRESULT(CALLBACK Window::* WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
+		typedef LRESULT(CALLBACK Window::* WINDOW_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
 		typedef void (CALLBACK Window::*TIMER_CALLBACK)();
 
 		struct Class {
@@ -29,7 +29,7 @@ namespace WPP
 			Class() = default;
 
 			Class(LPCTSTR name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
-				  HBRUSH background = (HBRUSH)GetStockObject(WHITE_BRUSH), LPCTSTR menu = NULL, UINT style = 0, int extra = 0)
+				  HBRUSH background = (HBRUSH)(COLOR_WINDOW), LPCTSTR menu = NULL, UINT style = 0, int extra = 0)
 			{
 				ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
 				m_window_class.cbSize = sizeof(WNDCLASSEX);
@@ -98,6 +98,7 @@ namespace WPP
 		//Create window controls
 		Button* CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
 		CheckBox* CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
+		ComboBox* CreateComboBox(UINT control_id, int x, int y, int width, int height);
 
 		template<typename DC>
 		void AddTimer(INT timer_elapse, DC callback)

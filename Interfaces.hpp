@@ -11,7 +11,7 @@
 
 #include "winplusplus.h"
 
-#define COMMAND_HANDLER(X) virtual INT_PTR CALLBACK X (INT controlId, HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define COMMAND_HANDLER(X) virtual LRESULT CALLBACK X (INT controlId, HWND hWnd, WPARAM wParam, LPARAM lParam)
 #define COMMAND_ID_REF(X) static_cast<WPP::Hwnd::COMMAND_ID_MESSAGE_CALLBACK>(X)
 
 namespace WPP
@@ -19,7 +19,7 @@ namespace WPP
 	class Hwnd
 	{
 	public:
-		typedef INT_PTR(CALLBACK Hwnd::*COMMAND_ID_MESSAGE_CALLBACK)(INT, HWND, WPARAM, LPARAM);
+		typedef LRESULT(CALLBACK Hwnd::*COMMAND_ID_MESSAGE_CALLBACK)(INT, HWND, WPARAM, LPARAM);
 
 		Hwnd(int resource_id, HWND parent = NULL)
 			: m_ItemID(resource_id), m_Parent(parent), m_hWnd(NULL)
@@ -927,7 +927,10 @@ namespace WPP
 
 		int Add(LPCTSTR lpszString)
 		{
-			return (int)SendMessage(m_hWnd, CB_ADDSTRING, 0, (LPARAM)lpszString);
+			int index = (int)SendMessage(m_hWnd, CB_ADDSTRING, 0, (LPARAM)lpszString);
+			if(index == 0)
+				SendMessage(m_hWnd, CB_SETCURSEL, 0, 0);
+			return index;
 		}
 
 		int Remove(UINT index)
