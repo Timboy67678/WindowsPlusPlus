@@ -99,6 +99,15 @@ namespace WPP
 		Button* CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
 		CheckBox* CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
 		ComboBox* CreateComboBox(UINT control_id, int x, int y, int width, int height);
+		EditText* CreateEditText(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+		ListBox* CreateListBox(UINT control_id, int x, int y, int width, int height);
+		ListView* CreateListView(UINT control_id, int x, int y, int width, int height);
+		TreeView* CreateTreeView(UINT control_id, int x, int y, int width, int height);
+		TabControl* CreateTabControl(UINT control_id, int x, int y, int width, int height);
+		ProgressBar* CreateProgressBar(UINT control_id, int x, int y, int width, int height);
+		SpinControl* CreateSpinControl(UINT control_id, int x, int y, int width, int height);
+		RichEdit* CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+		LinkControl* CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
 
 		template<typename DC>
 		void AddTimer(INT timer_elapse, DC callback)

@@ -46,7 +46,7 @@ namespace WPP
 		m_hWnd = ::CreateWindowEx(m_StyleEx, m_WindowClass.class_name(), m_WindowName.c_str(), m_Style,
 									  m_XPos, m_YPos, m_Width, m_Height, m_Parent, m_Menu, m_WindowClass.instance(), m_Param);
 		m_WindowCreated = true;
-		Show(SW_SHOWDEFAULT);
+		Show(SW_SHOWNORMAL);
 		::UpdateWindow(m_hWnd);
 		return m_hWnd != NULL;
 	}
@@ -59,7 +59,7 @@ namespace WPP
 		m_WindowRunning = true;
 
 		MSG msg;
-		while (m_WindowRunning && GetMessage(&msg, m_hWnd, 0, 0) > 0) {
+		while (m_WindowRunning && GetMessage(&msg, m_hWnd, 0, 0) != 0) {
 			::TranslateMessage(&msg);
 			::DispatchMessage(&msg);
 		}
@@ -92,7 +92,7 @@ namespace WPP
 
 	ComboBox* Window::CreateComboBox(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T("ComboBox"), CBS_DROPDOWNLIST | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
 		if (!combobox_handle)
 			return nullptr;
 		ComboBox* combobox = new (std::nothrow) ComboBox(control_id, m_hWnd);
@@ -100,6 +100,114 @@ namespace WPP
 			return nullptr;
 		m_MappedControls.emplace(control_id, combobox);
 		return combobox;
+	}
+
+	EditText* Window::CreateEditText(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text)
+	{
+		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text, ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!edittext_handle)
+			return nullptr;
+		EditText* edittext = new (std::nothrow) EditText(control_id, m_hWnd);
+		if (edittext == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, edittext);
+		return edittext;
+	}
+
+	ListBox* Window::CreateListBox(UINT control_id, int x, int y, int width, int height)
+	{
+		HWND listbox_handle = ::CreateWindowEx(0, WC_LISTBOX, _T(""), LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!listbox_handle)
+			return nullptr;
+		ListBox* listbox = new (std::nothrow) ListBox(control_id, m_hWnd);
+		if (listbox == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, listbox);
+		return listbox;
+	}
+
+	ListView* Window::CreateListView(UINT control_id, int x, int y, int width, int height)
+	{
+		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!listview_handle)
+			return nullptr;
+		ListView* listview = new (std::nothrow) ListView(control_id, m_hWnd);
+		if (listview == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, listview);
+		return listview;
+	}
+
+	TreeView* Window::CreateTreeView(UINT control_id, int x, int y, int width, int height)
+	{
+		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!treeview_handle)
+			return nullptr;
+		TreeView* treeview = new (std::nothrow) TreeView(control_id, m_hWnd);
+		if (treeview == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, treeview);
+		return treeview;
+	}
+
+	TabControl* Window::CreateTabControl(UINT control_id, int x, int y, int width, int height)
+	{
+		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!tabcontrol_handle)
+			return nullptr;
+		TabControl* tabcontrol = new (std::nothrow) TabControl(control_id, m_hWnd);
+		if (tabcontrol == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, tabcontrol);
+		return tabcontrol;
+	}
+
+	ProgressBar* Window::CreateProgressBar(UINT control_id, int x, int y, int width, int height)
+	{
+		HWND progressbar_handle = ::CreateWindowEx(0, PROGRESS_CLASS, _T(""), PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!progressbar_handle)
+			return nullptr;
+		ProgressBar* progressbar = new (std::nothrow) ProgressBar(control_id, m_hWnd);
+		if (progressbar == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, progressbar);
+		return progressbar;
+	}
+
+	SpinControl* Window::CreateSpinControl(UINT control_id, int x, int y, int width, int height)
+	{
+		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!spincontrol_handle)
+			return nullptr;
+		SpinControl* spincontrol = new (std::nothrow) SpinControl(control_id, m_hWnd);
+		if (spincontrol == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, spincontrol);
+		return spincontrol;
+	}
+
+	RichEdit* Window::CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text)
+	{
+		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text, ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!richedit_handle)
+			return nullptr;
+		RichEdit* richedit = new (std::nothrow) RichEdit(control_id, m_hWnd);
+		if (richedit == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, richedit);
+		return richedit;
+	}
+
+	LinkControl* Window::CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
+	{
+		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		if (!linkcontrol_handle)
+			return nullptr;
+		LinkControl* linkcontrol = new (std::nothrow) LinkControl(control_id, m_hWnd);
+		if (linkcontrol == nullptr)
+			return nullptr;
+		m_MappedControls.emplace(control_id, linkcontrol);
+		return linkcontrol;
 	}
 
 	LRESULT Window::WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -148,8 +256,6 @@ namespace WPP
 
 	LRESULT CALLBACK Window::OnSize(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		//::InvalidateRect(hWnd, NULL, TRUE);
-		//::UpdateWindow(hWnd);
 		return FALSE;
 	}
 
