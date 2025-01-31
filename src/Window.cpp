@@ -9,6 +9,8 @@ namespace WPP
 	{
 		m_MessageEvents[WM_CREATE] = &Window::OnCreate;
 		m_MessageEvents[WM_CLOSE] = &Window::OnClose;
+		m_MessageEvents[WM_DESTROY] = &Window::OnDestroy;
+		m_MessageEvents[WM_DISPLAYCHANGE] = &Window::OnDisplayChange;
 		m_MessageEvents[WM_MOVE] = &Window::OnMove;
 		m_MessageEvents[WM_COMMAND] = &Window::OnCommand;
 		m_MessageEvents[WM_MENUCOMMAND] = &Window::OnMenuCommand;
@@ -65,6 +67,22 @@ namespace WPP
 		}
 	}
 
+	LRESULT Window::WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+	{
+		m_hWnd = hWnd;
+		LRESULT ret = FALSE;
+		auto it = m_MessageEvents.find(Msg);
+		if (it != m_MessageEvents.end())
+			ret = (this->*(it->second))(hWnd, wParam, lParam);
+
+		if (ret == FALSE) //was handled? otherwise send to default os handler
+			return DefWindowProc(hWnd, Msg, wParam, lParam);
+		else
+			return ret;
+	}
+
+#pragma region Window Control Creators
+
 	Button* Window::CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
 	{
 		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
@@ -92,7 +110,7 @@ namespace WPP
 
 	ComboBox* Window::CreateComboBox(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
 		if (!combobox_handle)
 			return nullptr;
 		ComboBox* combobox = new (std::nothrow) ComboBox(control_id, m_hWnd);
@@ -209,26 +227,14 @@ namespace WPP
 		m_MappedControls.emplace(control_id, linkcontrol);
 		return linkcontrol;
 	}
-
-	LRESULT Window::WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-	{
-		m_hWnd = hWnd;
-		LRESULT ret = FALSE;
-		auto it = m_MessageEvents.find(Msg);
-		if (it != m_MessageEvents.end())
-			ret = (this->*(it->second))(hWnd, wParam, lParam);
-		if (ret == FALSE)
-			return DefWindowProc(hWnd, Msg, wParam, lParam);
-		else
-			return ret;
-	}
+#pragma endregion
 
 #pragma region Overidables
 	LRESULT CALLBACK Window::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		if (m_MenuID != -1)
 			m_Menu = ::LoadMenu(m_WindowClass.instance(), MAKEINTRESOURCE(m_MenuID));
-		return FALSE;
+		return TRUE;
 	}
 
 	LRESULT CALLBACK Window::OnClose(HWND hWnd, WPARAM wParam, LPARAM lParam)
@@ -237,9 +243,21 @@ namespace WPP
 		return FALSE;
 	}
 
+	LRESULT CALLBACK Window::OnDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		QuitWindow();
+		return TRUE;
+	}
+
 	LRESULT CALLBACK Window::OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		return FALSE;
+	}
+
+	LRESULT CALLBACK Window::OnDisplayChange(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		::InvalidateRect(m_hWnd, NULL, FALSE);
+		return TRUE;
 	}
 
 	LRESULT CALLBACK Window::OnMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
@@ -247,12 +265,15 @@ namespace WPP
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		if (m_TimerEvents.count((UINT_PTR)wParam) > 0)
-			(this->*m_TimerEvents[(UINT_PTR)wParam])();
-		return FALSE;
-	}
+    LRESULT CALLBACK Window::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
+    {
+        auto it = m_TimerEvents.find(static_cast<UINT_PTR>(wParam));
+        if (it != m_TimerEvents.end()) {
+            (this->*(it->second))();
+            return TRUE;
+        }
+        return FALSE;
+    }
 
 	LRESULT CALLBACK Window::OnSize(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
@@ -271,11 +292,11 @@ namespace WPP
 
 	LRESULT CALLBACK Window::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		if (lParam) 
-		{
-			LPNMHDR nm = (LPNMHDR)lParam;
-			if (m_NotifyEvents.count(nm->idFrom) > 0)
-				return (this->*m_NotifyEvents[nm->idFrom])(hWnd, nm->idFrom, nm);
+		if (lParam) {
+			LPNMHDR nm = reinterpret_cast<LPNMHDR>(lParam);
+			auto it = m_NotifyEvents.find(nm->idFrom);
+			if (it != m_NotifyEvents.end()) 
+				return (this->*(it->second))(hWnd, nm->idFrom, nm);
 		}
 		return FALSE;
 	}
@@ -300,12 +321,13 @@ namespace WPP
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		if (m_CommandEvents.count(LOWORD(wParam)) > 0)
-			return (this->*m_CommandEvents[LOWORD(wParam)])(LOWORD(wParam), hWnd, wParam, lParam);
-		return FALSE;
-	}
+    LRESULT CALLBACK Window::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+    {
+        auto it = m_CommandEvents.find(LOWORD(wParam));
+        if (it != m_CommandEvents.end())
+            return (this->*(it->second))(LOWORD(wParam), hWnd, wParam, lParam);
+        return FALSE;
+    }
 #pragma endregion
 
 	void Window::Show(INT show)

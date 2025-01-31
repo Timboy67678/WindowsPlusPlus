@@ -48,7 +48,7 @@ namespace WPP
 		protected:
 			HINSTANCE instance() const { return m_window_class.hInstance; }
 			LPCTSTR class_name() const { return m_window_class.lpszClassName; }
-			UINT Style() const { return m_window_class.style; }
+			UINT style() const { return m_window_class.style; }
 
 			void Register() {
 				m_class_atom = RegisterClassEx(&m_window_class);
@@ -56,6 +56,7 @@ namespace WPP
 
 			void Unregister() {
 				UnregisterClass(m_window_class.lpszClassName, m_window_class.hInstance);
+				m_class_atom = NULL;
 			}
 
 			ATOM& atom() { return m_class_atom; }
@@ -72,6 +73,8 @@ namespace WPP
 
 		WINDOW_MESSAGE_HANDLER(OnCreate);
 		WINDOW_MESSAGE_HANDLER(OnClose);
+		WINDOW_MESSAGE_HANDLER(OnDestroy);
+		WINDOW_MESSAGE_HANDLER(OnDisplayChange);
 		WINDOW_MESSAGE_HANDLER(OnMove);
 		WINDOW_MESSAGE_HANDLER(OnMenuCommand);
 		WINDOW_MESSAGE_HANDLER(OnCommand);
@@ -130,9 +133,9 @@ namespace WPP
 		}
 
 		template<typename CtrlType = Control>
-		CtrlType* GetControl(HWND hWnd)
+		CtrlType* GetControl(UINT control_id)
 		{
-			return static_cast<CtrlType*>(m_MappedControls[hWnd]);
+			return static_cast<CtrlType*>(m_MappedControls[control_id]);
 		}
 
 		virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type);
