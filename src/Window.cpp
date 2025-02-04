@@ -61,7 +61,7 @@ namespace WPP
 		m_WindowRunning = true;
 
 		MSG msg;
-		while (m_WindowRunning && GetMessage(&msg, m_hWnd, 0, 0) != 0) {
+		while (m_WindowRunning && GetMessage(&msg, NULL, 0, 0)) {
 			::TranslateMessage(&msg);
 			::DispatchMessage(&msg);
 		}
@@ -97,7 +97,7 @@ namespace WPP
 
 	CheckBox* Window::CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
 	{
-		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_CHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
 		if (!checkbox_handle)
 			return nullptr;
 		CheckBox* checkbox = new (std::nothrow) CheckBox(control_id, m_hWnd);

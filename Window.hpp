@@ -16,153 +16,329 @@
 
 namespace WPP
 {
-	class Window : public Hwnd
-	{
-	public:
-		typedef LRESULT(CALLBACK Window::* WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
-		typedef LRESULT(CALLBACK Window::* WINDOW_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
-		typedef void (CALLBACK Window::*TIMER_CALLBACK)();
+    class Window : public Hwnd
+    {
+    public:
+        /**
+         * @typedef WINDOW_MESSAGE_CALLBACK
+         * @brief Callback type for window messages.
+         */
+        typedef LRESULT(CALLBACK Window::*WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
-		struct Class {
-			friend class Window;
+        /**
+         * @typedef WINDOW_NOTIFY_CALLBACK
+         * @brief Callback type for window notifications.
+         */
+        typedef LRESULT(CALLBACK Window::*WINDOW_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
 
-			Class() = default;
+        /**
+         * @typedef TIMER_CALLBACK
+         * @brief Callback type for timer events.
+         */
+        typedef void (CALLBACK Window::*TIMER_CALLBACK)();
 
-			Class(LPCTSTR name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
-				  HBRUSH background = (HBRUSH)(COLOR_WINDOW), LPCTSTR menu = NULL, UINT style = 0, int extra = 0)
-			{
-				ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
-				m_window_class.cbSize = sizeof(WNDCLASSEX);
-				m_window_class.style = style;
-				m_window_class.cbClsExtra = 0;
-				m_window_class.cbWndExtra = extra;
-				m_window_class.hInstance = instance;
-				m_window_class.hIcon = icon;
-				m_window_class.hCursor = cursor;
-				m_window_class.hbrBackground = background;
-				m_window_class.lpszMenuName = menu;
-				m_window_class.lpszClassName = name;
-				m_window_class.hIconSm = icon;
-			}
+        /**
+         * @struct Class
+         * @brief Encapsulates window class information.
+         */
+        struct Class {
+            friend class Window;
 
-		protected:
-			HINSTANCE instance() const { return m_window_class.hInstance; }
-			LPCTSTR class_name() const { return m_window_class.lpszClassName; }
-			UINT style() const { return m_window_class.style; }
+            /**
+             * @brief Default constructor.
+             */
+            Class() = default;
 
-			void Register() {
-				m_class_atom = RegisterClassEx(&m_window_class);
-			}
+            /**
+             * @brief Parameterized constructor.
+             * @param name Class name.
+             * @param instance Instance handle.
+             * @param icon Icon handle.
+             * @param cursor Cursor handle.
+             * @param background Background brush.
+             * @param menu Menu name.
+             * @param style Class style.
+             * @param extra Extra bytes.
+             */
+            Class(LPCTSTR name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
+                  HBRUSH background = (HBRUSH)(COLOR_WINDOW), LPCTSTR menu = NULL, UINT style = 0, int extra = 0)
+            {
+                ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
+                m_window_class.cbSize = sizeof(WNDCLASSEX);
+                m_window_class.style = style;
+                m_window_class.cbClsExtra = 0;
+                m_window_class.cbWndExtra = extra;
+                m_window_class.hInstance = instance;
+                m_window_class.hIcon = icon;
+                m_window_class.hCursor = cursor;
+                m_window_class.hbrBackground = background;
+                m_window_class.lpszMenuName = menu;
+                m_window_class.lpszClassName = name;
+                m_window_class.hIconSm = icon;
+            }
 
-			void Unregister() {
-				UnregisterClass(m_window_class.lpszClassName, m_window_class.hInstance);
-				m_class_atom = NULL;
-			}
+        protected:
+            /**
+             * @brief Gets the instance handle.
+             * @return Instance handle.
+             */
+            HINSTANCE instance() const { return m_window_class.hInstance; }
 
-			ATOM& atom() { return m_class_atom; }
-			WNDCLASSEX& get() { return m_window_class; }
+            /**
+             * @brief Gets the class name.
+             * @return Class name.
+             */
+            LPCTSTR class_name() const { return m_window_class.lpszClassName; }
 
-		private:
-			WNDCLASSEX m_window_class;
-			ATOM m_class_atom = NULL;
-		};
+            /**
+             * @brief Gets the class style.
+             * @return Class style.
+             */
+            UINT style() const { return m_window_class.style; }
 
-		Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
-			   int menu_id = -1, HMENU menu = NULL, LPVOID param = NULL, DWORD style_ex = WS_EX_OVERLAPPEDWINDOW);
-		virtual ~Window();
+            /**
+             * @brief Registers the window class.
+             */
+            void Register() {
+                m_class_atom = RegisterClassEx(&m_window_class);
+            }
 
-		WINDOW_MESSAGE_HANDLER(OnCreate);
-		WINDOW_MESSAGE_HANDLER(OnClose);
-		WINDOW_MESSAGE_HANDLER(OnDestroy);
-		WINDOW_MESSAGE_HANDLER(OnDisplayChange);
-		WINDOW_MESSAGE_HANDLER(OnMove);
-		WINDOW_MESSAGE_HANDLER(OnMenuCommand);
-		WINDOW_MESSAGE_HANDLER(OnCommand);
-		WINDOW_MESSAGE_HANDLER(OnPaint);
-		WINDOW_MESSAGE_HANDLER(OnTimer);
-		WINDOW_MESSAGE_HANDLER(OnSize);
-		WINDOW_MESSAGE_HANDLER(OnKeyDown);
-		WINDOW_MESSAGE_HANDLER(OnKeyUp);
-		WINDOW_MESSAGE_HANDLER(OnNotify);
-		WINDOW_MESSAGE_HANDLER(OnHScroll);
-		WINDOW_MESSAGE_HANDLER(OnVScroll);
-		WINDOW_MESSAGE_HANDLER(OnDropFiles);
+            /**
+             * @brief Unregisters the window class.
+             */
+            void Unregister() {
+                UnregisterClass(m_window_class.lpszClassName, m_window_class.hInstance);
+                m_class_atom = NULL;
+            }
 
-		virtual bool WINAPI Create(HWND parent_window = HWND_DESKTOP);
-		virtual void WINAPI RunWindow();
-		virtual LRESULT WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+            /**
+             * @brief Gets the class atom.
+             * @return Class atom.
+             */
+            ATOM& atom() { return m_class_atom; }
 
-		void Show(INT show = SW_NORMAL);
-		void CloseWindow();
-		void QuitWindow(INT exit_code = 0);
-		void EnableDragDrop(BOOL state = TRUE);
-		BOOL CenterWindow(HWND hWndCenter = NULL);
+            /**
+             * @brief Gets the window class structure.
+             * @return Window class structure.
+             */
+            WNDCLASSEX& get() { return m_window_class; }
 
-		//Create window controls
-		Button* CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
-		CheckBox* CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
-		ComboBox* CreateComboBox(UINT control_id, int x, int y, int width, int height);
-		EditText* CreateEditText(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		ListBox* CreateListBox(UINT control_id, int x, int y, int width, int height);
-		ListView* CreateListView(UINT control_id, int x, int y, int width, int height);
-		TreeView* CreateTreeView(UINT control_id, int x, int y, int width, int height);
-		TabControl* CreateTabControl(UINT control_id, int x, int y, int width, int height);
-		ProgressBar* CreateProgressBar(UINT control_id, int x, int y, int width, int height);
-		SpinControl* CreateSpinControl(UINT control_id, int x, int y, int width, int height);
-		RichEdit* CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		LinkControl* CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
+        private:
+            WNDCLASSEX m_window_class; ///< Window class structure.
+            ATOM m_class_atom = NULL; ///< Class atom.
+        };
 
-		template<typename DC>
-		void AddTimer(INT timer_elapse, DC callback)
-		{
-			const UINT_PTR timer_id = ++m_InternalTimerID + WINDOW_TIMER_OFFSET_START;
-			if (::SetTimer(m_hWnd, timer_id, timer_elapse, NULL) != 0)
-				m_TimerEvents[timer_id] = WINDOW_TIMER_REF(callback);
-		}
+        /**
+         * @brief Constructor.
+         * @param wnd_class Window class.
+         * @param window_name Window name.
+         * @param x_pos X position.
+         * @param y_pos Y position.
+         * @param width Width.
+         * @param height Height.
+         * @param style Window style.
+         * @param menu_id Menu ID.
+         * @param menu Menu handle.
+         * @param param Additional parameters.
+         * @param style_ex Extended window style.
+         */
+        Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
+               int menu_id = -1, HMENU menu = NULL, LPVOID param = NULL, DWORD style_ex = WS_EX_OVERLAPPEDWINDOW);
 
-		template<typename DC>
-		void AddCommandEvent(UINT control_id, DC callback)
-		{
-			m_CommandEvents[control_id] = COMMAND_ID_REF(callback);
-		}
+        /**
+         * @brief Destructor.
+         */
+        virtual ~Window();
 
-		template<typename DC>
-		void AddNotifyMessage(INT id, DC callback)
-		{
-			m_NotifyEvents[id] = WINDOW_NOTIFY_REF(callback);
-		}
+        WINDOW_MESSAGE_HANDLER(OnCreate);
+        WINDOW_MESSAGE_HANDLER(OnClose);
+        WINDOW_MESSAGE_HANDLER(OnDestroy);
+        WINDOW_MESSAGE_HANDLER(OnDisplayChange);
+        WINDOW_MESSAGE_HANDLER(OnMove);
+        WINDOW_MESSAGE_HANDLER(OnMenuCommand);
+        WINDOW_MESSAGE_HANDLER(OnCommand);
+        WINDOW_MESSAGE_HANDLER(OnPaint);
+        WINDOW_MESSAGE_HANDLER(OnTimer);
+        WINDOW_MESSAGE_HANDLER(OnSize);
+        WINDOW_MESSAGE_HANDLER(OnKeyDown);
+        WINDOW_MESSAGE_HANDLER(OnKeyUp);
+        WINDOW_MESSAGE_HANDLER(OnNotify);
+        WINDOW_MESSAGE_HANDLER(OnHScroll);
+        WINDOW_MESSAGE_HANDLER(OnVScroll);
+        WINDOW_MESSAGE_HANDLER(OnDropFiles);
 
-		template<typename CtrlType = Control>
-		CtrlType* GetControl(UINT control_id)
-		{
-			return static_cast<CtrlType*>(m_MappedControls[control_id]);
-		}
+        /**
+         * @brief Creates the window.
+         * @param parent_window Parent window handle.
+         * @return True if successful, false otherwise.
+         */
+        virtual bool WINAPI Create(HWND parent_window = HWND_DESKTOP);
 
-		virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type);
-		virtual int MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...);
-		virtual int MsgBoxError(LPCTSTR title, LPCTSTR fmt, ...);
-		virtual int MsgBoxWarn(LPCTSTR title, LPCTSTR fmt, ...);
+        /**
+         * @brief Runs the window message loop.
+         */
+        virtual void WINAPI RunWindow();
 
-	protected:
-		Class m_WindowClass;
-		int m_XPos, m_YPos, m_Width, m_Height;
-		std::tstring m_WindowName;
-		HMENU m_Menu;
-		int m_MenuID;
-		LPVOID m_Param;
-		DWORD m_Style, m_StyleEx;
-		UINT_PTR m_InternalTimerID = 0;
-		bool m_WindowCreated = false;
-		volatile bool m_WindowRunning = false;
-		std::unique_ptr<Win32Thunk<WNDPROC, Window>> m_WindowProcThunk;
+        /**
+         * @brief Window procedure.
+         * @param hWnd Window handle.
+         * @param Msg Message.
+         * @param wParam WPARAM.
+         * @param lParam LPARAM.
+         * @return Result of message processing.
+         */
+        virtual LRESULT WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-	private:
-		std::map<INT, WINDOW_MESSAGE_CALLBACK> m_MessageEvents;
-		std::map<UINT, COMMAND_ID_MESSAGE_CALLBACK> m_CommandEvents;
-		std::map<UINT_PTR, WINDOW_NOTIFY_CALLBACK> m_NotifyEvents;
-		std::map<UINT_PTR, TIMER_CALLBACK> m_TimerEvents;
-		std::map<UINT, Control*> m_MappedControls;
-	};
+        /**
+         * @brief Shows the window.
+         * @param show Show state.
+         */
+        void Show(INT show = SW_NORMAL);
+
+        /**
+         * @brief Closes the window.
+         */
+        void CloseWindow();
+
+        /**
+         * @brief Quits the window.
+         * @param exit_code Exit code.
+         */
+        void QuitWindow(INT exit_code = 0);
+
+        /**
+         * @brief Enables or disables drag and drop.
+         * @param state TRUE to enable, FALSE to disable.
+         */
+        void EnableDragDrop(BOOL state = TRUE);
+
+        /**
+         * @brief Centers the window.
+         * @param hWndCenter Handle of the window to center relative to.
+         * @return TRUE if successful, FALSE otherwise.
+         */
+        BOOL CenterWindow(HWND hWndCenter = NULL);
+
+        // Create window controls
+        Button* CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
+        CheckBox* CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
+        ComboBox* CreateComboBox(UINT control_id, int x, int y, int width, int height);
+        EditText* CreateEditText(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+        ListBox* CreateListBox(UINT control_id, int x, int y, int width, int height);
+        ListView* CreateListView(UINT control_id, int x, int y, int width, int height);
+        TreeView* CreateTreeView(UINT control_id, int x, int y, int width, int height);
+        TabControl* CreateTabControl(UINT control_id, int x, int y, int width, int height);
+        ProgressBar* CreateProgressBar(UINT control_id, int x, int y, int width, int height);
+        SpinControl* CreateSpinControl(UINT control_id, int x, int y, int width, int height);
+        RichEdit* CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+        LinkControl* CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
+
+        /**
+         * @brief Adds a timer event.
+         * @tparam DC Callback type.
+         * @param timer_elapse Timer interval in milliseconds.
+         * @param callback Callback function.
+         */
+        template<typename DC>
+        void AddTimer(INT timer_elapse, DC callback)
+        {
+            const UINT_PTR timer_id = ++m_InternalTimerID + WINDOW_TIMER_OFFSET_START;
+            if (::SetTimer(m_hWnd, timer_id, timer_elapse, NULL) != 0)
+                m_TimerEvents[timer_id] = WINDOW_TIMER_REF(callback);
+        }
+
+        /**
+         * @brief Adds a command event.
+         * @tparam DC Callback type.
+         * @param control_id Control ID.
+         * @param callback Callback function.
+         */
+        template<typename DC>
+        void AddCommandEvent(UINT control_id, DC callback)
+        {
+            m_CommandEvents[control_id] = COMMAND_ID_REF(callback);
+        }
+
+        /**
+         * @brief Adds a notify message event.
+         * @tparam DC Callback type.
+         * @param id Notification ID.
+         * @param callback Callback function.
+         */
+        template<typename DC>
+        void AddNotifyMessage(INT id, DC callback)
+        {
+            m_NotifyEvents[id] = WINDOW_NOTIFY_REF(callback);
+        }
+
+        /**
+         * @brief Gets a control by ID.
+         * @tparam CtrlType Control type.
+         * @param control_id Control ID.
+         * @return Pointer to the control.
+         */
+        template<typename CtrlType = Control>
+        CtrlType* GetControl(UINT control_id)
+        {
+            return static_cast<CtrlType*>(m_MappedControls[control_id]);
+        }
+
+        /**
+         * @brief Displays a message box.
+         * @param message Message text.
+         * @param title Title text.
+         * @param type Message box type.
+         * @return Result of the message box.
+         */
+        virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type);
+
+        /**
+         * @brief Displays an information message box.
+         * @param title Title text.
+         * @param fmt Format string.
+         * @param ... Additional arguments.
+         * @return Result of the message box.
+         */
+        virtual int MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...);
+
+        /**
+         * @brief Displays an error message box.
+         * @param title Title text.
+         * @param fmt Format string.
+         * @param ... Additional arguments.
+         * @return Result of the message box.
+         */
+        virtual int MsgBoxError(LPCTSTR title, LPCTSTR fmt, ...);
+
+        /**
+         * @brief Displays a warning message box.
+         * @param title Title text.
+         * @param fmt Format string.
+         * @param ... Additional arguments.
+         * @return Result of the message box.
+         */
+        virtual int MsgBoxWarn(LPCTSTR title, LPCTSTR fmt, ...);
+
+    protected:
+        Class m_WindowClass; ///< Window class.
+        int m_XPos, m_YPos, m_Width, m_Height; ///< Window position and size.
+        std::tstring m_WindowName; ///< Window name.
+        HMENU m_Menu; ///< Menu handle.
+        int m_MenuID; ///< Menu ID.
+        LPVOID m_Param; ///< Additional parameters.
+        DWORD m_Style, m_StyleEx; ///< Window styles.
+        UINT_PTR m_InternalTimerID = 0; ///< Internal timer ID.
+        bool m_WindowCreated = false; ///< Window created flag.
+        volatile bool m_WindowRunning = false; ///< Window running flag.
+        std::unique_ptr<Win32Thunk<WNDPROC, Window>> m_WindowProcThunk; ///< Window procedure thunk.
+
+    private:
+        std::map<INT, WINDOW_MESSAGE_CALLBACK> m_MessageEvents; ///< Message events.
+        std::map<UINT, COMMAND_ID_MESSAGE_CALLBACK> m_CommandEvents; ///< Command events.
+        std::map<UINT_PTR, WINDOW_NOTIFY_CALLBACK> m_NotifyEvents; ///< Notify events.
+        std::map<UINT_PTR, TIMER_CALLBACK> m_TimerEvents; ///< Timer events.
+        std::map<UINT, Control*> m_MappedControls; ///< Mapped controls.
+    };
 }
 
 #endif //__WINDOW_H__
