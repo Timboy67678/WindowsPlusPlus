@@ -90,6 +90,12 @@ namespace WPP
 			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
 		}
 
+		LONG RemoveStyle(DWORD dwStyle)
+		{
+			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) & ~dwStyle;
+			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
+		}
+
 		//Stolen From ATL
 		BOOL ModifyStyle(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0)
 		{
@@ -520,6 +526,12 @@ namespace WPP
 	};
 
 	class CheckBox : public Button
+	{
+	public:
+		using Button::Button;
+	};
+
+	class RadioButton : public Button
 	{
 	public:
 		using Button::Button;
