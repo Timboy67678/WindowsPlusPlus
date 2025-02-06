@@ -47,9 +47,9 @@ namespace WPP
 		return m_hWnd != NULL;
 	}
 
-	bool Window::RunWindow()
+	bool Window::RunWindow(HWND parentWindow)
 	{
-		if (!m_WindowCreated)
+		if (!m_WindowCreated && !Create(parentWindow))
 			return false;
 
 		m_WindowRunning = true;

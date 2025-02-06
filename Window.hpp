@@ -217,7 +217,7 @@ namespace WPP
 		 * @brief Runs the window message loop.
 		 * @return True if window was created and ran, false otherwise.
 		 */
-		virtual bool WINAPI RunWindow();
+		virtual bool WINAPI RunWindow(HWND parentWindow = HWND_DESKTOP);
 
 		/**
 		 * @brief Window procedure.

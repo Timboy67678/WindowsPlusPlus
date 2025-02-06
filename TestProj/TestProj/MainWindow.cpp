@@ -50,7 +50,8 @@ LRESULT CALLBACK MainWindow::OnButtonOne(INT controlId, HWND hWnd, WPARAM wParam
 	{
 	case BN_CLICKED: {
 		static int x = 0;
-		m_ButtonOne->SetText(ext::fmt_str(_T("Button Clicked %d"), ++x));
+		std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
+		m_ButtonOne->SetText(button_counter_str);
 		break;
 	}
 	default:
