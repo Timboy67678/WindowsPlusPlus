@@ -95,8 +95,9 @@ namespace WPP
 
 	INT_PTR CALLBACK Dialog::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		if (m_TimerEvents.count((UINT_PTR) wParam) > 0)
-			(this->*m_TimerEvents[(UINT_PTR) wParam])();
+		auto it = m_TimerEvents.find((UINT_PTR)wParam);
+		if (it != m_TimerEvents.end())
+			(this->*it->second)();
 		return FALSE;
 	}
 
@@ -117,11 +118,12 @@ namespace WPP
 
 	INT_PTR CALLBACK Dialog::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		if (lParam) 
-		{
-			LPNMHDR nm = (LPNMHDR) lParam;
-			if (m_NotifyEvents.count(nm->idFrom) > 0)
-				return (this->*m_NotifyEvents[nm->idFrom])(hWnd, nm->idFrom, nm);
+		if (lParam) {
+			LPNMHDR nm = reinterpret_cast<LPNMHDR>(lParam);
+			auto it = m_NotifyEvents.find(nm->idFrom);
+			if (it != m_NotifyEvents.end()) {
+				return (this->*it->second)(hWnd, nm->idFrom, nm);
+			}
 		}
 		return TRUE;
 	}
@@ -148,16 +150,18 @@ namespace WPP
 
 	INT_PTR CALLBACK Dialog::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		if (m_CommandEvents.count(LOWORD(wParam)) > 0)
-			return (this->*m_CommandEvents[LOWORD(wParam)])(LOWORD(wParam), hWnd, wParam, lParam);
-		return TRUE;
+		auto it = m_CommandEvents.find(LOWORD(wParam));
+		if (it != m_CommandEvents.end())
+			return (this->*it->second)(LOWORD(wParam), hWnd, wParam, lParam);
+		return FALSE;
 	}
 
 	INT_PTR Dialog::DialogProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	{
 		m_hWnd = hWnd;
-		if (m_MessageEvents.count(Msg) > 0)
-			return (this->*m_MessageEvents[Msg])(hWnd, wParam, lParam);
+		auto it = m_MessageEvents.find(Msg);
+		if (it != m_MessageEvents.end())
+			return (this->*it->second)(hWnd, wParam, lParam);
 		return FALSE;
 	}
 #pragma endregion

@@ -9,6 +9,8 @@ MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
 
 LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+	CenterWindow();
+
 	m_ButtonOne = CreateButton(IDI_BUTTONONE, _T("Click Me!"), 0, 0, 150, 25);
 	m_CheckBoxOne = CreateCheckBox(IDI_CHECKBOXONE, _T("Check Me!"), 0, 30, 150, 25);
 	m_ComboBoxOne = CreateComboBox(IDI_COMBOBOXONE, 0, 60, 150, 25);
