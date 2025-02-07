@@ -4,7 +4,6 @@
 #include "winplusplus.h"
 #include "Thunk.hpp"
 
-#define WINDOW_TIMER_HANDLER(X) virtual void CALLBACK X()
 #define WINDOW_MESSAGE_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #define WINDOW_NOTIFY_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, UINT_PTR control_id, LPNMHDR nm)
 
@@ -141,7 +140,8 @@ namespace WPP
 			*/
 			RadioButtonGroup(Window* parent)
 				: m_Parent(parent)
-			{}
+			{
+			}
 
 			/**
 			* @brief Creates a radio button.
@@ -191,17 +191,17 @@ namespace WPP
 
 		WINDOW_MESSAGE_HANDLER(OnCreate);
 		WINDOW_MESSAGE_HANDLER(OnClose);
+		WINDOW_MESSAGE_HANDLER(OnTimer);
+		WINDOW_MESSAGE_HANDLER(OnNotify);
+		WINDOW_MESSAGE_HANDLER(OnCommand);
 		WINDOW_MESSAGE_HANDLER(OnDestroy);
 		WINDOW_MESSAGE_HANDLER(OnDisplayChange);
 		WINDOW_MESSAGE_HANDLER(OnMove);
 		WINDOW_MESSAGE_HANDLER(OnMenuCommand);
-		WINDOW_MESSAGE_HANDLER(OnCommand);
 		WINDOW_MESSAGE_HANDLER(OnPaint);
-		WINDOW_MESSAGE_HANDLER(OnTimer);
 		WINDOW_MESSAGE_HANDLER(OnSize);
 		WINDOW_MESSAGE_HANDLER(OnKeyDown);
 		WINDOW_MESSAGE_HANDLER(OnKeyUp);
-		WINDOW_MESSAGE_HANDLER(OnNotify);
 		WINDOW_MESSAGE_HANDLER(OnHScroll);
 		WINDOW_MESSAGE_HANDLER(OnVScroll);
 		WINDOW_MESSAGE_HANDLER(OnDropFiles);
@@ -228,6 +228,42 @@ namespace WPP
 		 * @return Result of message processing.
 		 */
 		virtual LRESULT WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+		/**
+		 * @brief Displays a message box.
+		 * @param message Message text.
+		 * @param title Title text.
+		 * @param type Message box type.
+		 * @return Result of the message box.
+		 */
+		virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type);
+
+		/**
+		 * @brief Displays an information message box.
+		 * @param title Title text.
+		 * @param fmt Format string.
+		 * @param ... Additional arguments.
+		 * @return Result of the message box.
+		 */
+		virtual int MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...);
+
+		/**
+		 * @brief Displays an error message box.
+		 * @param title Title text.
+		 * @param fmt Format string.
+		 * @param ... Additional arguments.
+		 * @return Result of the message box.
+		 */
+		virtual int MsgBoxError(LPCTSTR title, LPCTSTR fmt, ...);
+
+		/**
+		 * @brief Displays a warning message box.
+		 * @param title Title text.
+		 * @param fmt Format string.
+		 * @param ... Additional arguments.
+		 * @return Result of the message box.
+		 */
+		virtual int MsgBoxWarn(LPCTSTR title, LPCTSTR fmt, ...);
 
 		/**
 		 * @brief Shows the window.
@@ -259,6 +295,10 @@ namespace WPP
 		 */
 		BOOL CenterWindow(HWND hWndCenter = NULL);
 
+		/**
+		* @brief Creates a radio button group.
+		* @return Pointer to the created radio button group.
+		*/
 		std::shared_ptr<Window::RadioButtonGroup> CreateRadioButtonGroup();
 
 		// Create window controls
@@ -325,42 +365,6 @@ namespace WPP
 			return m_MappedControls[control_id];
 		}
 
-		/**
-		 * @brief Displays a message box.
-		 * @param message Message text.
-		 * @param title Title text.
-		 * @param type Message box type.
-		 * @return Result of the message box.
-		 */
-		virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type);
-
-		/**
-		 * @brief Displays an information message box.
-		 * @param title Title text.
-		 * @param fmt Format string.
-		 * @param ... Additional arguments.
-		 * @return Result of the message box.
-		 */
-		virtual int MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...);
-
-		/**
-		 * @brief Displays an error message box.
-		 * @param title Title text.
-		 * @param fmt Format string.
-		 * @param ... Additional arguments.
-		 * @return Result of the message box.
-		 */
-		virtual int MsgBoxError(LPCTSTR title, LPCTSTR fmt, ...);
-
-		/**
-		 * @brief Displays a warning message box.
-		 * @param title Title text.
-		 * @param fmt Format string.
-		 * @param ... Additional arguments.
-		 * @return Result of the message box.
-		 */
-		virtual int MsgBoxWarn(LPCTSTR title, LPCTSTR fmt, ...);
-
 	protected:
 		Class m_WindowClass; ///< Window class.
 		int m_XPos, m_YPos, m_Width, m_Height; ///< Window position and size.
@@ -371,7 +375,7 @@ namespace WPP
 		DWORD m_Style, m_StyleEx; ///< Window styles.
 		UINT_PTR m_InternalTimerID = 0; ///< Internal timer ID.
 		bool m_WindowCreated = false; ///< Window created flag.
-		volatile bool m_WindowRunning = false; ///< Window running flag.
+		std::atomic_bool m_WindowRunning = false; ///< Window running flag.
 		std::unique_ptr<Win32Thunk<WNDPROC, Window>> m_WindowProcThunk; ///< Window procedure thunk.
 
 	private:

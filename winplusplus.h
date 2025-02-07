@@ -36,6 +36,7 @@
 #include <string>
 #include <thread>
 #include <functional>
+//#include <memory>
 #include <map>
 
 namespace std
@@ -146,6 +147,8 @@ namespace COM
 
 using FileDialogHandler = ATL::CComObjectNoLock<COM::FileDialogEventsHandler>;
 using StackFileDialogHandler = ATL::CComObjectStackEx<COM::FileDialogEventsHandler>;
+
+#define TIMER_HANDLER(X) virtual void CALLBACK X()
 
 #include "Interfaces.hpp"
 #include "Dialog.hpp"

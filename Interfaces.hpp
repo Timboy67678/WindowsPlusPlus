@@ -35,6 +35,11 @@ namespace WPP
 		virtual HWND GetParent() const { return m_Parent; }
 		virtual int GetID() const { return m_ItemID; }
 
+		virtual BOOL Destroy()
+		{
+			return ::DestroyWindow(m_hWnd);
+		}
+
 		virtual std::tstring GetText()
 		{
 			TCHAR title_buffer[1024] = { 0 };

@@ -26,10 +26,7 @@ namespace WPP
 	}
 
 	Window::~Window()
-	{
-		for (auto& control : m_MappedControls)
-			control.second.reset();
-	}
+	{}
 
 	bool Window::Create(HWND parent_window)
 	{
@@ -37,9 +34,9 @@ namespace WPP
 			return false;
 
 		m_Parent = parent_window;
-		m_WindowProcThunk = std::make_unique<Win32Thunk<WNDPROC, Window>>(&Window::WindowProc, this);
 		if (m_WindowClass.atom() != NULL)
 			m_WindowClass.Unregister();
+		m_WindowProcThunk = std::make_unique<Win32Thunk<WNDPROC, Window>>(&Window::WindowProc, this);
 		m_WindowClass.get().lpfnWndProc = m_WindowProcThunk->GetThunk();
 		m_WindowClass.Register();
 		m_hWnd = ::CreateWindowEx(m_StyleEx, m_WindowClass.class_name(), m_WindowName.c_str(), m_Style,
@@ -58,7 +55,7 @@ namespace WPP
 		m_WindowRunning = true;
 
 		MSG msg;
-		while (m_WindowRunning && GetMessage(&msg, NULL, 0, 0)) {
+		while (m_WindowRunning && ::GetMessage(&msg, NULL, NULL, NULL)) {
 			if (!::IsDialogMessage(m_hWnd, &msg)) {
 				::TranslateMessage(&msg);
 				::DispatchMessage(&msg);
@@ -424,6 +421,9 @@ namespace WPP
 	void Window::QuitWindow(INT exit_code)
 	{
 		m_WindowRunning = false;
+		for (auto& control : m_MappedControls)
+			control.second.reset();
+
 		::PostQuitMessage(exit_code);
 	}
 
@@ -437,7 +437,7 @@ namespace WPP
 
 	BOOL Window::CenterWindow(HWND hWndCenter)
 	{
-		// determine owner window to center against
+		// Determine owner window to center against
 		DWORD dwStyle = GetStyle();
 		if (hWndCenter == NULL)
 		{
@@ -447,7 +447,7 @@ namespace WPP
 				hWndCenter = ::GetWindow(m_hWnd, GW_OWNER);
 		}
 
-		// get coordinates of the window relative to its parent
+		// Get coordinates of the window relative to its parent
 		RECT rcDlg;
 		::GetWindowRect(m_hWnd, &rcDlg);
 		RECT rcArea;
@@ -456,7 +456,7 @@ namespace WPP
 
 		if (!(dwStyle & WS_CHILD))
 		{
-			// don't center against invisible or minimized windows
+			// Don't center against invisible or minimized windows
 			if (hWndCenter != NULL)
 			{
 				DWORD dwStyleCenter = ::GetWindowLong(hWndCenter, GWL_STYLE);
@@ -464,16 +464,11 @@ namespace WPP
 					hWndCenter = NULL;
 			}
 
-			// center within screen coordinates
-			HMONITOR hMonitor = NULL;
-			if (hWndCenter != NULL)
-				hMonitor = ::MonitorFromWindow(hWndCenter, MONITOR_DEFAULTTONEAREST);
-			else
-				hMonitor = ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
+			// Center within screen coordinates
+			HMONITOR hMonitor = (hWndCenter != NULL) ? ::MonitorFromWindow(hWndCenter, MONITOR_DEFAULTTONEAREST) : ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
 
-			MONITORINFO minfo = { 0 };
-			minfo.cbSize = sizeof(MONITORINFO);
-			BOOL bResult = ::GetMonitorInfo(hMonitor, &minfo);
+			MONITORINFO minfo = { sizeof(MONITORINFO) };
+			::GetMonitorInfo(hMonitor, &minfo);
 			rcArea = minfo.rcWork;
 
 			if (hWndCenter == NULL)
@@ -481,7 +476,7 @@ namespace WPP
 			else
 				::GetWindowRect(hWndCenter, &rcCenter);
 		} else {
-			// center within parent client coordinates
+			// Center within parent client coordinates
 			hWndParent = ::GetParent(m_hWnd);
 			::GetClientRect(hWndParent, &rcArea);
 			::GetClientRect(hWndCenter, &rcCenter);
@@ -491,24 +486,18 @@ namespace WPP
 		int DlgWidth = rcDlg.right - rcDlg.left;
 		int DlgHeight = rcDlg.bottom - rcDlg.top;
 
-		// find dialog's upper left based on rcCenter
+		// Find dialog's upper left based on rcCenter
 		int xLeft = (rcCenter.left + rcCenter.right) / 2 - DlgWidth / 2;
 		int yTop = (rcCenter.top + rcCenter.bottom) / 2 - DlgHeight / 2;
 
-		// if the dialog is outside the screen, move it inside
-		if (xLeft + DlgWidth > rcArea.right)
-			xLeft = rcArea.right - DlgWidth;
-		if (xLeft < rcArea.left)
-			xLeft = rcArea.left;
+		// If the dialog is outside the screen, move it inside
+		xLeft = max(rcArea.left, min(xLeft, rcArea.right - DlgWidth));
+		yTop = max(rcArea.top, min(yTop, rcArea.bottom - DlgHeight));
 
-		if (yTop + DlgHeight > rcArea.bottom)
-			yTop = rcArea.bottom - DlgHeight;
-		if (yTop < rcArea.top)
-			yTop = rcArea.top;
-
-		// map screen coordinates to child coordinates
+		// Map screen coordinates to child coordinates
 		return ::SetWindowPos(m_hWnd, NULL, xLeft, yTop, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 	}
+
 
 #pragma region Message Box Abstracts
 	int Window::MsgBox(LPCTSTR message, LPCTSTR title, UINT type)

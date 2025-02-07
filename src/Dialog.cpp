@@ -7,14 +7,18 @@ namespace WPP
 		: m_MainInstance(instance), Hwnd(resource_id, NULL), m_InternalTimerID(0), m_MenuID(menu_id), m_Menu(NULL)
 	{
 		m_MessageEvents[WM_INITDIALOG] = &Dialog::OnInitDialog;
-		m_MessageEvents[WM_COMMAND] = &Dialog::OnCommand;
 		m_MessageEvents[WM_CLOSE] = &Dialog::OnClose;
-		m_MessageEvents[WM_PAINT] = &Dialog::OnPaint;
 		m_MessageEvents[WM_TIMER] = &Dialog::OnTimer;
+		m_MessageEvents[WM_NOTIFY] = &Dialog::OnNotify;
+		m_MessageEvents[WM_COMMAND] = &Dialog::OnCommand;
+		m_MessageEvents[WM_DESTROY] = &Dialog::OnDestroy;
+		m_MessageEvents[WM_DISPLAYCHANGE] = &Dialog::OnDisplayChange;
+		m_MessageEvents[WM_MOVE] = &Dialog::OnMove;
+		m_MessageEvents[WM_MENUCOMMAND] = &Dialog::OnMenuCommand;
+		m_MessageEvents[WM_PAINT] = &Dialog::OnPaint;
 		m_MessageEvents[WM_SIZE] = &Dialog::OnSize;
 		m_MessageEvents[WM_KEYDOWN] = &Dialog::OnKeyDown;
 		m_MessageEvents[WM_KEYUP] = &Dialog::OnKeyUp;
-		m_MessageEvents[WM_NOTIFY] = &Dialog::OnNotify;
 		m_MessageEvents[WM_HSCROLL] = &Dialog::OnHScroll;
 		m_MessageEvents[WM_VSCROLL] = &Dialog::OnVScroll;
 		m_MessageEvents[WM_DROPFILES] = &Dialog::OnDropFiles;
@@ -28,14 +32,7 @@ namespace WPP
 
 	Dialog::~Dialog()
 	{
-		for (auto& control_pair : m_MappedControls)
-		{
-			if (control_pair.second != nullptr)
-			{
-				delete control_pair.second;
-				control_pair.second = nullptr;
-			}
-		}
+		
 	}
 
 	void Dialog::Show(INT show)
@@ -49,10 +46,7 @@ namespace WPP
 			::KillTimer(m_hWnd, timer.first);
 
 		for (auto& control_pair : m_MappedControls)
-		{
-			delete control_pair.second;
-			control_pair.second = nullptr;
-		}
+			control_pair.second.reset();
 
 		::DestroyMenu(m_Menu);
 
@@ -88,16 +82,57 @@ namespace WPP
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		return FALSE;
-	}
-
 	INT_PTR CALLBACK Dialog::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		auto it = m_TimerEvents.find((UINT_PTR)wParam);
 		if (it != m_TimerEvents.end())
 			(this->*it->second)();
+		return FALSE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		if (lParam) {
+			LPNMHDR nm = reinterpret_cast<LPNMHDR>(lParam);
+			auto it = m_NotifyEvents.find(nm->idFrom);
+			if (it != m_NotifyEvents.end()) {
+				return (this->*it->second)(hWnd, nm->idFrom, nm);
+			}
+		}
+		return TRUE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		auto it = m_CommandEvents.find(LOWORD(wParam));
+		if (it != m_CommandEvents.end())
+			return (this->*it->second)(LOWORD(wParam), hWnd, wParam, lParam);
+		return FALSE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		EndDialog();
+		return TRUE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnDisplayChange(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		return FALSE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		return FALSE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnMenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		return FALSE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
 		return FALSE;
 	}
 
@@ -116,18 +151,6 @@ namespace WPP
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		if (lParam) {
-			LPNMHDR nm = reinterpret_cast<LPNMHDR>(lParam);
-			auto it = m_NotifyEvents.find(nm->idFrom);
-			if (it != m_NotifyEvents.end()) {
-				return (this->*it->second)(hWnd, nm->idFrom, nm);
-			}
-		}
-		return TRUE;
-	}
-
 	INT_PTR CALLBACK Dialog::OnHScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		return FALSE;
@@ -140,19 +163,6 @@ namespace WPP
 
 	INT_PTR CALLBACK Dialog::OnDropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		return FALSE;
-	}
-
-	INT_PTR CALLBACK Dialog::OnMenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		return FALSE;
-	}
-
-	INT_PTR CALLBACK Dialog::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		auto it = m_CommandEvents.find(LOWORD(wParam));
-		if (it != m_CommandEvents.end())
-			return (this->*it->second)(LOWORD(wParam), hWnd, wParam, lParam);
 		return FALSE;
 	}
 
@@ -212,9 +222,7 @@ namespace WPP
 				rcCenter = rcArea;
 			else
 				::GetWindowRect(hWndCenter, &rcCenter);
-		} else
-		{
-	// center within parent client coordinates
+		} else { // center within parent client coordinates
 			hWndParent = ::GetParent(m_hWnd);
 			::GetClientRect(hWndParent, &rcArea);
 			::GetClientRect(hWndCenter, &rcCenter);

@@ -5,19 +5,19 @@
 
 INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-	RegisterControl(IDC_TEST_CHECK, &m_check);
-	RegisterControl(IDC_LISTBOX_TEST, &m_list);
-	RegisterControl(IDC_OK_BTN, &m_dostuff);
-	RegisterControl(IDC_COMB_TEST, &m_combo);
-	RegisterControl(IDC_RICHEDIT_TEST, &m_richedit);
-	RegisterControl(IDC_EDIT_SPIN, &m_spinedit);
-	RegisterControl(IDC_SCROLLBAR_TEST, &m_scroll);
-	RegisterControl(IDC_LISTVIEW_TEST, &m_view);
-	RegisterControl(IDC_TREE_TEST, &m_tree);
-	RegisterControl(IDC_SLIDER_TEST, &m_track);
-	RegisterControl(IDC_SPIN_TEST, &m_spin);
-	RegisterControl(IDC_PROGRESS_TEST, &m_progress);
-	RegisterControl(IDC_TAB_TEST, &m_tab);
+	RegisterControl(IDC_TEST_CHECK, std::move(m_check));
+	RegisterControl(IDC_LISTBOX_TEST, std::move(m_list));
+	RegisterControl(IDC_OK_BTN, std::move(m_dostuff));
+	RegisterControl(IDC_COMB_TEST, std::move(m_combo));
+	RegisterControl(IDC_RICHEDIT_TEST, std::move(m_richedit));
+	RegisterControl(IDC_EDIT_SPIN, std::move(m_spinedit));
+	RegisterControl(IDC_SCROLLBAR_TEST, std::move(m_scroll));
+	RegisterControl(IDC_LISTVIEW_TEST, std::move(m_view));
+	RegisterControl(IDC_TREE_TEST, std::move(m_tree));
+	RegisterControl(IDC_SLIDER_TEST, std::move(m_track));
+	RegisterControl(IDC_SPIN_TEST, std::move(m_spin));
+	RegisterControl(IDC_PROGRESS_TEST, std::move(m_progress));
+	RegisterControl(IDC_TAB_TEST, std::move(m_tab));
 
 	m_combo->SetCueBannerText(L"ComboBox control item test");
 

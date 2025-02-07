@@ -13,8 +13,8 @@ public:
 		Dialog::AddCommandEvent(IDM_ABOUT, &MainDialog::OnMenuAbout);
 	}
 
-	MESSAGE_ONINITDIALOG();
-	MESSAGE_ONNOTIFY();
+	DIALOG_MESSAGE_HANDLER(OnInitDialog);
+	DIALOG_MESSAGE_HANDLER(OnNotify);
 
 	COMMAND_HANDLER(OnMenuAbout);
 	COMMAND_HANDLER(OnMenuExit);
@@ -24,17 +24,17 @@ public:
 private:
 	BOOL shield_state = FALSE;
 
-	ComboBox* m_combo = nullptr;
-	Button* m_dostuff = nullptr;
-	CheckBox* m_check = nullptr;
-	ListBox* m_list = nullptr;
-	RichEdit* m_richedit = nullptr;
-	EditText* m_spinedit = nullptr;
-	ScrollBar* m_scroll = nullptr;
-	ListView* m_view = nullptr;
-	TreeView* m_tree = nullptr;
-	TrackBar* m_track = nullptr;
-	SpinControl* m_spin = nullptr;
-	ProgressBar* m_progress = nullptr;
-	TabControl* m_tab = nullptr;
+	std::shared_ptr<ComboBox> m_combo;
+	std::shared_ptr<Button> m_dostuff;
+	std::shared_ptr<CheckBox> m_check;
+	std::shared_ptr<ListBox> m_list;
+	std::shared_ptr<RichEdit> m_richedit;
+	std::shared_ptr<EditText> m_spinedit;
+	std::shared_ptr<ScrollBar> m_scroll;
+	std::shared_ptr<ListView> m_view;
+	std::shared_ptr<TreeView> m_tree;
+	std::shared_ptr<TrackBar> m_track;
+	std::shared_ptr<SpinControl> m_spin;
+	std::shared_ptr<ProgressBar> m_progress;
+	std::shared_ptr<TabControl> m_tab;
 };
