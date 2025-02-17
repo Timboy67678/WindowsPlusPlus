@@ -6,33 +6,30 @@ namespace WPP
 	Dialog::Dialog(HINSTANCE instance, int resource_id, int menu_id)
 		: m_MainInstance(instance), Hwnd(resource_id, NULL), m_InternalTimerID(0), m_MenuID(menu_id), m_Menu(NULL)
 	{
-		m_MessageEvents[WM_INITDIALOG] = &Dialog::OnInitDialog;
-		m_MessageEvents[WM_CLOSE] = &Dialog::OnClose;
-		m_MessageEvents[WM_TIMER] = &Dialog::OnTimer;
-		m_MessageEvents[WM_NOTIFY] = &Dialog::OnNotify;
-		m_MessageEvents[WM_COMMAND] = &Dialog::OnCommand;
-		m_MessageEvents[WM_DESTROY] = &Dialog::OnDestroy;
-		m_MessageEvents[WM_DISPLAYCHANGE] = &Dialog::OnDisplayChange;
-		m_MessageEvents[WM_MOVE] = &Dialog::OnMove;
-		m_MessageEvents[WM_MENUCOMMAND] = &Dialog::OnMenuCommand;
-		m_MessageEvents[WM_PAINT] = &Dialog::OnPaint;
-		m_MessageEvents[WM_SIZE] = &Dialog::OnSize;
-		m_MessageEvents[WM_KEYDOWN] = &Dialog::OnKeyDown;
-		m_MessageEvents[WM_KEYUP] = &Dialog::OnKeyUp;
-		m_MessageEvents[WM_HSCROLL] = &Dialog::OnHScroll;
-		m_MessageEvents[WM_VSCROLL] = &Dialog::OnVScroll;
-		m_MessageEvents[WM_DROPFILES] = &Dialog::OnDropFiles;
+		m_MessageEvents = {
+			{WM_INITDIALOG, &Dialog::OnInitDialog},
+			{WM_CLOSE, &Dialog::OnClose},
+			{WM_TIMER, &Dialog::OnTimer},
+			{WM_NOTIFY, &Dialog::OnNotify},
+			{WM_COMMAND, &Dialog::OnCommand},
+			{WM_DESTROY, &Dialog::OnDestroy},
+			{WM_DISPLAYCHANGE, &Dialog::OnDisplayChange},
+			{WM_MOVE, &Dialog::OnMove},
+			{WM_MENUCOMMAND, &Dialog::OnMenuCommand},
+			{WM_PAINT, &Dialog::OnPaint},
+			{WM_SIZE, &Dialog::OnSize},
+			{WM_KEYDOWN, &Dialog::OnKeyDown},
+			{WM_KEYUP, &Dialog::OnKeyUp},
+			{WM_HSCROLL, &Dialog::OnHScroll},
+			{WM_VSCROLL, &Dialog::OnVScroll},
+			{WM_DROPFILES, &Dialog::OnDropFiles}
+		};
 	}
 
 	Dialog::Dialog(HWND hWnd)
 		: Hwnd(hWnd), m_InternalTimerID(0), m_MenuID(-1), m_Menu(NULL)
 	{
 		m_MainInstance = (HINSTANCE) ::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
-	}
-
-	Dialog::~Dialog()
-	{
-		
 	}
 
 	void Dialog::Show(INT show)
@@ -51,14 +48,6 @@ namespace WPP
 		::DestroyMenu(m_Menu);
 
 		::EndDialog(m_hWnd, 0);
-	}
-
-	void Dialog::EnableDragDrop(BOOL state)
-	{
-		::ChangeWindowMessageFilterEx(m_hWnd, WM_DROPFILES, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-		::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-		::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYGLOBALDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-		::DragAcceptFiles(m_hWnd, state);
 	}
 
 	INT_PTR CALLBACK Dialog::RunDlg(HWND parent, LPVOID param)

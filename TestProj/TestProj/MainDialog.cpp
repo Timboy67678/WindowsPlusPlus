@@ -81,7 +81,7 @@ LRESULT CALLBACK MainDialog::OnMenuAbout(INT nControlID, HWND hWnd, WPARAM wPara
 
 LRESULT CALLBACK MainDialog::OnCheckBoxClicked(INT nControlID, HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-	m_dostuff->SetShield(shield_state = !shield_state);
+	m_dostuff->SetShield(m_check->GetChecked() == BST_CHECKED);
 	return FALSE;
 }
 

@@ -1,56 +1,57 @@
 #include "..\Window.hpp"
 
-namespace WPP 
+namespace WPP
 {
 	Window::Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style,
-				   int menu_id, HMENU menu, LPVOID param, DWORD style_ex)
+				   int menu_id, HMENU menu, HFONT font, DWORD style_ex)
 		: Hwnd(NULL), m_WindowClass(wnd_class), m_WindowName(window_name), m_XPos(x_pos), m_YPos(y_pos),
-		m_Width(width), m_Height(height), m_Style(style), m_MenuID(menu_id), m_Menu(menu), m_Param(param), m_StyleEx(style_ex)
+		m_Width(width), m_Height(height), m_Style(style), m_MenuID(menu_id), m_Menu(menu), m_Font(font), m_StyleEx(style_ex)
 	{
-		m_MessageEvents[WM_CREATE] = &Window::OnCreate;
-		m_MessageEvents[WM_CLOSE] = &Window::OnClose;
-		m_MessageEvents[WM_DESTROY] = &Window::OnDestroy;
-		m_MessageEvents[WM_DISPLAYCHANGE] = &Window::OnDisplayChange;
-		m_MessageEvents[WM_MOVE] = &Window::OnMove;
-		m_MessageEvents[WM_COMMAND] = &Window::OnCommand;
-		m_MessageEvents[WM_MENUCOMMAND] = &Window::OnMenuCommand;
-		m_MessageEvents[WM_PAINT] = &Window::OnPaint;
-		m_MessageEvents[WM_TIMER] = &Window::OnTimer;
-		m_MessageEvents[WM_SIZE] = &Window::OnSize;
-		m_MessageEvents[WM_KEYDOWN] = &Window::OnKeyDown;
-		m_MessageEvents[WM_KEYUP] = &Window::OnKeyUp;
-		m_MessageEvents[WM_NOTIFY] = &Window::OnNotify;
-		m_MessageEvents[WM_HSCROLL] = &Window::OnHScroll;
-		m_MessageEvents[WM_VSCROLL] = &Window::OnVScroll;
-		m_MessageEvents[WM_DROPFILES] = &Window::OnDropFiles;
+		// Initialize message events
+		m_MessageEvents = {
+			{WM_CREATE, &Window::OnCreate},
+			{WM_CLOSE, &Window::OnClose},
+			{WM_DESTROY, &Window::OnDestroy},
+			{WM_DISPLAYCHANGE, &Window::OnDisplayChange},
+			{WM_MOVE, &Window::OnMove},
+			{WM_COMMAND, &Window::OnCommand},
+			{WM_MENUCOMMAND, &Window::OnMenuCommand},
+			{WM_PAINT, &Window::OnPaint},
+			{WM_TIMER, &Window::OnTimer},
+			{WM_SIZE, &Window::OnSize},
+			{WM_KEYDOWN, &Window::OnKeyDown},
+			{WM_KEYUP, &Window::OnKeyUp},
+			{WM_NOTIFY, &Window::OnNotify},
+			{WM_HSCROLL, &Window::OnHScroll},
+			{WM_VSCROLL, &Window::OnVScroll},
+			{WM_DROPFILES, &Window::OnDropFiles}
+		};
 	}
 
-	Window::~Window()
-	{}
-
-	bool Window::Create(HWND parent_window)
+	bool Window::RunWindow(HWND parent_window, LPVOID param)
 	{
-		if (m_WindowCreated)
-			return false;
-
 		m_Parent = parent_window;
+
 		if (m_WindowClass.atom() != NULL)
 			m_WindowClass.Unregister();
 		m_WindowProcThunk = std::make_unique<Win32Thunk<WNDPROC, Window>>(&Window::WindowProc, this);
 		m_WindowClass.get().lpfnWndProc = m_WindowProcThunk->GetThunk();
 		m_WindowClass.Register();
 		m_hWnd = ::CreateWindowEx(m_StyleEx, m_WindowClass.class_name(), m_WindowName.c_str(), m_Style,
-									  m_XPos, m_YPos, m_Width, m_Height, m_Parent, m_Menu, m_WindowClass.instance(), m_Param);
-		m_WindowCreated = true;
-		Show(SW_SHOWNORMAL);
-		::UpdateWindow(m_hWnd);
-		return m_hWnd != NULL;
-	}
+								  m_XPos, m_YPos, m_Width, m_Height, m_Parent, m_Menu, m_WindowClass.instance(), param);
 
-	bool Window::RunWindow(HWND parentWindow)
-	{
-		if (!m_WindowCreated && !Create(parentWindow))
-			return false;
+		Show(SW_SHOWNORMAL);
+
+		if (m_Font == NULL)
+			m_Font = ::CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
+								  CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("MS Shell Dlg"));
+
+		SetFont(m_Font);
+
+		for (auto& control : m_MappedControls)
+			control.second->SetFont(m_Font);
+
+		::UpdateWindow(m_hWnd);
 
 		m_WindowRunning = true;
 
@@ -61,6 +62,8 @@ namespace WPP
 				::DispatchMessage(&msg);
 			}
 		}
+
+		m_WindowRunning = false;
 
 		return true;
 	}
@@ -89,6 +92,8 @@ namespace WPP
 		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTORADIOBUTTON | style, x, y, width, height, m_Parent->m_hWnd, (HMENU)control_id, m_Parent->m_WindowClass.instance(), NULL);
 		if (!radiobutton_handle)
 			return nullptr;
+
+		::SendMessage(radiobutton_handle, WM_SETFONT, (WPARAM)m_Parent->m_Font, TRUE);
 
 		auto radiobutton = std::make_shared<RadioButton>(control_id, m_Parent->m_hWnd);
 		if (!radiobutton)
@@ -312,6 +317,7 @@ namespace WPP
 	{
 		if (m_MenuID != -1)
 			m_Menu = ::LoadMenu(m_WindowClass.instance(), MAKEINTRESOURCE(m_MenuID));
+
 		return TRUE;
 	}
 
@@ -324,6 +330,10 @@ namespace WPP
 	LRESULT CALLBACK Window::OnDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		QuitWindow();
+		DeleteObject(m_Font);
+		m_Font = NULL;
+		for (auto& timer : m_TimerEvents)
+			::KillTimer(m_hWnd, timer.first);
 		return TRUE;
 	}
 
@@ -426,78 +436,6 @@ namespace WPP
 
 		::PostQuitMessage(exit_code);
 	}
-
-	void Window::EnableDragDrop(BOOL state)
-	{
-		::ChangeWindowMessageFilterEx(m_hWnd, WM_DROPFILES, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-		::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-		::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYGLOBALDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-		::DragAcceptFiles(m_hWnd, state);
-	}
-
-	BOOL Window::CenterWindow(HWND hWndCenter)
-	{
-		// Determine owner window to center against
-		DWORD dwStyle = GetStyle();
-		if (hWndCenter == NULL)
-		{
-			if (dwStyle & WS_CHILD)
-				hWndCenter = ::GetParent(m_hWnd);
-			else
-				hWndCenter = ::GetWindow(m_hWnd, GW_OWNER);
-		}
-
-		// Get coordinates of the window relative to its parent
-		RECT rcDlg;
-		::GetWindowRect(m_hWnd, &rcDlg);
-		RECT rcArea;
-		RECT rcCenter;
-		HWND hWndParent;
-
-		if (!(dwStyle & WS_CHILD))
-		{
-			// Don't center against invisible or minimized windows
-			if (hWndCenter != NULL)
-			{
-				DWORD dwStyleCenter = ::GetWindowLong(hWndCenter, GWL_STYLE);
-				if (!(dwStyleCenter & WS_VISIBLE) || (dwStyleCenter & WS_MINIMIZE))
-					hWndCenter = NULL;
-			}
-
-			// Center within screen coordinates
-			HMONITOR hMonitor = (hWndCenter != NULL) ? ::MonitorFromWindow(hWndCenter, MONITOR_DEFAULTTONEAREST) : ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
-
-			MONITORINFO minfo = { sizeof(MONITORINFO) };
-			::GetMonitorInfo(hMonitor, &minfo);
-			rcArea = minfo.rcWork;
-
-			if (hWndCenter == NULL)
-				rcCenter = rcArea;
-			else
-				::GetWindowRect(hWndCenter, &rcCenter);
-		} else {
-			// Center within parent client coordinates
-			hWndParent = ::GetParent(m_hWnd);
-			::GetClientRect(hWndParent, &rcArea);
-			::GetClientRect(hWndCenter, &rcCenter);
-			::MapWindowPoints(hWndCenter, hWndParent, (POINT*)&rcCenter, 2);
-		}
-
-		int DlgWidth = rcDlg.right - rcDlg.left;
-		int DlgHeight = rcDlg.bottom - rcDlg.top;
-
-		// Find dialog's upper left based on rcCenter
-		int xLeft = (rcCenter.left + rcCenter.right) / 2 - DlgWidth / 2;
-		int yTop = (rcCenter.top + rcCenter.bottom) / 2 - DlgHeight / 2;
-
-		// If the dialog is outside the screen, move it inside
-		xLeft = max(rcArea.left, min(xLeft, rcArea.right - DlgWidth));
-		yTop = max(rcArea.top, min(yTop, rcArea.bottom - DlgHeight));
-
-		// Map screen coordinates to child coordinates
-		return ::SetWindowPos(m_hWnd, NULL, xLeft, yTop, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-	}
-
 
 #pragma region Message Box Abstracts
 	int Window::MsgBox(LPCTSTR message, LPCTSTR title, UINT type)

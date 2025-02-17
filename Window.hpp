@@ -182,12 +182,12 @@ namespace WPP
 		 * @param style_ex Extended window style.
 		 */
 		Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
-			   int menu_id = -1, HMENU menu = NULL, LPVOID param = NULL, DWORD style_ex = 0);
+			   int menu_id = -1, HMENU menu = NULL, HFONT font = NULL, DWORD style_ex = 0);
 
 		/**
 		 * @brief Destructor.
 		 */
-		virtual ~Window();
+		virtual ~Window() = default;
 
 		WINDOW_MESSAGE_HANDLER(OnCreate);
 		WINDOW_MESSAGE_HANDLER(OnClose);
@@ -207,17 +207,10 @@ namespace WPP
 		WINDOW_MESSAGE_HANDLER(OnDropFiles);
 
 		/**
-		 * @brief Creates the window.
-		 * @param parent_window Parent window handle.
-		 * @return True if successful, false otherwise.
-		 */
-		virtual bool WINAPI Create(HWND parent_window = HWND_DESKTOP);
-
-		/**
 		 * @brief Runs the window message loop.
 		 * @return True if window was created and ran, false otherwise.
 		 */
-		virtual bool WINAPI RunWindow(HWND parentWindow = HWND_DESKTOP);
+		virtual bool WINAPI RunWindow(HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
 
 		/**
 		 * @brief Window procedure.
@@ -281,19 +274,6 @@ namespace WPP
 		 * @param exit_code Exit code.
 		 */
 		void QuitWindow(INT exit_code = 0);
-
-		/**
-		 * @brief Enables or disables drag and drop.
-		 * @param state TRUE to enable, FALSE to disable.
-		 */
-		void EnableDragDrop(BOOL state = TRUE);
-
-		/**
-		 * @brief Centers the window.
-		 * @param hWndCenter Handle of the window to center relative to.
-		 * @return TRUE if successful, FALSE otherwise.
-		 */
-		BOOL CenterWindow(HWND hWndCenter = NULL);
 
 		/**
 		* @brief Creates a radio button group.
@@ -370,11 +350,10 @@ namespace WPP
 		int m_XPos, m_YPos, m_Width, m_Height; ///< Window position and size.
 		std::tstring m_WindowName; ///< Window name.
 		HMENU m_Menu; ///< Menu handle.
+		HFONT m_Font; ///< Font handle.
 		int m_MenuID; ///< Menu ID.
-		LPVOID m_Param; ///< Additional parameters.
 		DWORD m_Style, m_StyleEx; ///< Window styles.
 		UINT_PTR m_InternalTimerID = 0; ///< Internal timer ID.
-		bool m_WindowCreated = false; ///< Window created flag.
 		std::atomic_bool m_WindowRunning = false; ///< Window running flag.
 		std::unique_ptr<Win32Thunk<WNDPROC, Window>> m_WindowProcThunk; ///< Window procedure thunk.
 

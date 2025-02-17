@@ -15,7 +15,7 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	m_CheckBoxOne = CreateCheckBox(IDI_CHECKBOXONE, _T("Check Me!"), 0, 30, 150, 25);
 	m_ComboBoxOne = CreateComboBox(IDI_COMBOBOXONE, 0, 60, 150, 25);
 	m_EditTextOne = CreateEditText(IDI_EDITTEXTONE, 0, 90, 150, 25, _T("Edit me!"));
-	m_ListViewOne = CreateListView(IDI_LISTVIEWONE, 0, 120, 150, 150);
+	m_ListViewOne = CreateListView(IDI_LISTVIEWONE, 0, 120, 350, 150);
 
 	m_RadioButtonGroup = CreateRadioButtonGroup();
 	auto radiobuttonone = m_RadioButtonGroup->CreateButton(IDI_RADIOBUTTONONE, _T("Radio 1"), 0, 270, 150, 25, TRUE);

@@ -22,8 +22,6 @@ public:
 	COMMAND_HANDLER(OnCheckBoxClicked);
 
 private:
-	BOOL shield_state = FALSE;
-
 	std::shared_ptr<ComboBox> m_combo;
 	std::shared_ptr<Button> m_dostuff;
 	std::shared_ptr<CheckBox> m_check;

@@ -32,12 +32,23 @@ namespace WPP
 		}
 
 		virtual HWND GetHandle() const { return m_hWnd; }
+		virtual void SetHandle(HWND handle) { m_hWnd = handle; }
 		virtual HWND GetParent() const { return m_Parent; }
+		virtual void SetParent(HWND parent) { m_Parent = parent; }
+		
 		virtual int GetID() const { return m_ItemID; }
 
 		virtual BOOL Destroy()
 		{
 			return ::DestroyWindow(m_hWnd);
+		}
+
+		virtual void EnableDragDrop(BOOL state)
+		{
+			::ChangeWindowMessageFilterEx(m_hWnd, WM_DROPFILES, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
+			::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
+			::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYGLOBALDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
+			::DragAcceptFiles(m_hWnd, state);
 		}
 
 		virtual std::tstring GetText()
@@ -84,25 +95,43 @@ namespace WPP
 			return ::GetForegroundWindow() == m_hWnd;
 		}
 
-		UINT GetStyle() const
+		virtual HFONT GetFont()
 		{
-			return (UINT) ::GetWindowLong(m_hWnd, GWL_STYLE) & 0xFFFF;
+			return (HFONT)::SendMessage(m_hWnd, WM_GETFONT, 0, 0);
 		}
 
-		LONG AddStyle(DWORD dwStyle)
+		virtual void SetFont(HFONT hFont, BOOL redraw = TRUE)
+		{
+			::SendMessage(m_hWnd, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(redraw, 0));
+		}
+
+		virtual DWORD GetStyle() const
+		{
+			return (DWORD) ::GetWindowLong(m_hWnd, GWL_STYLE) & 0xFFFF;
+		}
+
+		virtual DWORD AddStyle(DWORD dwStyle)
 		{
 			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) | dwStyle;
 			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
 		}
 
-		LONG RemoveStyle(DWORD dwStyle)
+		virtual DWORD RemoveStyle(DWORD dwStyle)
 		{
 			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) & ~dwStyle;
 			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
 		}
 
+		virtual void SetTabStop(BOOL tab_stop = TRUE)
+		{
+			if (tab_stop)
+				ModifyStyle(0, WS_TABSTOP);
+			else
+				ModifyStyle(WS_TABSTOP, 0);
+		}
+
 		//Stolen From ATL
-		BOOL ModifyStyle(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0)
+		virtual BOOL ModifyStyle(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0)
 		{
 			DWORD dwStyle = ::GetWindowLong(m_hWnd, GWL_STYLE);
 			DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
@@ -111,6 +140,69 @@ namespace WPP
 			if (nFlags != 0)
 				::SetWindowPos(m_hWnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags);
 			return TRUE;
+		}
+
+		virtual BOOL CenterWindow(HWND hWndCenter = HWND_DESKTOP)
+		{
+			// Determine owner window to center against
+			DWORD dwStyle = GetStyle();
+			if (hWndCenter == HWND_DESKTOP)
+			{
+				if (dwStyle & WS_CHILD)
+					hWndCenter = ::GetParent(m_hWnd);
+				else
+					hWndCenter = ::GetWindow(m_hWnd, GW_OWNER);
+			}
+
+			// Get coordinates of the window relative to its parent
+			RECT rcDlg;
+			::GetWindowRect(m_hWnd, &rcDlg);
+			RECT rcArea;
+			RECT rcCenter;
+			HWND hWndParent;
+
+			if (!(dwStyle & WS_CHILD))
+			{
+				// Don't center against invisible or minimized windows
+				if (hWndCenter != NULL)
+				{
+					DWORD dwStyleCenter = ::GetWindowLong(hWndCenter, GWL_STYLE);
+					if (!(dwStyleCenter & WS_VISIBLE) || (dwStyleCenter & WS_MINIMIZE))
+						hWndCenter = NULL;
+				}
+
+				// Center within screen coordinates
+				HMONITOR hMonitor = (hWndCenter != NULL) ? ::MonitorFromWindow(hWndCenter, MONITOR_DEFAULTTONEAREST) : ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
+
+				MONITORINFO minfo = { sizeof(MONITORINFO) };
+				::GetMonitorInfo(hMonitor, &minfo);
+				rcArea = minfo.rcWork;
+
+				if (hWndCenter == NULL)
+					rcCenter = rcArea;
+				else
+					::GetWindowRect(hWndCenter, &rcCenter);
+			} else {
+				// Center within parent client coordinates
+				hWndParent = ::GetParent(m_hWnd);
+				::GetClientRect(hWndParent, &rcArea);
+				::GetClientRect(hWndCenter, &rcCenter);
+				::MapWindowPoints(hWndCenter, hWndParent, (POINT*)&rcCenter, 2);
+			}
+
+			int DlgWidth = rcDlg.right - rcDlg.left;
+			int DlgHeight = rcDlg.bottom - rcDlg.top;
+
+			// Find dialog's upper left based on rcCenter
+			int xLeft = (rcCenter.left + rcCenter.right) / 2 - DlgWidth / 2;
+			int yTop = (rcCenter.top + rcCenter.bottom) / 2 - DlgHeight / 2;
+
+			// If the dialog is outside the screen, move it inside
+			xLeft = max(rcArea.left, min(xLeft, rcArea.right - DlgWidth));
+			yTop = max(rcArea.top, min(yTop, rcArea.bottom - DlgHeight));
+
+			// Map screen coordinates to child coordinates
+			return ::SetWindowPos(m_hWnd, NULL, xLeft, yTop, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 		}
 
 	protected:

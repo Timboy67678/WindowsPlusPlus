@@ -36,7 +36,6 @@
 #include <string>
 #include <thread>
 #include <functional>
-//#include <memory>
 #include <map>
 
 namespace std

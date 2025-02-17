@@ -42,7 +42,7 @@ namespace WPP
 		/**
 		* @brief Destroys the Dialog object.
 		*/
-		virtual ~Dialog();
+		virtual ~Dialog() = default;
 
 		DIALOG_MESSAGE_HANDLER(OnInitDialog);
 		DIALOG_MESSAGE_HANDLER(OnClose);
@@ -98,12 +98,6 @@ namespace WPP
 		void EndDialog();
 
 		/**
-		* @brief Enables or disables drag and drop.
-		* @param state TRUE to enable, FALSE to disable (default is TRUE).
-		*/
-		void EnableDragDrop(BOOL state = TRUE);
-
-		/**
 		* @brief Adds a timer event.
 		* @param timer_elapse The timer elapse time.
 		* @param callback The callback function.
@@ -113,7 +107,7 @@ namespace WPP
 		{
 			const UINT_PTR timer_id = ++m_InternalTimerID + DIALOG_TIMER_OFFSET_START;
 			if (::SetTimer(m_hWnd, timer_id, timer_elapse, NULL) != 0)
-				m_TimerEvents[timer_id] = TIMER_REF(callback);
+				m_TimerEvents[timer_id] = DIALOG_TIMER_REF(callback);
 		}
 
 		/**
@@ -135,11 +129,11 @@ namespace WPP
 		template<typename DC>
 		void AddNotifyMessage(INT id, DC callback)
 		{
-			m_NotifyEvents[id] = NOTIFY_REF(callback);
+			m_NotifyEvents[id] = DIALOG_NOTIFY_REF(callback);
 		}
 
 		/**
-		 * @brief Registers a control.
+		* @brief Registers a control.
 		* @param control_id The control ID.
 		* @param ctrl The control object.
 		* @return TRUE if successful, FALSE otherwise.
