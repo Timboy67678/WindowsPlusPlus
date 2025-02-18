@@ -68,6 +68,7 @@ LRESULT CALLBACK MainWindow::OnCheckBoxOne(INT controlId, HWND hWnd, WPARAM wPar
 	switch (HIWORD(wParam))
 	{
 	case BN_CLICKED:
+		m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
 		break;
 	default:
 		break;

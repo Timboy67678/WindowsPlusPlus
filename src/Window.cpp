@@ -87,9 +87,11 @@ namespace WPP
 	std::shared_ptr<RadioButton> Window::RadioButtonGroup::CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
 	{
 		DWORD style = WS_CHILD | WS_VISIBLE | WS_OVERLAPPED;
-		if (m_RadioButtons.empty()) style |= WS_GROUP;
+		if (m_RadioButtons.empty()) 
+			style |= WS_GROUP;
 
-		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTORADIOBUTTON | style, x, y, width, height, m_Parent->m_hWnd, (HMENU)control_id, m_Parent->m_WindowClass.instance(), NULL);
+		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTORADIOBUTTON | style, 
+												   x, y, width, height, m_Parent->m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_Parent->m_WindowClass.instance(), NULL);
 		if (!radiobutton_handle)
 			return nullptr;
 
@@ -110,7 +112,7 @@ namespace WPP
 	{
 		for (size_t index = 0; index < m_RadioButtons.size(); ++index) {
 			if (m_RadioButtons[index]->GetChecked() == BST_CHECKED)
-				return index;
+				return static_cast<int>(index);
 		}
 		return -1;
 	}
@@ -122,7 +124,8 @@ namespace WPP
 
 	std::shared_ptr<Button> Window::CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
 	{
-		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, 
+											  x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!button_handle)
 			return nullptr;
 
@@ -136,7 +139,8 @@ namespace WPP
 
 	std::shared_ptr<CheckBox> Window::CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
 	{
-		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, 
+												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!checkbox_handle)
 			return nullptr;
 
@@ -153,7 +157,8 @@ namespace WPP
 	
 	std::shared_ptr<ComboBox> Window::CreateComboBox(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 
+												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!combobox_handle)
 			return nullptr;
 
@@ -169,7 +174,8 @@ namespace WPP
 
 	std::shared_ptr<EditText> Window::CreateEditText(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text)
 	{
-		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text, ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text, ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!edittext_handle)
 			return nullptr;
 
@@ -185,7 +191,8 @@ namespace WPP
 
 	std::shared_ptr<ListBox> Window::CreateListBox(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND listbox_handle = ::CreateWindowEx(0, WC_LISTBOX, _T(""), LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND listbox_handle = ::CreateWindowEx(0, WC_LISTBOX, _T(""), LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+											   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!listbox_handle)
 			return nullptr;
 
@@ -201,7 +208,8 @@ namespace WPP
 
 	std::shared_ptr<ListView> Window::CreateListView(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!listview_handle)
 			return nullptr;
 
@@ -217,7 +225,8 @@ namespace WPP
 
 	std::shared_ptr<TreeView> Window::CreateTreeView(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!treeview_handle)
 			return nullptr;
 
@@ -233,7 +242,8 @@ namespace WPP
 
 	std::shared_ptr<TabControl> Window::CreateTabControl(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+												  x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!tabcontrol_handle)
 			return nullptr;
 
@@ -249,7 +259,8 @@ namespace WPP
 
 	std::shared_ptr<ProgressBar> Window::CreateProgressBar(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND progressbar_handle = ::CreateWindowEx(0, PROGRESS_CLASS, _T(""), PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND progressbar_handle = ::CreateWindowEx(0, PROGRESS_CLASS, _T(""), PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!progressbar_handle)
 			return nullptr;
 
@@ -265,7 +276,8 @@ namespace WPP
 
 	std::shared_ptr<SpinControl> Window::CreateSpinControl(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!spincontrol_handle)
 			return nullptr;
 
@@ -281,7 +293,8 @@ namespace WPP
 
 	std::shared_ptr<RichEdit> Window::CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text)
 	{
-		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text, ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text, ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE,
+												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!richedit_handle)
 			return nullptr;
 
@@ -292,12 +305,17 @@ namespace WPP
 		}
 
 		m_MappedControls.emplace(control_id, richedit);
+
+		if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) //control's only works with richedit2.0 dll loaded
+			::LoadLibrary(TEXT("Riched20.dll"));
+
 		return richedit;
 	}
 
 	std::shared_ptr<LinkControl> Window::CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
 	{
-		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_VISIBLE, x, y, width, height, m_hWnd, (HMENU)control_id, m_WindowClass.instance(), NULL);
+		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_VISIBLE, 
+												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!linkcontrol_handle)
 			return nullptr;
 

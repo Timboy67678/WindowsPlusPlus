@@ -80,6 +80,11 @@ namespace WPP
 			return ::ShowWindow(m_hWnd, state);
 		}
 
+		virtual BOOL IsEnabled()
+		{
+			return ::IsWindowEnabled(m_hWnd);
+		}
+
 		virtual BOOL SetEnabled(BOOL enabled = TRUE)
 		{
 			return ::EnableWindow(m_hWnd, enabled);
@@ -617,8 +622,10 @@ namespace WPP
 
 		void EmulatePress()
 		{
+			HWND current_focus = ::GetForegroundWindow();
 			::SetActiveWindow(GetParent());
 			SendMessage(m_hWnd, BM_CLICK, 0, 0L);
+			::SetActiveWindow(current_focus);
 		}
 	};
 
