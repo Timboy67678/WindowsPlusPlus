@@ -29,10 +29,9 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	auto radio_three = radio_grptwo->CreateButton(1011, _T("Radio 2 3"), 0, 395, 150, 25);
 
 	m_LinkControl = CreateLinkControl(1012, _T("<a href=\"https://www.google.com\">Click me!</a>"), 0, 450, 150, 25);
-	m_LinkControl->SetOnClick([this](HWND, LPNMHDR nm) -> LRESULT {
+	m_LinkControl->SetOnClick([this](HWND, LPNMHDR nm) {
 		auto lnk = reinterpret_cast<PNMLINK>(nm);
 		ShellExecute(NULL, TEXT("open"), lnk->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
-		return FALSE;
 	});
 
 	m_ComboBoxOne->Add(_T("Item 1"));
@@ -48,16 +47,14 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	m_ListViewOne->AddItem(0, 1, _T("Column Item 1"));
 	m_ListViewOne->AddItem(0, 2, _T("Column Item 2"));
 
-	m_ButtonOne->SetButtonClicked([this](HWND, WPARAM, LPARAM)->LRESULT {
+	m_ButtonOne->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
 		static int x = 0;
 		std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
 		m_ButtonOne->SetText(button_counter_str);
-		return FALSE;
 	});
 
-	m_CheckBoxOne->SetButtonClicked([this](HWND, WPARAM, LPARAM)->LRESULT {
+	m_CheckBoxOne->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
 		m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
-		return FALSE;
 	});
 
 	return WPP::Window::OnCreate(hWnd, wParam, lParam);

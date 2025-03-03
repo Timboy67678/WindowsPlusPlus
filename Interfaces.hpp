@@ -501,8 +501,8 @@ namespace WPP
 	class Control : public Hwnd
 	{
 	public:
-		using CommandCallback = std::function<LRESULT(HWND, WPARAM, LPARAM)>;
-		using NotifyCallback = std::function<LRESULT(HWND, LPNMHDR)>;
+		using CommandCallback = std::function<void(HWND, WPARAM, LPARAM)>;
+		using NotifyCallback = std::function<void(HWND, LPNMHDR)>;
 
 		Control(int resource_id, HWND parent = nullptr)
 			: Hwnd(resource_id, parent)
@@ -524,10 +524,10 @@ namespace WPP
 			m_hWnd = ::GetDlgItem(parent, item_id);
 		}
 
-		virtual LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm)
+		virtual void OnNotifyCallback(HWND hWnd, LPNMHDR nm)
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{NM_CLICK, m_NotifyOnClick},
@@ -541,19 +541,15 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			if (m_NotifyDefault)
-				return m_NotifyDefault(hWnd, nm);
-
-			return FALSE;
+				it->second(hWnd, nm);
+			else if (m_NotifyDefault)
+				m_NotifyDefault(hWnd, nm);
 		}
 
-		virtual LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam)
+		virtual void OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		{
 			if (m_DefaultCommand)
-				return m_DefaultCommand(hWnd, wParam, lParam);
-			return FALSE;
+				m_DefaultCommand(hWnd, wParam, lParam);
 		}
 
 		void SetCommandCallback(CommandCallback callback)
@@ -665,7 +661,7 @@ namespace WPP
 			return (HCURSOR)SendMessage(m_hWnd, STM_SETIMAGE, IMAGE_CURSOR, (LPARAM)hCursor);
 		}
 
-		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		void OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
 		{
 			UINT notification = HIWORD(wParam);
 
@@ -678,9 +674,9 @@ namespace WPP
 
 			auto it = commandMap.find(notification);
 			if (it != commandMap.end() && it->second)
-				return it->second(hWnd, wParam, lParam);
-
-			return Control::OnCommandCallback(hWnd, wParam, lParam);
+				it->second(hWnd, wParam, lParam);
+			else
+				Control::OnCommandCallback(hWnd, wParam, lParam);
 		}
 
 		void SetStaticClicked(CommandCallback callback)
@@ -773,7 +769,7 @@ namespace WPP
 			::SetActiveWindow(current_focus);
 		}
 
-		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		void OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
 		{
 			UINT notification = HIWORD(wParam);
 
@@ -793,7 +789,7 @@ namespace WPP
 
 			auto it = commandMap.find(notification);
 			if (it != commandMap.end() && it->second)
-				return it->second(hWnd, wParam, lParam);
+				it->second(hWnd, wParam, lParam);
 
 			return Control::OnCommandCallback(hWnd, wParam, lParam);
 		}
@@ -1105,7 +1101,7 @@ namespace WPP
 				(int)SendMessage(m_hWnd, LB_SELITEMRANGEEX, last_item, first_item);
 		}
 
-		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		void OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
 		{
 			UINT notification = HIWORD(wParam);
 
@@ -1120,9 +1116,9 @@ namespace WPP
 
 			auto it = commandMap.find(notification);
 			if (it != commandMap.end() && it->second)
-				return it->second(hWnd, wParam, lParam);
-
-			return Control::OnCommandCallback(hWnd, wParam, lParam);
+				it->second(hWnd, wParam, lParam);
+			else
+				Control::OnCommandCallback(hWnd, wParam, lParam);
 		}
 
 		void SetListboxDblClick(CommandCallback callback)
@@ -1395,7 +1391,7 @@ namespace WPP
 			SendMessage(m_hWnd, WM_PASTE, 0, 0L);
 		}
 
-		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		void OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
 		{
 			UINT notification = HIWORD(wParam);
 			const std::unordered_map<UINT, CommandCallback> commandMap = {
@@ -1413,9 +1409,9 @@ namespace WPP
 
 			auto it = commandMap.find(notification);
 			if (it != commandMap.end() && it->second)
-				return it->second(hWnd, wParam, lParam);
-
-			return Control::OnCommandCallback(hWnd, wParam, lParam);
+				it->second(hWnd, wParam, lParam);
+			else
+				Control::OnCommandCallback(hWnd, wParam, lParam);
 		}
 
 		void SetComboCloseUp(CommandCallback callback)
@@ -1808,7 +1804,7 @@ namespace WPP
 			SendMessage(m_hWnd, WM_PASTE, 0, 0L);
 		}
 
-		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		void OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
 		{
 			UINT notification = HIWORD(wParam);
 
@@ -1824,9 +1820,9 @@ namespace WPP
 
 			auto it = commandMap.find(notification);
 			if (it != commandMap.end() && it->second)
-				return it->second(hWnd, wParam, lParam);
-
-			return Control::OnCommandCallback(hWnd, wParam, lParam);
+				it->second(hWnd, wParam, lParam);
+			else
+				Control::OnCommandCallback(hWnd, wParam, lParam);
 		}
 
 		void SetEditChange(CommandCallback callback)
@@ -2209,10 +2205,10 @@ namespace WPP
 			SendMessage(m_hWnd, TTM_POPUP, 0, 0L);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{TTN_GETDISPINFO, m_TooltipGetDispInfo},
@@ -2223,9 +2219,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 	protected:
@@ -2380,10 +2376,11 @@ namespace WPP
 			return (int)SendMessage(m_hWnd, HDM_CLEARFILTER, (WPARAM)-1, 0L);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
+
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{HDN_BEGINDRAG, m_HeaderBeginDrag},
 				{HDN_BEGINFILTEREDIT, m_HeaderBeginFilterEdit},
@@ -2406,9 +2403,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetHeaderBeginDrag(NotifyCallback callback)
@@ -3394,10 +3391,10 @@ namespace WPP
 			return bRet;
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{LVN_ITEMCHANGED, m_ListViewItemChanged},
@@ -3417,9 +3414,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetListViewItemChanged(NotifyCallback callback)
@@ -3988,10 +3985,10 @@ namespace WPP
 			SendMessage(m_hWnd, TVM_SHOWINFOTIP, 0, (LPARAM)hItem);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{TVN_SELCHANGED, m_TreeViewSelChanged},
@@ -4009,9 +4006,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetTreeViewSelChanged(NotifyCallback callback)
@@ -4647,10 +4644,10 @@ namespace WPP
 			return (HRESULT)SendMessage(m_hWnd, TB_GETOBJECT, (WPARAM)&iid, (LPARAM)ppvObject);
 		}
 
-		virtual LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		virtual void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{TBN_BEGINADJUST, m_ToolBarBeginAdjust},
@@ -4675,9 +4672,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetToolBarBeginAdjust(NotifyCallback callback)
@@ -5103,10 +5100,10 @@ namespace WPP
 			return (BOOL)SendMessage(m_hWnd, TCM_HIGHLIGHTITEM, nIndex, MAKELPARAM(bHighlight, 0));
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{TCN_SELCHANGE, m_TabControlSelChange},
@@ -5117,9 +5114,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetTabControlSelChange(NotifyCallback callback)
@@ -5352,10 +5349,10 @@ namespace WPP
 			SendMessage(m_hWnd, TBM_CLEARTICS, bRedraw, 0L);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{TRBN_THUMBPOSCHANGING, m_TrackBarThumbPosChanging}
@@ -5363,9 +5360,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetTrackBarThumbPosChanging(NotifyCallback callback)
@@ -5471,10 +5468,10 @@ namespace WPP
 			return (int)SendMessage(m_hWnd, UDM_SETPOS32, 0, (LPARAM)nPos);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{UDN_DELTAPOS, m_UpDownDeltaPos}
@@ -5482,9 +5479,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetUpDownDeltaPosCallback(NotifyCallback callback)
@@ -5659,10 +5656,10 @@ namespace WPP
 			return (BOOL)SendMessage(m_hWnd, ACM_ISPLAYING, 0, 0L);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{ACN_START, m_AnimationStart},
@@ -5671,9 +5668,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetAnimationStart(NotifyCallback callback)
@@ -6373,10 +6370,10 @@ namespace WPP
 			return (BOOL)SendMessage(m_hWnd, EM_SETUIANAME, 0, (LPARAM)lpstrName);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{EN_CORRECTTEXT, m_RichEditCorrectText},
@@ -6397,9 +6394,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetRichEditCorrectText(NotifyCallback callback)
@@ -6633,10 +6630,10 @@ namespace WPP
 			return (BOOL)SendMessage(m_hWnd, CBEM_HASEDITCHANGED, 0, 0L);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{CBEN_BEGINEDIT, m_ComboBoxExBeginEdit},
@@ -6649,9 +6646,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetComboBoxExBeginEdit(NotifyCallback callback)
@@ -6862,10 +6859,10 @@ namespace WPP
 			SendMessage(m_hWnd, MCM_SIZERECTTOMIN, 0, (LPARAM)lpRect);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{MCN_GETDAYSTATE, m_MonthCalendarGetDayState},
@@ -6876,9 +6873,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetMonthCalendarGetDayState(NotifyCallback callback)
@@ -6988,10 +6985,10 @@ namespace WPP
 			SendMessage(m_hWnd, DTM_CLOSEMONTHCAL, 0, 0L);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{DTN_CLOSEUP, m_DateTimePickerCloseUp},
@@ -7005,9 +7002,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetDateTimePickerCloseUp(NotifyCallback callback)
@@ -7100,10 +7097,10 @@ namespace WPP
 			SendMessage(m_hWnd, IPM_SETFOCUS, nField, 0L);
 		}
 
-		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		void OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
 		{
 			if (nm == nullptr)
-				return FALSE;
+				return;
 
 			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
 				{IPN_FIELDCHANGED, m_IP4AddressFieldChanged}
@@ -7111,9 +7108,9 @@ namespace WPP
 
 			auto it = notifyMap.find(nm->code);
 			if (it != notifyMap.end() && it->second)
-				return it->second(hWnd, nm);
-
-			return Control::OnNotifyCallback(hWnd, nm);
+				it->second(hWnd, nm);
+			else
+				Control::OnNotifyCallback(hWnd, nm);
 		}
 
 		void SetIP4AddressFieldChanged(NotifyCallback callback)

@@ -23,17 +23,15 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 	RegisterControl(IDC_PROGRESS_TEST, std::move(m_progress));
 	RegisterControl(IDC_TAB_TEST, std::move(m_tab));
 
-	RegisterMenuCommand(IDM_EXIT, [this](HWND, WPARAM, LPARAM) -> LRESULT {
+	RegisterMenuCommand(IDM_EXIT, [this](HWND, WPARAM, LPARAM) {
 		EndDialog();
-		return FALSE;
 	});
 
-	RegisterMenuCommand(IDM_ABOUT, [this](HWND, WPARAM, LPARAM) -> LRESULT {
+	RegisterMenuCommand(IDM_ABOUT, [this](HWND, WPARAM, LPARAM) {
 		MsgBoxInfo(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
-		return FALSE;
 	});
 
-	m_dostuff->SetButtonClicked([this](HWND, WPARAM, LPARAM) -> LRESULT {
+	m_dostuff->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
 		m_list->ResetContent();
 		m_combo->ResetContent();
 		m_tree->DeleteAllItems();
@@ -56,16 +54,13 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 			m_tree->Expand(trees[i]);
 
 		m_tree->Expand(tree);
-
-		return FALSE;
 	});
 
-	m_check->SetButtonClicked([this](HWND, WPARAM, LPARAM) -> LRESULT {
+	m_check->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
 		m_dostuff->SetShield(m_check->GetChecked() == BST_CHECKED);
-		return FALSE;
 	});
 
-	m_spin->SetUpDownDeltaPosCallback([this](HWND, LPNMHDR nm) -> LRESULT {
+	m_spin->SetUpDownDeltaPosCallback([this](HWND, LPNMHDR nm) {
 		auto updn = reinterpret_cast<LPNMUPDOWN>(nm);
 		int minimum, maximum, new_val = updn->iPos + updn->iDelta;
 		m_spin->GetRange32(minimum, maximum);
@@ -78,11 +73,9 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 			m_spinedit->SetText(std::to_tstring(new_val));
 			m_richedit->AppendText((TEXT("Delta is ") + std::to_tstring(updn->iDelta) + TEXT("\n")).c_str());
 		}
-
-		return TRUE;
 	});
 
-	m_track->SetTrackBarThumbPosChanging([this](HWND hWnd, LPNMHDR nm) -> LRESULT {
+	m_track->SetTrackBarThumbPosChanging([this](HWND hWnd, LPNMHDR nm) {
 		auto tbm = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(nm);
 
 		int minimum, maximum, new_val = tbm->dwPos;
@@ -95,8 +88,6 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 			m_scroll->SetScrollPos(new_val);
 			m_spinedit->SetText(std::to_tstring(new_val));
 		}
-
-		return TRUE;
 	});
 
 	m_combo->SetCueBannerText(L"ComboBox control item test");
