@@ -21,9 +21,6 @@ public:
 
 	WINDOW_MESSAGE_HANDLER(OnCreate);
 
-	COMMAND_HANDLER(OnButtonOne);
-	COMMAND_HANDLER(OnCheckBoxOne);
-
 private:
 	std::shared_ptr<WPP::Button> m_ButtonOne;
 	std::shared_ptr<WPP::CheckBox> m_CheckBoxOne;

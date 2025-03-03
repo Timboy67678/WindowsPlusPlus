@@ -3,7 +3,7 @@
 #include <memory>
 
 #define MAX_RANGES 0, 100
-#define MAX_TAB_ITEMS 5
+#define MAX_TAB_ITEMS 7
 #define MAX_VISIBLE_ITEMS 8
 #define SYSTEM32_PATH TEXT("C:\\Windows\\System32\\*.exe")
 
@@ -23,13 +23,49 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 	RegisterControl(IDC_PROGRESS_TEST, std::move(m_progress));
 	RegisterControl(IDC_TAB_TEST, std::move(m_tab));
 
-	RegisterMenuCommand(IDM_EXIT, std::bind(&MainDialog::OnMenuExit, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	RegisterMenuCommand(IDM_ABOUT, std::bind(&MainDialog::OnMenuAbout, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	RegisterMenuCommand(IDM_EXIT, [this](HWND, WPARAM, LPARAM) -> LRESULT {
+		EndDialog();
+		return FALSE;
+	});
 
-	m_dostuff->SetButtonClicked(std::bind(&MainDialog::OnOK, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	m_check->SetButtonClicked(std::bind(&MainDialog::OnCheckBoxClicked, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	RegisterMenuCommand(IDM_ABOUT, [this](HWND, WPARAM, LPARAM) -> LRESULT {
+		MsgBoxInfo(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
+		return FALSE;
+	});
 
-	m_spin->SetUpDownDeltaPosCallback([this](HWND hWnd, LPNMHDR nm) -> LRESULT {
+	m_dostuff->SetButtonClicked([this](HWND, WPARAM, LPARAM) -> LRESULT {
+		m_list->ResetContent();
+		m_combo->ResetContent();
+		m_tree->DeleteAllItems();
+
+		if (m_tab->GetItemCount() < MAX_TAB_ITEMS)
+			m_tab->AddItem((TEXT("Tab ") + std::to_tstring(m_tab->GetItemCount() + 1)).c_str());
+
+		m_list->AddDir(0, SYSTEM32_PATH);
+		m_combo->AddDir(0, SYSTEM32_PATH);
+
+		m_combo->SetMinVisible(MAX_VISIBLE_ITEMS);
+
+		HTREEITEM trees[MAX_VISIBLE_ITEMS] = { 0 };
+		HTREEITEM tree = m_tree->InsertItem(TEXT("Main Item"), NULL, NULL);
+
+		for (int i = 0; i < ARRAYSIZE(trees); i++)
+			trees[i] = m_tree->InsertItem(TEXT("Sub Item"), i == 0 ? tree : trees[i - 1], NULL);
+
+		for (int i = ARRAYSIZE(trees) - 1; i >= 0; i--)
+			m_tree->Expand(trees[i]);
+
+		m_tree->Expand(tree);
+
+		return FALSE;
+	});
+
+	m_check->SetButtonClicked([this](HWND, WPARAM, LPARAM) -> LRESULT {
+		m_dostuff->SetShield(m_check->GetChecked() == BST_CHECKED);
+		return FALSE;
+	});
+
+	m_spin->SetUpDownDeltaPosCallback([this](HWND, LPNMHDR nm) -> LRESULT {
 		auto updn = reinterpret_cast<LPNMUPDOWN>(nm);
 		int minimum, maximum, new_val = updn->iPos + updn->iDelta;
 		m_spin->GetRange32(minimum, maximum);
@@ -81,50 +117,4 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 	m_scroll->SetScrollRange(nMin, nMax);
 
 	return Dialog::OnInitDialog(hWnd, wParam, lParam);
-}
-
-LRESULT CALLBACK MainDialog::OnOK(HWND hWnd, WPARAM wParam, LPARAM lParam)
-{
-	m_list->ResetContent();
-	m_combo->ResetContent();
-	m_tree->DeleteAllItems();
-
-	if (m_tab->GetItemCount() < MAX_TAB_ITEMS)
-		m_tab->AddItem((TEXT("Tab ") + std::to_tstring(m_tab->GetItemCount() + 1)).c_str());
-
-	m_list->AddDir(0, SYSTEM32_PATH);
-	m_combo->AddDir(0, SYSTEM32_PATH);
-
-	m_combo->SetMinVisible(MAX_VISIBLE_ITEMS);
-
-	HTREEITEM trees[MAX_VISIBLE_ITEMS] = { 0 };
-	HTREEITEM tree = m_tree->InsertItem(TEXT("Main Item"), NULL, NULL);
-
-	for (int i = 0; i < ARRAYSIZE(trees); i++)
-		trees[i] = m_tree->InsertItem(TEXT("Sub Item"), i == 0 ? tree : trees[i - 1], NULL);
-
-	for (int i = ARRAYSIZE(trees) - 1; i >= 0; i--)
-		m_tree->Expand(trees[i]);
-
-	m_tree->Expand(tree);
-
-	return FALSE;
-}
-
-LRESULT CALLBACK MainDialog::OnMenuExit(HWND hWnd, WPARAM wParam, LPARAM lParam)
-{
-	EndDialog();
-	return FALSE;
-}
-
-LRESULT CALLBACK MainDialog::OnMenuAbout(HWND hWnd, WPARAM wParam, LPARAM lParam)
-{
-	MsgBoxInfo(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
-	return FALSE;
-}
-
-LRESULT CALLBACK MainDialog::OnCheckBoxClicked(HWND hWnd, WPARAM wParam, LPARAM lParam)
-{
-	m_dostuff->SetShield(m_check->GetChecked() == BST_CHECKED);
-	return FALSE;
 }
