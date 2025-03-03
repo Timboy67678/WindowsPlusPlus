@@ -31,5 +31,6 @@ private:
 	std::shared_ptr<WPP::EditText> m_EditTextOne;
 	std::shared_ptr<WPP::ListView> m_ListViewOne;
 	std::shared_ptr<WPP::Window::RadioButtonGroup> m_RadioButtonGroup;
+	std::shared_ptr<WPP::SysLink> m_LinkControl;
 };
 

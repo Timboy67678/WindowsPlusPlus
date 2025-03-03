@@ -11,232 +11,12 @@
 
 #include "winplusplus.h"
 
-#define COMMAND_HANDLER(X) virtual LRESULT CALLBACK X (INT controlId, HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define COMMAND_HANDLER(X) virtual LRESULT CALLBACK X (HWND hWnd, WPARAM wParam, LPARAM lParam)
+#define NOTIFY_HANDLER(X) virtual LRESULT CALLBACK X (HWND hWnd, LPNMHDR nm)
 #define COMMAND_ID_REF(X) static_cast<WPP::Hwnd::COMMAND_ID_MESSAGE_CALLBACK>(X)
 
 namespace WPP
 {
-	class Hwnd
-	{
-	public:
-		typedef LRESULT(CALLBACK Hwnd::*COMMAND_ID_MESSAGE_CALLBACK)(INT, HWND, WPARAM, LPARAM);
-
-		Hwnd(int resource_id, HWND parent = NULL)
-			: m_ItemID(resource_id), m_Parent(parent), m_hWnd(NULL)
-		{
-		}
-
-		Hwnd(HWND handle)
-			: m_hWnd(handle), m_ItemID(-1), m_Parent(NULL)
-		{
-		}
-
-		virtual HWND GetHandle() const { return m_hWnd; }
-		virtual void SetHandle(HWND handle) { m_hWnd = handle; }
-		virtual HWND GetParent() const { return m_Parent; }
-		virtual void SetParent(HWND parent) { m_Parent = parent; }
-		
-		virtual int GetID() const { return m_ItemID; }
-
-		virtual BOOL Destroy()
-		{
-			return ::DestroyWindow(m_hWnd);
-		}
-
-		virtual void EnableDragDrop(BOOL state)
-		{
-			::ChangeWindowMessageFilterEx(m_hWnd, WM_DROPFILES, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-			::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-			::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYGLOBALDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
-			::DragAcceptFiles(m_hWnd, state);
-		}
-
-		virtual std::tstring GetText()
-		{
-			TCHAR title_buffer[1024] = { 0 };
-			int text_length = ::GetWindowText(m_hWnd, title_buffer, ARRAYSIZE(title_buffer));
-			return std::tstring(title_buffer, text_length);
-		}
-
-		virtual int GetTextLength()
-		{
-			return ::GetWindowTextLength(m_hWnd);
-		}
-
-		virtual RECT GetRect()
-		{
-			RECT rc = { 0 };
-			::GetWindowRect(m_hWnd, &rc);
-			return rc;
-		}
-
-		virtual BOOL SetText(const std::tstring& text)
-		{
-			return ::SetWindowText(m_hWnd, text.c_str());
-		}
-
-		virtual BOOL SetShowing(int state = SW_NORMAL)
-		{
-			return ::ShowWindow(m_hWnd, state);
-		}
-
-		virtual BOOL IsEnabled()
-		{
-			return ::IsWindowEnabled(m_hWnd);
-		}
-
-		virtual BOOL SetEnabled(BOOL enabled = TRUE)
-		{
-			return ::EnableWindow(m_hWnd, enabled);
-		}
-
-		virtual HWND Focus()
-		{
-			return ::SetFocus(m_hWnd);
-		}
-
-		virtual BOOL IsFocused()
-		{
-			return ::GetForegroundWindow() == m_hWnd;
-		}
-
-		virtual HFONT GetFont()
-		{
-			return (HFONT)::SendMessage(m_hWnd, WM_GETFONT, 0, 0);
-		}
-
-		virtual void SetFont(HFONT hFont, BOOL redraw = TRUE)
-		{
-			::SendMessage(m_hWnd, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(redraw, 0));
-		}
-
-		virtual DWORD GetStyle() const
-		{
-			return (DWORD) ::GetWindowLong(m_hWnd, GWL_STYLE) & 0xFFFF;
-		}
-
-		virtual DWORD AddStyle(DWORD dwStyle)
-		{
-			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) | dwStyle;
-			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
-		}
-
-		virtual DWORD RemoveStyle(DWORD dwStyle)
-		{
-			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) & ~dwStyle;
-			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
-		}
-
-		virtual void SetTabStop(BOOL tab_stop = TRUE)
-		{
-			if (tab_stop)
-				ModifyStyle(0, WS_TABSTOP);
-			else
-				ModifyStyle(WS_TABSTOP, 0);
-		}
-
-		//Stolen From ATL
-		virtual BOOL ModifyStyle(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0)
-		{
-			DWORD dwStyle = ::GetWindowLong(m_hWnd, GWL_STYLE);
-			DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
-			if (dwStyle == dwNewStyle) return FALSE;
-			::SetWindowLong(m_hWnd, GWL_STYLE, dwNewStyle);
-			if (nFlags != 0)
-				::SetWindowPos(m_hWnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags);
-			return TRUE;
-		}
-
-		virtual BOOL CenterWindow(HWND hWndCenter = HWND_DESKTOP)
-		{
-			// Determine owner window to center against
-			DWORD dwStyle = GetStyle();
-			if (hWndCenter == HWND_DESKTOP)
-			{
-				if (dwStyle & WS_CHILD)
-					hWndCenter = ::GetParent(m_hWnd);
-				else
-					hWndCenter = ::GetWindow(m_hWnd, GW_OWNER);
-			}
-
-			// Get coordinates of the window relative to its parent
-			RECT rcDlg;
-			::GetWindowRect(m_hWnd, &rcDlg);
-			RECT rcArea;
-			RECT rcCenter;
-			HWND hWndParent;
-
-			if (!(dwStyle & WS_CHILD))
-			{
-				// Don't center against invisible or minimized windows
-				if (hWndCenter != NULL)
-				{
-					DWORD dwStyleCenter = ::GetWindowLong(hWndCenter, GWL_STYLE);
-					if (!(dwStyleCenter & WS_VISIBLE) || (dwStyleCenter & WS_MINIMIZE))
-						hWndCenter = NULL;
-				}
-
-				// Center within screen coordinates
-				HMONITOR hMonitor = (hWndCenter != NULL) ? ::MonitorFromWindow(hWndCenter, MONITOR_DEFAULTTONEAREST) : ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
-
-				MONITORINFO minfo = { sizeof(MONITORINFO) };
-				::GetMonitorInfo(hMonitor, &minfo);
-				rcArea = minfo.rcWork;
-
-				if (hWndCenter == NULL)
-					rcCenter = rcArea;
-				else
-					::GetWindowRect(hWndCenter, &rcCenter);
-			} else {
-				// Center within parent client coordinates
-				hWndParent = ::GetParent(m_hWnd);
-				::GetClientRect(hWndParent, &rcArea);
-				::GetClientRect(hWndCenter, &rcCenter);
-				::MapWindowPoints(hWndCenter, hWndParent, (POINT*)&rcCenter, 2);
-			}
-
-			int DlgWidth = rcDlg.right - rcDlg.left;
-			int DlgHeight = rcDlg.bottom - rcDlg.top;
-
-			// Find dialog's upper left based on rcCenter
-			int xLeft = (rcCenter.left + rcCenter.right) / 2 - DlgWidth / 2;
-			int yTop = (rcCenter.top + rcCenter.bottom) / 2 - DlgHeight / 2;
-
-			// If the dialog is outside the screen, move it inside
-			xLeft = max(rcArea.left, min(xLeft, rcArea.right - DlgWidth));
-			yTop = max(rcArea.top, min(yTop, rcArea.bottom - DlgHeight));
-
-			// Map screen coordinates to child coordinates
-			return ::SetWindowPos(m_hWnd, NULL, xLeft, yTop, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-		}
-
-	protected:
-		int m_ItemID;
-		HWND m_hWnd, m_Parent;
-	};
-
-	class Control : public Hwnd
-	{
-	public:
-		Control(int resource_id, HWND parent = NULL)
-			: Hwnd(resource_id, parent)
-		{
-			if (parent != NULL)
-				m_hWnd = ::GetDlgItem(m_Parent, resource_id);
-		}
-
-		Control(HWND handle) : Hwnd(handle)
-		{
-		}
-
-		void SetItem(HWND parent, int item_id)
-		{
-			m_ItemID = item_id;
-			m_Parent = parent;
-			m_hWnd = ::GetDlgItem(parent, item_id);
-		}
-	};
-
 	class ImageList
 	{
 	public:
@@ -519,6 +299,327 @@ namespace WPP
 #endif // (_WIN32_IE >= 0x0400)
 	};
 
+	class Hwnd
+	{
+	public:
+		typedef LRESULT(CALLBACK Hwnd::* COMMAND_ID_MESSAGE_CALLBACK)(HWND, WPARAM, LPARAM);
+
+		Hwnd(int resource_id, HWND parent = NULL)
+			: m_ItemID(resource_id), m_Parent(parent), m_hWnd(NULL)
+		{
+		}
+
+		Hwnd(HWND handle)
+			: m_hWnd(handle), m_ItemID(-1), m_Parent(NULL)
+		{
+		}
+
+		virtual HWND GetHandle() const { return m_hWnd; }
+		virtual void SetHandle(HWND handle) { m_hWnd = handle; }
+		virtual HWND GetParent() const { return m_Parent; }
+		virtual void SetParent(HWND parent) { m_Parent = parent; }
+
+		virtual int GetID() const { return m_ItemID; }
+
+		virtual BOOL Destroy()
+		{
+			return ::DestroyWindow(m_hWnd);
+		}
+
+		virtual void EnableDragDrop(BOOL state)
+		{
+			::ChangeWindowMessageFilterEx(m_hWnd, WM_DROPFILES, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
+			::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
+			::ChangeWindowMessageFilterEx(m_hWnd, WM_COPYGLOBALDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
+			::DragAcceptFiles(m_hWnd, state);
+		}
+
+		virtual std::tstring GetText()
+		{
+			TCHAR title_buffer[1024] = { 0 };
+			int text_length = ::GetWindowText(m_hWnd, title_buffer, ARRAYSIZE(title_buffer));
+			return std::tstring(title_buffer, text_length);
+		}
+
+		virtual int GetTextLength()
+		{
+			return ::GetWindowTextLength(m_hWnd);
+		}
+
+		virtual RECT GetRect()
+		{
+			RECT rc = { 0 };
+			::GetWindowRect(m_hWnd, &rc);
+			return rc;
+		}
+
+		virtual BOOL SetText(const std::tstring& text)
+		{
+			return ::SetWindowText(m_hWnd, text.c_str());
+		}
+
+		virtual BOOL SetShowing(int state = SW_NORMAL)
+		{
+			return ::ShowWindow(m_hWnd, state);
+		}
+
+		virtual BOOL IsEnabled()
+		{
+			return ::IsWindowEnabled(m_hWnd);
+		}
+
+		virtual BOOL SetEnabled(BOOL enabled = TRUE)
+		{
+			return ::EnableWindow(m_hWnd, enabled);
+		}
+
+		virtual HWND Focus()
+		{
+			return ::SetFocus(m_hWnd);
+		}
+
+		virtual BOOL IsFocused()
+		{
+			return ::GetForegroundWindow() == m_hWnd;
+		}
+
+		virtual HFONT GetFont()
+		{
+			return (HFONT)::SendMessage(m_hWnd, WM_GETFONT, 0, 0);
+		}
+
+		virtual void SetFont(HFONT hFont, BOOL redraw = TRUE)
+		{
+			::SendMessage(m_hWnd, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(redraw, 0));
+		}
+
+		virtual DWORD GetStyle() const
+		{
+			return (DWORD) ::GetWindowLong(m_hWnd, GWL_STYLE) & 0xFFFF;
+		}
+
+		virtual DWORD AddStyle(DWORD dwStyle)
+		{
+			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) | dwStyle;
+			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
+		}
+
+		virtual DWORD RemoveStyle(DWORD dwStyle)
+		{
+			DWORD new_style = ::GetWindowLong(m_hWnd, GWL_STYLE) & ~dwStyle;
+			return ::SetWindowLong(m_hWnd, GWL_STYLE, new_style);
+		}
+
+		virtual void SetTabStop(BOOL tab_stop = TRUE)
+		{
+			if (tab_stop)
+				ModifyStyle(0, WS_TABSTOP);
+			else
+				ModifyStyle(WS_TABSTOP, 0);
+		}
+
+		//Stolen From ATL
+		virtual BOOL ModifyStyle(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0)
+		{
+			DWORD dwStyle = ::GetWindowLong(m_hWnd, GWL_STYLE);
+			DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
+			if (dwStyle == dwNewStyle) return FALSE;
+			::SetWindowLong(m_hWnd, GWL_STYLE, dwNewStyle);
+			if (nFlags != 0)
+				::SetWindowPos(m_hWnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags);
+			return TRUE;
+		}
+
+		virtual BOOL CenterWindow(HWND hWndCenter = HWND_DESKTOP)
+		{
+			// Determine owner window to center against
+			DWORD dwStyle = GetStyle();
+			if (hWndCenter == HWND_DESKTOP)
+			{
+				if (dwStyle & WS_CHILD)
+					hWndCenter = ::GetParent(m_hWnd);
+				else
+					hWndCenter = ::GetWindow(m_hWnd, GW_OWNER);
+			}
+
+			// Get coordinates of the window relative to its parent
+			RECT rcDlg;
+			::GetWindowRect(m_hWnd, &rcDlg);
+			RECT rcArea;
+			RECT rcCenter;
+			HWND hWndParent;
+
+			if (!(dwStyle & WS_CHILD))
+			{
+				// Don't center against invisible or minimized windows
+				if (hWndCenter != NULL)
+				{
+					DWORD dwStyleCenter = ::GetWindowLong(hWndCenter, GWL_STYLE);
+					if (!(dwStyleCenter & WS_VISIBLE) || (dwStyleCenter & WS_MINIMIZE))
+						hWndCenter = NULL;
+				}
+
+				// Center within screen coordinates
+				HMONITOR hMonitor = (hWndCenter != NULL) ? ::MonitorFromWindow(hWndCenter, MONITOR_DEFAULTTONEAREST) : ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
+
+				MONITORINFO minfo = { sizeof(MONITORINFO) };
+				::GetMonitorInfo(hMonitor, &minfo);
+				rcArea = minfo.rcWork;
+
+				if (hWndCenter == NULL)
+					rcCenter = rcArea;
+				else
+					::GetWindowRect(hWndCenter, &rcCenter);
+			} else {
+				// Center within parent client coordinates
+				hWndParent = ::GetParent(m_hWnd);
+				::GetClientRect(hWndParent, &rcArea);
+				::GetClientRect(hWndCenter, &rcCenter);
+				::MapWindowPoints(hWndCenter, hWndParent, (POINT*)&rcCenter, 2);
+			}
+
+			int DlgWidth = rcDlg.right - rcDlg.left;
+			int DlgHeight = rcDlg.bottom - rcDlg.top;
+
+			// Find dialog's upper left based on rcCenter
+			int xLeft = (rcCenter.left + rcCenter.right) / 2 - DlgWidth / 2;
+			int yTop = (rcCenter.top + rcCenter.bottom) / 2 - DlgHeight / 2;
+
+			// If the dialog is outside the screen, move it inside
+			xLeft = max(rcArea.left, min(xLeft, rcArea.right - DlgWidth));
+			yTop = max(rcArea.top, min(yTop, rcArea.bottom - DlgHeight));
+
+			// Map screen coordinates to child coordinates
+			return ::SetWindowPos(m_hWnd, NULL, xLeft, yTop, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+		}
+
+	protected:
+		int m_ItemID;
+		HWND m_hWnd, m_Parent;
+	};
+
+	class Control : public Hwnd
+	{
+	public:
+		using CommandCallback = std::function<LRESULT(HWND, WPARAM, LPARAM)>;
+		using NotifyCallback = std::function<LRESULT(HWND, LPNMHDR)>;
+
+		Control(int resource_id, HWND parent = nullptr)
+			: Hwnd(resource_id, parent)
+		{
+			if (parent != nullptr)
+			{
+				m_hWnd = ::GetDlgItem(m_Parent, resource_id);
+			}
+		}
+
+		Control(HWND handle) : Hwnd(handle)
+		{
+		}
+
+		void SetItem(HWND parent, int item_id)
+		{
+			m_ItemID = item_id;
+			m_Parent = parent;
+			m_hWnd = ::GetDlgItem(parent, item_id);
+		}
+
+		virtual LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm)
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{NM_CLICK, m_NotifyOnClick},
+				{NM_RETURN, m_NotifyOnReturn},
+				{NM_HOVER, m_NotifyOnHover},
+				{NM_KEYDOWN, m_NotifyOnKeyDown},
+				{NM_LDOWN, m_NotifyOnLeftDown},
+				{NM_CUSTOMDRAW, m_NotifyOnCustomDraw},
+				{NM_CUSTOMTEXT, m_NotifyOnCustomText}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			if (m_NotifyDefault)
+				return m_NotifyDefault(hWnd, nm);
+
+			return FALSE;
+		}
+
+		virtual LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam)
+		{
+			if (m_DefaultCommand)
+				return m_DefaultCommand(hWnd, wParam, lParam);
+			return FALSE;
+		}
+
+		void SetCommandCallback(CommandCallback callback)
+		{
+			m_DefaultCommand = std::move(callback);
+		}
+
+		void SetDefaultNotifyCallback(NotifyCallback callback)
+		{
+			m_NotifyDefault = std::move(callback);
+		}
+
+		void SetOnClick(NotifyCallback callback)
+		{
+			m_NotifyOnClick = std::move(callback);
+		}
+
+		void SetOnReturn(NotifyCallback callback)
+		{
+			m_NotifyOnReturn = std::move(callback);
+		}
+
+		void SetOnHover(NotifyCallback callback)
+		{
+			m_NotifyOnHover = std::move(callback);
+		}
+
+		void SetOnKeyDown(NotifyCallback callback)
+		{
+			m_NotifyOnKeyDown = std::move(callback);
+		}
+
+		void SetOnLeftDown(NotifyCallback callback)
+		{
+			m_NotifyOnLeftDown = std::move(callback);
+		}
+
+		void SetOnCustomDraw(NotifyCallback callback)
+		{
+			m_NotifyOnCustomDraw = std::move(callback);
+		}
+
+		void SetOnCustomText(NotifyCallback callback)
+		{
+			m_NotifyOnCustomText = std::move(callback);
+		}
+
+		void SetOnFontChanged(NotifyCallback callback)
+		{
+			m_NotifyOnFontChanged = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_NotifyOnClick;
+		NotifyCallback m_NotifyOnReturn;
+		NotifyCallback m_NotifyOnHover;
+		NotifyCallback m_NotifyOnKeyDown;
+		NotifyCallback m_NotifyOnLeftDown;
+		NotifyCallback m_NotifyOnCustomDraw;
+		NotifyCallback m_NotifyOnCustomText;
+		NotifyCallback m_NotifyOnFontChanged;
+		NotifyCallback m_NotifyDefault;
+
+		CommandCallback m_DefaultCommand;
+	};
+
 	class Static : public Control
 	{
 	public:
@@ -563,6 +664,50 @@ namespace WPP
 		{
 			return (HCURSOR)SendMessage(m_hWnd, STM_SETIMAGE, IMAGE_CURSOR, (LPARAM)hCursor);
 		}
+
+		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		{
+			UINT notification = HIWORD(wParam);
+
+			const std::unordered_map<UINT, CommandCallback> commandMap = {
+				{STN_CLICKED, m_StaticClicked},
+				{STN_DBLCLK, m_StaticDblClick},
+				{STN_DISABLE, m_StaticDisable},
+				{STN_ENABLE, m_StaticEnable}
+			};
+
+			auto it = commandMap.find(notification);
+			if (it != commandMap.end() && it->second)
+				return it->second(hWnd, wParam, lParam);
+
+			return Control::OnCommandCallback(hWnd, wParam, lParam);
+		}
+
+		void SetStaticClicked(CommandCallback callback)
+		{
+			m_StaticClicked = std::move(callback);
+		}
+
+		void SetStaticDblClick(CommandCallback callback)
+		{
+			m_StaticDblClick = std::move(callback);
+		}
+
+		void SetStaticDisable(CommandCallback callback)
+		{
+			m_StaticDisable = std::move(callback);
+		}
+
+		void SetStaticEnable(CommandCallback callback)
+		{
+			m_StaticEnable = std::move(callback);
+		}
+
+	protected:
+		CommandCallback m_StaticClicked;
+		CommandCallback m_StaticDblClick;
+		CommandCallback m_StaticDisable;
+		CommandCallback m_StaticEnable;
 	};
 
 	class Button : public Control
@@ -579,7 +724,7 @@ namespace WPP
 		{
 			Button_SetCheck(m_hWnd, check);
 		}
-		
+
 		int GetState()
 		{
 			return Button_GetState(m_hWnd);
@@ -627,6 +772,99 @@ namespace WPP
 			SendMessage(m_hWnd, BM_CLICK, 0, 0L);
 			::SetActiveWindow(current_focus);
 		}
+
+		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		{
+			UINT notification = HIWORD(wParam);
+
+			const std::unordered_map<UINT, CommandCallback> commandMap = {
+				{BN_CLICKED, m_ButtonClicked},
+				{BN_DBLCLK, m_ButtonDblClick},
+				{BN_DISABLE, m_ButtonDisable},
+				{BN_DOUBLECLICKED, m_ButtonDoubleClick},
+				{BN_HILITE, m_ButtonHilite},
+				{BN_KILLFOCUS, m_ButtonKillFocus},
+				{BN_PAINT, m_ButtonPaint},
+				{BN_PUSHED, m_ButtonPushed},
+				{BN_SETFOCUS, m_ButtonSetFocus},
+				{BN_UNHILITE, m_ButtonUnhilite},
+				{BN_UNPUSHED, m_ButtonUnpushed}
+			};
+
+			auto it = commandMap.find(notification);
+			if (it != commandMap.end() && it->second)
+				return it->second(hWnd, wParam, lParam);
+
+			return Control::OnCommandCallback(hWnd, wParam, lParam);
+		}
+
+		void SetButtonClicked(CommandCallback callback)
+		{
+			m_ButtonClicked = std::move(callback);
+		}
+
+		void SetButtonDblClick(CommandCallback callback)
+		{
+			m_ButtonDblClick = std::move(callback);
+		}
+
+		void SetButtonDisable(CommandCallback callback)
+		{
+			m_ButtonDisable = std::move(callback);
+		}
+
+		void SetButtonDoubleClick(CommandCallback callback)
+		{
+			m_ButtonDoubleClick = std::move(callback);
+		}
+
+		void SetButtonHilite(CommandCallback callback)
+		{
+			m_ButtonHilite = std::move(callback);
+		}
+
+		void SetButtonKillFocus(CommandCallback callback)
+		{
+			m_ButtonKillFocus = std::move(callback);
+		}
+
+		void SetButtonPaint(CommandCallback callback)
+		{
+			m_ButtonPaint = std::move(callback);
+		}
+
+		void SetButtonPushed(CommandCallback callback)
+		{
+			m_ButtonPushed = std::move(callback);
+		}
+
+		void SetButtonSetFocus(CommandCallback callback)
+		{
+			m_ButtonSetFocus = std::move(callback);
+		}
+
+		void SetButtonUnhilite(CommandCallback callback)
+		{
+			m_ButtonUnhilite = std::move(callback);
+		}
+
+		void SetButtonUnpushed(CommandCallback callback)
+		{
+			m_ButtonUnpushed = std::move(callback);
+		}
+
+	protected:
+		CommandCallback m_ButtonClicked;
+		CommandCallback m_ButtonDblClick;
+		CommandCallback m_ButtonDisable;
+		CommandCallback m_ButtonDoubleClick;
+		CommandCallback m_ButtonHilite;
+		CommandCallback m_ButtonKillFocus;
+		CommandCallback m_ButtonPaint;
+		CommandCallback m_ButtonPushed;
+		CommandCallback m_ButtonSetFocus;
+		CommandCallback m_ButtonUnhilite;
+		CommandCallback m_ButtonUnpushed;
 	};
 
 	class CheckBox : public Button
@@ -866,6 +1104,64 @@ namespace WPP
 				(int)SendMessage(m_hWnd, LB_SELITEMRANGEEX, first_item, last_item) :
 				(int)SendMessage(m_hWnd, LB_SELITEMRANGEEX, last_item, first_item);
 		}
+
+		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		{
+			UINT notification = HIWORD(wParam);
+
+			const std::unordered_map<UINT, CommandCallback> commandMap = {
+				{LBN_DBLCLK, m_ListboxDblClick},
+				{LBN_ERRSPACE, m_ListboxErrSpace},
+				{LBN_KILLFOCUS, m_ListboxKillFocus},
+				{LBN_SELCANCEL, m_ListboxSelCancel},
+				{LBN_SELCHANGE, m_ListboxSelChange},
+				{LBN_SETFOCUS, m_ListboxSetFocus}
+			};
+
+			auto it = commandMap.find(notification);
+			if (it != commandMap.end() && it->second)
+				return it->second(hWnd, wParam, lParam);
+
+			return Control::OnCommandCallback(hWnd, wParam, lParam);
+		}
+
+		void SetListboxDblClick(CommandCallback callback)
+		{
+			m_ListboxDblClick = std::move(callback);
+		}
+
+		void SetListboxErrSpace(CommandCallback callback)
+		{
+			m_ListboxErrSpace = std::move(callback);
+		}
+
+		void SetListboxKillFocus(CommandCallback callback)
+		{
+			m_ListboxKillFocus = std::move(callback);
+		}
+
+		void SetListboxSelCancel(CommandCallback callback)
+		{
+			m_ListboxSelCancel = std::move(callback);
+		}
+
+		void SetListboxSelChange(CommandCallback callback)
+		{
+			m_ListboxSelChange = std::move(callback);
+		}
+
+		void SetListboxSetFocus(CommandCallback callback)
+		{
+			m_ListboxSetFocus = std::move(callback);
+		}
+
+	protected:
+		CommandCallback m_ListboxDblClick;
+		CommandCallback m_ListboxErrSpace;
+		CommandCallback m_ListboxKillFocus;
+		CommandCallback m_ListboxSelCancel;
+		CommandCallback m_ListboxSelChange;
+		CommandCallback m_ListboxSetFocus;
 	};
 
 	class ComboBox : public Control
@@ -1044,7 +1340,7 @@ namespace WPP
 		int Add(LPCTSTR lpszString)
 		{
 			int index = (int)SendMessage(m_hWnd, CB_ADDSTRING, 0, (LPARAM)lpszString);
-			if(index == 0)
+			if (index == 0)
 				SendMessage(m_hWnd, CB_SETCURSEL, 0, 0);
 			return index;
 		}
@@ -1098,6 +1394,91 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, WM_PASTE, 0, 0L);
 		}
+
+		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		{
+			UINT notification = HIWORD(wParam);
+			const std::unordered_map<UINT, CommandCallback> commandMap = {
+				{CBN_CLOSEUP, m_ComboCloseUp},
+				{CBN_DBLCLK, m_ComboDblClick},
+				{CBN_DROPDOWN, m_ComboDropDown},
+				{CBN_EDITCHANGE, m_ComboEditChange},
+				{CBN_EDITUPDATE, m_ComboEditUpdate},
+				{CBN_KILLFOCUS, m_ComboKillFocus},
+				{CBN_SELCHANGE, m_ComboSelChange},
+				{CBN_SELENDCANCEL, m_ComboSelEndCancel},
+				{CBN_SELENDOK, m_ComboSelEndOk},
+				{CBN_SETFOCUS, m_ComboSetFocus}
+			};
+
+			auto it = commandMap.find(notification);
+			if (it != commandMap.end() && it->second)
+				return it->second(hWnd, wParam, lParam);
+
+			return Control::OnCommandCallback(hWnd, wParam, lParam);
+		}
+
+		void SetComboCloseUp(CommandCallback callback)
+		{
+			m_ComboCloseUp = std::move(callback);
+		}
+
+		void SetComboDblClick(CommandCallback callback)
+		{
+			m_ComboDblClick = std::move(callback);
+		}
+
+		void SetComboDropDown(CommandCallback callback)
+		{
+			m_ComboDropDown = std::move(callback);
+		}
+
+		void SetComboEditChange(CommandCallback callback)
+		{
+			m_ComboEditChange = std::move(callback);
+		}
+
+		void SetComboEditUpdate(CommandCallback callback)
+		{
+			m_ComboEditUpdate = std::move(callback);
+		}
+
+		void SetComboKillFocus(CommandCallback callback)
+		{
+			m_ComboKillFocus = std::move(callback);
+		}
+
+		void SetComboSelChange(CommandCallback callback)
+		{
+			m_ComboSelChange = std::move(callback);
+		}
+
+		void SetComboSelEndCancel(CommandCallback callback)
+		{
+			m_ComboSelEndCancel = std::move(callback);
+		}
+
+		void SetComboSelEndOk(CommandCallback callback)
+		{
+			m_ComboSelEndOk = std::move(callback);
+		}
+
+		void SetComboSetFocus(CommandCallback callback)
+		{
+			m_ComboSetFocus = std::move(callback);
+		}
+
+	protected:
+		CommandCallback m_ComboCloseUp;
+		CommandCallback m_ComboDblClick;
+		CommandCallback m_ComboDropDown;
+		CommandCallback m_ComboEditChange;
+		CommandCallback m_ComboEditUpdate;
+		CommandCallback m_ComboKillFocus;
+		CommandCallback m_ComboSelChange;
+		CommandCallback m_ComboSelEndCancel;
+		CommandCallback m_ComboSelEndOk;
+		CommandCallback m_ComboSetFocus;
 	};
 
 	class EditText : public Control
@@ -1426,6 +1807,71 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, WM_PASTE, 0, 0L);
 		}
+
+		LRESULT OnCommandCallback(HWND hWnd, WPARAM wParam, LPARAM lParam) override
+		{
+			UINT notification = HIWORD(wParam);
+
+			const std::unordered_map<UINT, CommandCallback> commandMap = {
+				{EN_CHANGE, m_EditChange},
+				{EN_HSCROLL, m_EditHScroll},
+				{EN_KILLFOCUS, m_EditKillFocus},
+				{EN_MAXTEXT, m_EditMaxText},
+				{EN_SETFOCUS, m_EditSetFocus},
+				{EN_UPDATE, m_EditUpdate},
+				{EN_VSCROLL, m_EditVScroll}
+			};
+
+			auto it = commandMap.find(notification);
+			if (it != commandMap.end() && it->second)
+				return it->second(hWnd, wParam, lParam);
+
+			return Control::OnCommandCallback(hWnd, wParam, lParam);
+		}
+
+		void SetEditChange(CommandCallback callback)
+		{
+			m_EditChange = std::move(callback);
+		}
+
+		void SetEditHScroll(CommandCallback callback)
+		{
+			m_EditHScroll = std::move(callback);
+		}
+
+		void SetEditKillFocus(CommandCallback callback)
+		{
+			m_EditKillFocus = std::move(callback);
+		}
+
+		void SetEditMaxText(CommandCallback callback)
+		{
+			m_EditMaxText = std::move(callback);
+		}
+
+		void SetEditSetFocus(CommandCallback callback)
+		{
+			m_EditSetFocus = std::move(callback);
+		}
+
+		void SetEditUpdate(CommandCallback callback)
+		{
+			m_EditUpdate = std::move(callback);
+		}
+
+		void SetEditVScroll(CommandCallback callback)
+		{
+			m_EditVScroll = std::move(callback);
+		}
+
+	protected:
+		CommandCallback m_EditChange;
+		CommandCallback m_EditHScroll;
+		CommandCallback m_EditKillFocus;
+		CommandCallback m_EditMaxText;
+		CommandCallback m_EditSetFocus;
+		CommandCallback m_EditUpdate;
+		CommandCallback m_EditVScroll;
 	};
 
 	class ScrollBar : public Control
@@ -1762,6 +2208,31 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, TTM_POPUP, 0, 0L);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{TTN_GETDISPINFO, m_TooltipGetDispInfo},
+				{TTN_LINKCLICK, m_TooltipLinkClick},
+				{TTN_POP, m_TooltipPop},
+				{TTN_SHOW, m_TooltipShow}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+	protected:
+		NotifyCallback m_TooltipGetDispInfo;
+		NotifyCallback m_TooltipLinkClick;
+		NotifyCallback m_TooltipPop;
+		NotifyCallback m_TooltipShow;
 	};
 
 	class Header : public Control
@@ -1908,6 +2379,141 @@ namespace WPP
 		{
 			return (int)SendMessage(m_hWnd, HDM_CLEARFILTER, (WPARAM)-1, 0L);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{HDN_BEGINDRAG, m_HeaderBeginDrag},
+				{HDN_BEGINFILTEREDIT, m_HeaderBeginFilterEdit},
+				{HDN_BEGINTRACK, m_HeaderBeginTrack},
+				{HDN_DIVIDERDBLCLICK, m_HeaderDividerDblClick},
+				{HDN_ENDDRAG, m_HeaderEndDrag},
+				{HDN_ENDFILTEREDIT, m_HeaderEndFilterEdit},
+				{HDN_ENDTRACK, m_HeaderEndTrack},
+				{HDN_FILTERCHANGE, m_HeaderFilterChange},
+				{HDN_FILTERBTNCLICK, m_HeaderFilterBtnClick},
+				{HDN_GETDISPINFO, m_HeaderGetDispInfo},
+				{HDN_ITEMCHANGED, m_HeaderItemChanged},
+				{HDN_ITEMCHANGING, m_HeaderItemChanging},
+				{HDN_ITEMCLICK, m_HeaderItemClick},
+				{HDN_ITEMDBLCLICK, m_HeaderItemDblClick},
+				{HDN_ITEMKEYDOWN, m_HeaderItemKeyDown},
+				{HDN_OVERFLOWCLICK, m_HeaderOverflowClick},
+				{HDN_TRACK, m_HeaderTrack}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetHeaderBeginDrag(NotifyCallback callback)
+		{
+			m_HeaderBeginDrag = std::move(callback);
+		}
+
+		void SetHeaderBeginFilterEdit(NotifyCallback callback)
+		{
+			m_HeaderBeginFilterEdit = std::move(callback);
+		}
+
+		void SetHeaderBeginTrack(NotifyCallback callback)
+		{
+			m_HeaderBeginTrack = std::move(callback);
+		}
+
+		void SetHeaderDividerDblClick(NotifyCallback callback)
+		{
+			m_HeaderDividerDblClick = std::move(callback);
+		}
+
+		void SetHeaderEndDrag(NotifyCallback callback)
+		{
+			m_HeaderEndDrag = std::move(callback);
+		}
+
+		void SetHeaderEndFilterEdit(NotifyCallback callback)
+		{
+			m_HeaderEndFilterEdit = std::move(callback);
+		}
+
+		void SetHeaderEndTrack(NotifyCallback callback)
+		{
+			m_HeaderEndTrack = std::move(callback);
+		}
+
+		void SetHeaderFilterChange(NotifyCallback callback)
+		{
+			m_HeaderFilterChange = std::move(callback);
+		}
+
+		void SetHeaderFilterBtnClick(NotifyCallback callback)
+		{
+			m_HeaderFilterBtnClick = std::move(callback);
+		}
+
+		void SetHeaderGetDispInfo(NotifyCallback callback)
+		{
+			m_HeaderGetDispInfo = std::move(callback);
+		}
+
+		void SetHeaderItemChanged(NotifyCallback callback)
+		{
+			m_HeaderItemChanged = std::move(callback);
+		}
+
+		void SetHeaderItemChanging(NotifyCallback callback)
+		{
+			m_HeaderItemChanging = std::move(callback);
+		}
+
+		void SetHeaderItemClick(NotifyCallback callback)
+		{
+			m_HeaderItemClick = std::move(callback);
+		}
+
+		void SetHeaderItemDblClick(NotifyCallback callback)
+		{
+			m_HeaderItemDblClick = std::move(callback);
+		}
+
+		void SetHeaderItemKeyDown(NotifyCallback callback)
+		{
+			m_HeaderItemKeyDown = std::move(callback);
+		}
+
+		void SetHeaderOverflowClick(NotifyCallback callback)
+		{
+			m_HeaderOverflowClick = std::move(callback);
+		}
+
+		void SetHeaderTrack(NotifyCallback callback)
+		{
+			m_HeaderTrack = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_HeaderBeginDrag;
+		NotifyCallback m_HeaderBeginFilterEdit;
+		NotifyCallback m_HeaderBeginTrack;
+		NotifyCallback m_HeaderDividerDblClick;
+		NotifyCallback m_HeaderEndDrag;
+		NotifyCallback m_HeaderEndFilterEdit;
+		NotifyCallback m_HeaderEndTrack;
+		NotifyCallback m_HeaderFilterChange;
+		NotifyCallback m_HeaderFilterBtnClick;
+		NotifyCallback m_HeaderGetDispInfo;
+		NotifyCallback m_HeaderItemChanged;
+		NotifyCallback m_HeaderItemChanging;
+		NotifyCallback m_HeaderItemClick;
+		NotifyCallback m_HeaderItemDblClick;
+		NotifyCallback m_HeaderItemKeyDown;
+		NotifyCallback m_HeaderOverflowClick;
+		NotifyCallback m_HeaderTrack;
 	};
 
 	class ListView : public Control
@@ -2787,6 +3393,114 @@ namespace WPP
 
 			return bRet;
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{LVN_ITEMCHANGED, m_ListViewItemChanged},
+				{LVN_ITEMCHANGING, m_ListViewItemChanging},
+				{LVN_BEGINLABELEDIT, m_ListViewBeginLabelEdit},
+				{LVN_ENDLABELEDIT, m_ListViewEndLabelEdit},
+				{LVN_COLUMNCLICK, m_ListViewColumnClick},
+				{LVN_BEGINDRAG, m_ListViewBeginDrag},
+				{LVN_BEGINRDRAG, m_ListViewBeginRDrag},
+				{LVN_KEYDOWN, m_ListViewKeyDown},
+				{LVN_GETDISPINFO, m_ListViewGetDispInfo},
+				{LVN_SETDISPINFO, m_ListViewSetDispInfo},
+				{LVN_ODCACHEHINT, m_ListViewODCacheHint},
+				{LVN_ODFINDITEM, m_ListViewODFindItem},
+				{LVN_ODSTATECHANGED, m_ListViewODStateChanged}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetListViewItemChanged(NotifyCallback callback)
+		{
+			m_ListViewItemChanged = callback;
+		}
+
+		void SetListViewItemChanging(NotifyCallback callback)
+		{
+			m_ListViewItemChanging = callback;
+		}
+
+		void SetListViewBeginLabelEdit(NotifyCallback callback)
+		{
+			m_ListViewBeginLabelEdit = callback;
+		}
+
+		void SetListViewEndLabelEdit(NotifyCallback callback)
+		{
+			m_ListViewEndLabelEdit = callback;
+		}
+
+		void SetListViewColumnClick(NotifyCallback callback)
+		{
+			m_ListViewColumnClick = callback;
+		}
+
+		void SetListViewBeginDrag(NotifyCallback callback)
+		{
+			m_ListViewBeginDrag = callback;
+		}
+
+		void SetListViewBeginRDrag(NotifyCallback callback)
+		{
+			m_ListViewBeginRDrag = callback;
+		}
+
+		void SetListViewKeyDown(NotifyCallback callback)
+		{
+			m_ListViewKeyDown = callback;
+		}
+
+		void SetListViewGetDispInfo(NotifyCallback callback)
+		{
+			m_ListViewGetDispInfo = callback;
+		}
+
+		void SetListViewSetDispInfo(NotifyCallback callback)
+		{
+			m_ListViewSetDispInfo = callback;
+		}
+
+		void SetListViewODCacheHint(NotifyCallback callback)
+		{
+			m_ListViewODCacheHint = callback;
+		}
+
+		void SetListViewODFindItem(NotifyCallback callback)
+		{
+			m_ListViewODFindItem = callback;
+		}
+
+		void SetListViewODStateChanged(NotifyCallback callback)
+		{
+			m_ListViewODStateChanged = callback;
+		}
+
+	protected:
+		NotifyCallback m_ListViewItemChanged;
+		NotifyCallback m_ListViewItemChanging;
+		NotifyCallback m_ListViewBeginLabelEdit;
+		NotifyCallback m_ListViewEndLabelEdit;
+		NotifyCallback m_ListViewColumnClick;
+		NotifyCallback m_ListViewBeginDrag;
+		NotifyCallback m_ListViewBeginRDrag;
+		NotifyCallback m_ListViewKeyDown;
+		NotifyCallback m_ListViewGetDispInfo;
+		NotifyCallback m_ListViewSetDispInfo;
+		NotifyCallback m_ListViewODCacheHint;
+		NotifyCallback m_ListViewODFindItem;
+		NotifyCallback m_ListViewODStateChanged;
 	};
 
 	class TreeView : public Control
@@ -3273,6 +3987,100 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, TVM_SHOWINFOTIP, 0, (LPARAM)hItem);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{TVN_SELCHANGED, m_TreeViewSelChanged},
+				{TVN_ITEMEXPANDED, m_TreeViewItemExpanded},
+				{TVN_ITEMEXPANDING, m_TreeViewItemExpanding},
+				{TVN_BEGINDRAG, m_TreeViewBeginDrag},
+				{TVN_BEGINRDRAG, m_TreeViewBeginRDrag},
+				{TVN_DELETEITEM, m_TreeViewDeleteItem},
+				{TVN_BEGINLABELEDIT, m_TreeViewBeginLabelEdit},
+				{TVN_ENDLABELEDIT, m_TreeViewEndLabelEdit},
+				{TVN_KEYDOWN, m_TreeViewKeyDown},
+				{TVN_GETDISPINFO, m_TreeViewGetDispInfo},
+				{TVN_SETDISPINFO, m_TreeViewSetDispInfo}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetTreeViewSelChanged(NotifyCallback callback)
+		{
+			m_TreeViewSelChanged = std::move(callback);
+		}
+
+		void SetTreeViewItemExpanded(NotifyCallback callback)
+		{
+			m_TreeViewItemExpanded = std::move(callback);
+		}
+
+		void SetTreeViewItemExpanding(NotifyCallback callback)
+		{
+			m_TreeViewItemExpanding = std::move(callback);
+		}
+
+		void SetTreeViewBeginDrag(NotifyCallback callback)
+		{
+			m_TreeViewBeginDrag = std::move(callback);
+		}
+
+		void SetTreeViewBeginRDrag(NotifyCallback callback)
+		{
+			m_TreeViewBeginRDrag = std::move(callback);
+		}
+
+		void SetTreeViewDeleteItem(NotifyCallback callback)
+		{
+			m_TreeViewDeleteItem = std::move(callback);
+		}
+
+		void SetTreeViewBeginLabelEdit(NotifyCallback callback)
+		{
+			m_TreeViewBeginLabelEdit = std::move(callback);
+		}
+
+		void SetTreeViewEndLabelEdit(NotifyCallback callback)
+		{
+			m_TreeViewEndLabelEdit = std::move(callback);
+		}
+
+		void SetTreeViewKeyDown(NotifyCallback callback)
+		{
+			m_TreeViewKeyDown = std::move(callback);
+		}
+
+		void SetTreeViewGetDispInfo(NotifyCallback callback)
+		{
+			m_TreeViewGetDispInfo = std::move(callback);
+		}
+
+		void SetTreeViewSetDispInfo(NotifyCallback callback)
+		{
+			m_TreeViewSetDispInfo = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_TreeViewSelChanged;
+		NotifyCallback m_TreeViewItemExpanded;
+		NotifyCallback m_TreeViewItemExpanding;
+		NotifyCallback m_TreeViewBeginDrag;
+		NotifyCallback m_TreeViewBeginRDrag;
+		NotifyCallback m_TreeViewDeleteItem;
+		NotifyCallback m_TreeViewBeginLabelEdit;
+		NotifyCallback m_TreeViewEndLabelEdit;
+		NotifyCallback m_TreeViewKeyDown;
+		NotifyCallback m_TreeViewGetDispInfo;
+		NotifyCallback m_TreeViewSetDispInfo;
 	};
 
 	class ToolBar : public Control
@@ -3834,10 +4642,153 @@ namespace WPP
 			return (BOOL)SendMessage(m_hWnd, TB_MOVEBUTTON, nOldPos, nNewPos);
 		}
 
-		HRESULT GetObject(REFIID iid, LPVOID* ppvObject)
+		HRESULT GetObjectFromIid(REFIID iid, LPVOID* ppvObject)
 		{
 			return (HRESULT)SendMessage(m_hWnd, TB_GETOBJECT, (WPARAM)&iid, (LPARAM)ppvObject);
 		}
+
+		virtual LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{TBN_BEGINADJUST, m_ToolBarBeginAdjust},
+				{TBN_BEGINDRAG, m_ToolBarBeginDrag},
+				{TBN_CUSTHELP, m_ToolBarCustHelp},
+				{TBN_ENDADJUST, m_ToolBarEndAdjust},
+				{TBN_ENDDRAG, m_ToolBarEndDrag},
+				{TBN_GETBUTTONINFO, m_ToolBarGetButtonInfo},
+				{TBN_QUERYDELETE, m_ToolBarQueryDelete},
+				{TBN_QUERYINSERT, m_ToolBarQueryInsert},
+				{TBN_RESET, m_ToolBarReset},
+				{TBN_TOOLBARCHANGE, m_ToolBarChange},
+				{TBN_DRAGOUT, m_ToolBarDragOut},
+				{TBN_DELETINGBUTTON, m_ToolBarDeletingButton},
+				{TBN_GETDISPINFO, m_ToolBarGetDispInfo},
+				{TBN_GETINFOTIP, m_ToolBarGetInfoTip},
+				{TBN_GETOBJECT, m_ToolBarGetObject},
+				{TBN_RESTORE, m_ToolBarRestore},
+				{TBN_SAVE, m_ToolBarSave},
+				{TBN_WRAPHOTITEM, m_ToolBarWrapHotItem}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetToolBarBeginAdjust(NotifyCallback callback)
+		{
+			m_ToolBarBeginAdjust = std::move(callback);
+		}
+
+		void SetToolBarBeginDrag(NotifyCallback callback)
+		{
+			m_ToolBarBeginDrag = std::move(callback);
+		}
+
+		void SetToolBarCustHelp(NotifyCallback callback)
+		{
+			m_ToolBarCustHelp = std::move(callback);
+		}
+
+		void SetToolBarEndAdjust(NotifyCallback callback)
+		{
+			m_ToolBarEndAdjust = std::move(callback);
+		}
+
+		void SetToolBarEndDrag(NotifyCallback callback)
+		{
+			m_ToolBarEndDrag = std::move(callback);
+		}
+
+		void SetToolBarGetButtonInfo(NotifyCallback callback)
+		{
+			m_ToolBarGetButtonInfo = std::move(callback);
+		}
+
+		void SetToolBarQueryDelete(NotifyCallback callback)
+		{
+			m_ToolBarQueryDelete = std::move(callback);
+		}
+
+		void SetToolBarQueryInsert(NotifyCallback callback)
+		{
+			m_ToolBarQueryInsert = std::move(callback);
+		}
+
+		void SetToolBarReset(NotifyCallback callback)
+		{
+			m_ToolBarReset = std::move(callback);
+		}
+
+		void SetToolBarChange(NotifyCallback callback)
+		{
+			m_ToolBarChange = std::move(callback);
+		}
+
+		void SetToolBarDragOut(NotifyCallback callback)
+		{
+			m_ToolBarDragOut = std::move(callback);
+		}
+
+		void SetToolBarDeletingButton(NotifyCallback callback)
+		{
+			m_ToolBarDeletingButton = std::move(callback);
+		}
+
+		void SetToolBarGetDispInfo(NotifyCallback callback)
+		{
+			m_ToolBarGetDispInfo = std::move(callback);
+		}
+
+		void SetToolBarGetInfoTip(NotifyCallback callback)
+		{
+			m_ToolBarGetInfoTip = std::move(callback);
+		}
+
+		void SetToolBarGetObject(NotifyCallback callback)
+		{
+			m_ToolBarGetObject = std::move(callback);
+		}
+
+		void SetToolBarRestore(NotifyCallback callback)
+		{
+			m_ToolBarRestore = std::move(callback);
+		}
+
+		void SetToolBarSave(NotifyCallback callback)
+		{
+			m_ToolBarSave = std::move(callback);
+		}
+
+		void SetToolBarWrapHotItem(NotifyCallback callback)
+		{
+			m_ToolBarWrapHotItem = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_ToolBarBeginAdjust;
+		NotifyCallback m_ToolBarBeginDrag;
+		NotifyCallback m_ToolBarCustHelp;
+		NotifyCallback m_ToolBarEndAdjust;
+		NotifyCallback m_ToolBarEndDrag;
+		NotifyCallback m_ToolBarGetButtonInfo;
+		NotifyCallback m_ToolBarQueryDelete;
+		NotifyCallback m_ToolBarQueryInsert;
+		NotifyCallback m_ToolBarReset;
+		NotifyCallback m_ToolBarChange;
+		NotifyCallback m_ToolBarDragOut;
+		NotifyCallback m_ToolBarDeletingButton;
+		NotifyCallback m_ToolBarGetDispInfo;
+		NotifyCallback m_ToolBarGetInfoTip;
+		NotifyCallback m_ToolBarGetObject;
+		NotifyCallback m_ToolBarRestore;
+		NotifyCallback m_ToolBarSave;
+		NotifyCallback m_ToolBarWrapHotItem;
 	};
 
 	class StatusBar : public Control
@@ -4151,6 +5102,51 @@ namespace WPP
 		{
 			return (BOOL)SendMessage(m_hWnd, TCM_HIGHLIGHTITEM, nIndex, MAKELPARAM(bHighlight, 0));
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{TCN_SELCHANGE, m_TabControlSelChange},
+				{TCN_SELCHANGING, m_TabControlSelChanging},
+				{TCN_KEYDOWN, m_TabControlKeyDown},
+				{TCN_FOCUSCHANGE, m_TabControlFocusChange}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetTabControlSelChange(NotifyCallback callback)
+		{
+			m_TabControlSelChange = std::move(callback);
+		}
+
+		void SetTabControlSelChanging(NotifyCallback callback)
+		{
+			m_TabControlSelChanging = std::move(callback);
+		}
+
+		void SetTabControlKeyDown(NotifyCallback callback)
+		{
+			m_TabControlKeyDown = std::move(callback);
+		}
+
+		void SetTabControlFocusChange(NotifyCallback callback)
+		{
+			m_TabControlFocusChange = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_TabControlSelChange;
+		NotifyCallback m_TabControlSelChanging;
+		NotifyCallback m_TabControlKeyDown;
+		NotifyCallback m_TabControlFocusChange;
 	};
 
 	class TrackBar : public Control
@@ -4355,9 +5351,33 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, TBM_CLEARTICS, bRedraw, 0L);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{TRBN_THUMBPOSCHANGING, m_TrackBarThumbPosChanging}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetTrackBarThumbPosChanging(NotifyCallback callback)
+		{
+			m_TrackBarThumbPosChanging = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_TrackBarThumbPosChanging;
 	};
 
-	class SpinControl : public Control
+	class UpDownControl : public Control
 	{
 	public:
 		using Control::Control;
@@ -4450,6 +5470,30 @@ namespace WPP
 		{
 			return (int)SendMessage(m_hWnd, UDM_SETPOS32, 0, (LPARAM)nPos);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{UDN_DELTAPOS, m_UpDownDeltaPos}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetUpDownDeltaPosCallback(NotifyCallback callback)
+		{
+			m_UpDownDeltaPos = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_UpDownDeltaPos;
 	};
 
 	class ProgressBar : public Control
@@ -4614,6 +5658,37 @@ namespace WPP
 		{
 			return (BOOL)SendMessage(m_hWnd, ACM_ISPLAYING, 0, 0L);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{ACN_START, m_AnimationStart},
+				{ACN_STOP, m_AnimationStop}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetAnimationStart(NotifyCallback callback)
+		{
+			m_AnimationStart = std::move(callback);
+		}
+
+		void SetAnimationStop(NotifyCallback callback)
+		{
+			m_AnimationStop = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_AnimationStart;
+		NotifyCallback m_AnimationStop;
 	};
 
 	class RichEdit : public Control
@@ -5297,6 +6372,121 @@ namespace WPP
 		{
 			return (BOOL)SendMessage(m_hWnd, EM_SETUIANAME, 0, (LPARAM)lpstrName);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{EN_CORRECTTEXT, m_RichEditCorrectText},
+				{EN_DRAGDROPDONE, m_RichEditDragDropDone},
+				{EN_DROPFILES, m_RichEditDropFiles},
+				{EN_IMECHANGE, m_RichEditIMEChange},
+				{EN_LINK, m_RichEditLink},
+				{EN_LOWFIRTF, m_RichEditLowFirTF},
+				{EN_MSGFILTER, m_RichEditMsgFilter},
+				{EN_OBJECTPOSITIONS, m_RichEditObjectPositions},
+				{EN_OLEOPFAILED, m_RichEditOleOpFailed},
+				{EN_PROTECTED, m_RichEditProtected},
+				{EN_REQUESTRESIZE, m_RichEditRequestResize},
+				{EN_SAVECLIPBOARD, m_RichEditSaveClipboard},
+				{EN_SELCHANGE, m_RichEditSelChange},
+				{EN_STOPNOUNDO, m_RichEditStopUndo}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetRichEditCorrectText(NotifyCallback callback)
+		{
+			m_RichEditCorrectText = std::move(callback);
+		}
+
+		void SetRichEditDragDropDone(NotifyCallback callback)
+		{
+			m_RichEditDragDropDone = std::move(callback);
+		}
+
+		void SetRichEditDropFiles(NotifyCallback callback)
+		{
+			m_RichEditDropFiles = std::move(callback);
+		}
+
+		void SetRichEditIMEChange(NotifyCallback callback)
+		{
+			m_RichEditIMEChange = std::move(callback);
+		}
+
+		void SetRichEditLink(NotifyCallback callback)
+		{
+			m_RichEditLink = std::move(callback);
+		}
+
+		void SetRichEditLowFirTF(NotifyCallback callback)
+		{
+			m_RichEditLowFirTF = std::move(callback);
+		}
+
+		void SetRichEditMsgFilter(NotifyCallback callback)
+		{
+			m_RichEditMsgFilter = std::move(callback);
+		}
+
+		void SetRichEditObjectPositions(NotifyCallback callback)
+		{
+			m_RichEditObjectPositions = std::move(callback);
+		}
+
+		void SetRichEditOleOpFailed(NotifyCallback callback)
+		{
+			m_RichEditOleOpFailed = std::move(callback);
+		}
+
+		void SetRichEditProtected(NotifyCallback callback)
+		{
+			m_RichEditProtected = std::move(callback);
+		}
+
+		void SetRichEditRequestResize(NotifyCallback callback)
+		{
+			m_RichEditRequestResize = std::move(callback);
+		}
+
+		void SetRichEditSaveClipboard(NotifyCallback callback)
+		{
+			m_RichEditSaveClipboard = std::move(callback);
+		}
+
+		void SetRichEditSelChange(NotifyCallback callback)
+		{
+			m_RichEditSelChange = std::move(callback);
+		}
+
+		void SetRichEditStopUndo(NotifyCallback callback)
+		{
+			m_RichEditStopUndo = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_RichEditCorrectText;
+		NotifyCallback m_RichEditDragDropDone;
+		NotifyCallback m_RichEditDropFiles;
+		NotifyCallback m_RichEditIMEChange;
+		NotifyCallback m_RichEditLink;
+		NotifyCallback m_RichEditLowFirTF;
+		NotifyCallback m_RichEditMsgFilter;
+		NotifyCallback m_RichEditObjectPositions;
+		NotifyCallback m_RichEditOleOpFailed;
+		NotifyCallback m_RichEditProtected;
+		NotifyCallback m_RichEditRequestResize;
+		NotifyCallback m_RichEditSaveClipboard;
+		NotifyCallback m_RichEditSelChange;
+		NotifyCallback m_RichEditStopUndo;
 	};
 
 	class ComboBoxEx : public Control
@@ -5442,6 +6632,65 @@ namespace WPP
 		{
 			return (BOOL)SendMessage(m_hWnd, CBEM_HASEDITCHANGED, 0, 0L);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{CBEN_BEGINEDIT, m_ComboBoxExBeginEdit},
+				{CBEN_DELETEITEM, m_ComboBoxExDeleteItem},
+				{CBEN_DRAGBEGIN, m_ComboBoxExDragBegin},
+				{CBEN_ENDEDIT, m_ComboBoxExEndEdit},
+				{CBEN_GETDISPINFO, m_ComboBoxExGetDispInfo},
+				{CBEN_INSERTITEM, m_ComboBoxExInsertItem}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetComboBoxExBeginEdit(NotifyCallback callback)
+		{
+			m_ComboBoxExBeginEdit = std::move(callback);
+		}
+
+		void SetComboBoxExDeleteItem(NotifyCallback callback)
+		{
+			m_ComboBoxExDeleteItem = std::move(callback);
+		}
+
+		void SetComboBoxExDragBegin(NotifyCallback callback)
+		{
+			m_ComboBoxExDragBegin = std::move(callback);
+		}
+
+		void SetComboBoxExEndEdit(NotifyCallback callback)
+		{
+			m_ComboBoxExEndEdit = std::move(callback);
+		}
+
+		void SetComboBoxExGetDispInfo(NotifyCallback callback)
+		{
+			m_ComboBoxExGetDispInfo = std::move(callback);
+		}
+
+		void SetComboBoxExInsertItem(NotifyCallback callback)
+		{
+			m_ComboBoxExInsertItem = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_ComboBoxExBeginEdit;
+		NotifyCallback m_ComboBoxExDeleteItem;
+		NotifyCallback m_ComboBoxExDragBegin;
+		NotifyCallback m_ComboBoxExEndEdit;
+		NotifyCallback m_ComboBoxExGetDispInfo;
+		NotifyCallback m_ComboBoxExInsertItem;
 	};
 
 	class MonthCalendar : public Control
@@ -5612,6 +6861,51 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, MCM_SIZERECTTOMIN, 0, (LPARAM)lpRect);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{MCN_GETDAYSTATE, m_MonthCalendarGetDayState},
+				{MCN_SELCHANGE, m_MonthCalendarSelChange},
+				{MCN_SELECT, m_MonthCalendarSelect},
+				{MCN_VIEWCHANGE, m_MonthCalendarViewChange}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetMonthCalendarGetDayState(NotifyCallback callback)
+		{
+			m_MonthCalendarGetDayState = std::move(callback);
+		}
+
+		void SetMonthCalendarSelChange(NotifyCallback callback)
+		{
+			m_MonthCalendarSelChange = std::move(callback);
+		}
+
+		void SetMonthCalendarSelect(NotifyCallback callback)
+		{
+			m_MonthCalendarSelect = std::move(callback);
+		}
+
+		void SetMonthCalendarViewChange(NotifyCallback callback)
+		{
+			m_MonthCalendarViewChange = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_MonthCalendarGetDayState;
+		NotifyCallback m_MonthCalendarSelChange;
+		NotifyCallback m_MonthCalendarSelect;
+		NotifyCallback m_MonthCalendarViewChange;
 	};
 
 	class DateTimePicker : public Control
@@ -5693,6 +6987,72 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, DTM_CLOSEMONTHCAL, 0, 0L);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{DTN_CLOSEUP, m_DateTimePickerCloseUp},
+				{DTN_DATETIMECHANGE, m_DateTimePickerDateTimeChange},
+				{DTN_DROPDOWN, m_DateTimePickerDropDown},
+				{DTN_FORMAT, m_DateTimePickerFormat},
+				{DTN_FORMATQUERY, m_DateTimePickerFormatQuery},
+				{DTN_USERSTRING, m_DateTimePickerUserString},
+				{DTN_WMKEYDOWN, m_DateTimePickerWMKeyDown},
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetDateTimePickerCloseUp(NotifyCallback callback)
+		{
+			m_DateTimePickerCloseUp = std::move(callback);
+		}
+
+		void SetDateTimePickerDateTimeChange(NotifyCallback callback)
+		{
+			m_DateTimePickerDateTimeChange = std::move(callback);
+		}
+
+		void SetDateTimePickerDropDown(NotifyCallback callback)
+		{
+			m_DateTimePickerDropDown = std::move(callback);
+		}
+
+		void SetDateTimePickerFormat(NotifyCallback callback)
+		{
+			m_DateTimePickerFormat = std::move(callback);
+		}
+
+		void SetDateTimePickerFormatQuery(NotifyCallback callback)
+		{
+			m_DateTimePickerFormatQuery = std::move(callback);
+		}
+
+		void SetDateTimePickerUserString(NotifyCallback callback)
+		{
+			m_DateTimePickerUserString = std::move(callback);
+		}
+
+		void SetDateTimePickerWMKeyDown(NotifyCallback callback)
+		{
+			m_DateTimePickerWMKeyDown = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_DateTimePickerCloseUp;
+		NotifyCallback m_DateTimePickerDateTimeChange;
+		NotifyCallback m_DateTimePickerDropDown;
+		NotifyCallback m_DateTimePickerFormat;
+		NotifyCallback m_DateTimePickerFormatQuery;
+		NotifyCallback m_DateTimePickerUserString;
+		NotifyCallback m_DateTimePickerWMKeyDown;
 	};
 
 	class IP4Address : public Control
@@ -5739,9 +7099,33 @@ namespace WPP
 		{
 			SendMessage(m_hWnd, IPM_SETFOCUS, nField, 0L);
 		}
+
+		LRESULT OnNotifyCallback(HWND hWnd, LPNMHDR nm) override
+		{
+			if (nm == nullptr)
+				return FALSE;
+
+			const std::unordered_map<UINT, NotifyCallback> notifyMap = {
+				{IPN_FIELDCHANGED, m_IP4AddressFieldChanged}
+			};
+
+			auto it = notifyMap.find(nm->code);
+			if (it != notifyMap.end() && it->second)
+				return it->second(hWnd, nm);
+
+			return Control::OnNotifyCallback(hWnd, nm);
+		}
+
+		void SetIP4AddressFieldChanged(NotifyCallback callback)
+		{
+			m_IP4AddressFieldChanged = std::move(callback);
+		}
+
+	protected:
+		NotifyCallback m_IP4AddressFieldChanged;
 	};
 
-	class LinkControl : public Control
+	class SysLink : public Control
 	{
 	public:
 		using Control::Control;
@@ -5754,6 +7138,18 @@ namespace WPP
 		BOOL GetItem(PLITEM pLItem) const
 		{
 			return (BOOL)SendMessage(m_hWnd, LM_GETITEM, 0, (LPARAM)pLItem);
+		}
+
+		BOOL SetItemEx(UINT uMask, int iLink, UINT state, UINT stateMask, LPCWSTR szID, LPCWSTR szUrl)
+		{
+			LITEM lItem = { 0 };
+			lItem.mask = uMask;
+			lItem.iLink = iLink;
+			lItem.state = state;
+			lItem.stateMask = stateMask;
+			wcscpy_s(lItem.szID, szID);
+			wcscpy_s(lItem.szUrl, szUrl);
+			return (BOOL)SendMessage(m_hWnd, LM_SETITEM, 0, (LPARAM)&lItem);
 		}
 
 		BOOL SetItem(PLITEM pLItem)

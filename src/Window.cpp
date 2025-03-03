@@ -34,11 +34,16 @@ namespace WPP
 
 		if (m_WindowClass.atom() != NULL)
 			m_WindowClass.Unregister();
+
 		m_WindowProcThunk = std::make_unique<Win32Thunk<WNDPROC, Window>>(&Window::WindowProc, this);
 		m_WindowClass.get().lpfnWndProc = m_WindowProcThunk->GetThunk();
 		m_WindowClass.Register();
+
 		m_hWnd = ::CreateWindowEx(m_StyleEx, m_WindowClass.class_name(), m_WindowName.c_str(), m_Style,
 								  m_XPos, m_YPos, m_Width, m_Height, m_Parent, m_Menu, m_WindowClass.instance(), param);
+
+		if (!m_hWnd)
+			return false;
 
 		Show(SW_SHOWNORMAL);
 
@@ -48,8 +53,8 @@ namespace WPP
 
 		SetFont(m_Font);
 
-		for (auto& control : m_MappedControls)
-			control.second->SetFont(m_Font);
+		for (auto& control : m_Controls)
+			control->SetFont(m_Font);
 
 		::UpdateWindow(m_hWnd);
 
@@ -83,7 +88,6 @@ namespace WPP
 	}
 
 #pragma region Window Control Creators
-
 	std::shared_ptr<RadioButton> Window::RadioButtonGroup::CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
 	{
 		DWORD style = WS_CHILD | WS_VISIBLE | WS_OVERLAPPED;
@@ -103,7 +107,7 @@ namespace WPP
 
 		radiobutton->SetChecked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_RadioButtons.push_back(radiobutton);
-		m_Parent->m_MappedControls[control_id] = radiobutton;
+		m_Parent->m_Controls.emplace_back(radiobutton);
 
 		return radiobutton;
 	}
@@ -133,7 +137,7 @@ namespace WPP
 		if (!button)
 			return nullptr;
 
-		m_MappedControls.emplace(control_id, button);
+		m_Controls.emplace_back(button);
 		return button;
 	}
 
@@ -151,7 +155,7 @@ namespace WPP
 		}
 
 		checkbox->SetChecked(initial_state ? BST_CHECKED : BST_UNCHECKED);
-		m_MappedControls.emplace(control_id, checkbox);
+		m_Controls.emplace_back(checkbox);
 		return checkbox;
 	}
 	
@@ -168,7 +172,7 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, combobox);
+		m_Controls.emplace_back(combobox);
 		return combobox;
 	}
 
@@ -185,7 +189,7 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, edittext);
+		m_Controls.emplace_back(edittext);
 		return edittext;
 	}
 
@@ -202,7 +206,7 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, listbox);
+		m_Controls.emplace_back(listbox);
 		return listbox;
 	}
 
@@ -219,7 +223,7 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, listview);
+		m_Controls.emplace_back(listview);
 		return listview;
 	}
 
@@ -236,7 +240,7 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, treeview);
+		m_Controls.emplace_back(treeview);
 		return treeview;
 	}
 
@@ -253,7 +257,7 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, tabcontrol);
+		m_Controls.emplace_back(tabcontrol);
 		return tabcontrol;
 	}
 
@@ -270,33 +274,40 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, progressbar);
+		m_Controls.emplace_back(progressbar);
 		return progressbar;
 	}
 
-	std::shared_ptr<SpinControl> Window::CreateSpinControl(UINT control_id, int x, int y, int width, int height)
+	std::shared_ptr<UpDownControl> Window::CreateSpinControl(UINT control_id, int x, int y, int width, int height)
 	{
 		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, 
 												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!spincontrol_handle)
 			return nullptr;
 
-		auto spincontrol = std::make_shared<SpinControl>(control_id, m_hWnd);
+		auto spincontrol = std::make_shared<UpDownControl>(control_id, m_hWnd);
 		if (!spincontrol) {
 			::DestroyWindow(spincontrol_handle);
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, spincontrol);
+		m_Controls.emplace_back(spincontrol);
 		return spincontrol;
 	}
 
 	std::shared_ptr<RichEdit> Window::CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text)
 	{
+		if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) {
+			if (::LoadLibrary(TEXT("Riched20.dll")) == NULL) {
+				return nullptr;
+			}
+		}
+
 		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text, ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
-		if (!richedit_handle)
+		if (!richedit_handle) {
 			return nullptr;
+		}
 
 		auto richedit = std::make_shared<RichEdit>(control_id, m_hWnd);
 		if (!richedit) {
@@ -304,28 +315,24 @@ namespace WPP
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, richedit);
-
-		if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) //control's only works with richedit2.0 dll loaded
-			::LoadLibrary(TEXT("Riched20.dll"));
-
+		m_Controls.emplace_back(richedit);
 		return richedit;
 	}
 
-	std::shared_ptr<LinkControl> Window::CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
+	std::shared_ptr<SysLink> Window::CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
 	{
 		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_VISIBLE, 
 												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!linkcontrol_handle)
 			return nullptr;
 
-		auto linkcontrol = std::make_shared<LinkControl>(control_id, m_hWnd);
+		auto linkcontrol = std::make_shared<SysLink>(control_id, m_hWnd);
 		if (!linkcontrol) {
 			::DestroyWindow(linkcontrol_handle);
 			return nullptr;
 		}
 
-		m_MappedControls.emplace(control_id, linkcontrol);
+		m_Controls.emplace_back(linkcontrol);
 		return linkcontrol;
 	}
 #pragma endregion
@@ -375,7 +382,7 @@ namespace WPP
     {
         auto it = m_TimerEvents.find(static_cast<UINT_PTR>(wParam));
         if (it != m_TimerEvents.end()) {
-            (this->*(it->second))();
+            it->second();
             return TRUE;
         }
         return FALSE;
@@ -398,12 +405,10 @@ namespace WPP
 
 	LRESULT CALLBACK Window::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		if (lParam) {
-			LPNMHDR nm = reinterpret_cast<LPNMHDR>(lParam);
-			auto it = m_NotifyEvents.find(nm->idFrom);
-			if (it != m_NotifyEvents.end()) 
-				return (this->*(it->second))(hWnd, nm->idFrom, nm);
-		}
+		auto nm = reinterpret_cast<LPNMHDR>(lParam);
+		for (auto& control : m_Controls)
+			if (control && nm->idFrom == control->GetID())
+				control->OnNotifyCallback(hWnd, nm);
 		return FALSE;
 	}
 
@@ -427,13 +432,26 @@ namespace WPP
 		return FALSE;
 	}
 
-    LRESULT CALLBACK Window::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-    {
-        auto it = m_CommandEvents.find(LOWORD(wParam));
-        if (it != m_CommandEvents.end())
-            return (this->*(it->second))(LOWORD(wParam), hWnd, wParam, lParam);
-        return FALSE;
-    }
+	LRESULT CALLBACK Window::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		UINT commandID = LOWORD(wParam);
+		UINT notificationCode = HIWORD(wParam);
+
+		// Check if the command is a menu command
+		if (notificationCode == 0 && m_MenuCommandEvents.count(commandID) != 0) {
+			m_MenuCommandEvents[commandID](hWnd, wParam, lParam);
+			return TRUE;
+		}
+
+		// Check if the command is from a control
+		auto control = GetControl(commandID);
+		if (control) {
+			control->OnCommandCallback(hWnd, wParam, lParam);
+			return TRUE;
+		}
+
+		return FALSE;
+	}
 #pragma endregion
 
 	void Window::Show(INT show)
@@ -449,8 +467,8 @@ namespace WPP
 	void Window::QuitWindow(INT exit_code)
 	{
 		m_WindowRunning = false;
-		for (auto& control : m_MappedControls)
-			control.second.reset();
+		for (auto& control : m_Controls)
+			control.reset();
 
 		::PostQuitMessage(exit_code);
 	}

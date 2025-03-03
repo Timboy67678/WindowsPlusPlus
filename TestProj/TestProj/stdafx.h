@@ -15,6 +15,7 @@
 #include <tchar.h>
 
 #include <string>
+#include <functional>
 #include <thread>
 
 #include "resource.h"

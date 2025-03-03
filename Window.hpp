@@ -5,11 +5,8 @@
 #include "Thunk.hpp"
 
 #define WINDOW_MESSAGE_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
-#define WINDOW_NOTIFY_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, UINT_PTR control_id, LPNMHDR nm)
 
 #define WINDOW_MESSAGE_REF(X) static_cast<WPP::Window::WINDOW_MESSAGE_CALLBACK>(X)
-#define WINDOW_NOTIFY_REF(X) static_cast<WPP::Window::WINDOW_NOTIFY_CALLBACK>(X)
-#define WINDOW_TIMER_REF(X) static_cast<WPP::Window::TIMER_CALLBACK>(X)
 
 #define WINDOW_TIMER_OFFSET_START 0x2374
 
@@ -18,23 +15,15 @@ namespace WPP
 	class Window : public Hwnd
 	{
 	public:
+		using MenuCallback = std::function<LRESULT(HWND, WPARAM, LPARAM)>;
+		using TimerCallback = std::function<void()>;
+
 		/**
 		 * @typedef WINDOW_MESSAGE_CALLBACK
 		 * @brief Callback type for window messages.
 		 */
-		typedef LRESULT(CALLBACK Window::* WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
+		typedef LRESULT(CALLBACK Window::*WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
-		/**
-		 * @typedef WINDOW_NOTIFY_CALLBACK
-		 * @brief Callback type for window notifications.
-		 */
-		typedef LRESULT(CALLBACK Window::* WINDOW_NOTIFY_CALLBACK)(HWND hWnd, UINT_PTR control_id, LPNMHDR nm);
-
-		/**
-		 * @typedef TIMER_CALLBACK
-		 * @brief Callback type for timer events.
-		 */
-		typedef void (CALLBACK Window::* TIMER_CALLBACK)();
 
 		/**
 		 * @struct Class
@@ -140,8 +129,7 @@ namespace WPP
 			*/
 			RadioButtonGroup(Window* parent)
 				: m_Parent(parent)
-			{
-			}
+			{}
 
 			/**
 			* @brief Creates a radio button.
@@ -291,9 +279,22 @@ namespace WPP
 		std::shared_ptr<TreeView> CreateTreeView(UINT control_id, int x, int y, int width, int height);
 		std::shared_ptr<TabControl> CreateTabControl(UINT control_id, int x, int y, int width, int height);
 		std::shared_ptr<ProgressBar> CreateProgressBar(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<SpinControl> CreateSpinControl(UINT control_id, int x, int y, int width, int height);
+		std::shared_ptr<UpDownControl> CreateSpinControl(UINT control_id, int x, int y, int width, int height);
 		std::shared_ptr<RichEdit> CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		std::shared_ptr<LinkControl> CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<SysLink> CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
+
+		/**
+		 * @brief Registers a menu control callback.
+		 * @param control_id Control ID.
+		 * @param callback Callback for the menu item.
+		 */
+		void RegisterMenuCommand(UINT_PTR menu_id, MenuCallback callback)
+		{
+			if (callback)
+				m_MenuCommandEvents[menu_id] = std::move(callback);
+			else
+				m_MenuCommandEvents.erase(menu_id);
+		}
 
 		/**
 		 * @brief Adds a timer event.
@@ -309,41 +310,22 @@ namespace WPP
 				m_TimerEvents[timer_id] = WINDOW_TIMER_REF(callback);
 		}
 
-		/**
-		 * @brief Adds a command event.
-		 * @tparam DC Callback type.
-		 * @param control_id Control ID.
-		 * @param callback Callback function.
-		 */
-		template<typename DC>
-		void AddCommandEvent(UINT control_id, DC callback)
-		{
-			m_CommandEvents[control_id] = COMMAND_ID_REF(callback);
-		}
-
-		/**
-		 * @brief Adds a notify message event.
-		 * @tparam DC Callback type.
-		 * @param id Notification ID.
-		 * @param callback Callback function.
-		 */
-		template<typename DC>
-		void AddNotifyMessage(INT id, DC callback)
-		{
-			m_NotifyEvents[id] = WINDOW_NOTIFY_REF(callback);
-		}
-
-		/**
-		 * @brief Gets a control by ID.
-		 * @tparam CtrlType Control type.
-		 * @param control_id Control ID.
-		 * @return Pointer to the control.
-		 */
-		template<typename CtrlType = Control>
-		std::shared_ptr<CtrlType> GetControl(UINT control_id)
-		{
-			return m_MappedControls[control_id];
-		}
+        /**
+        * @brief Gets a control by ID.
+        * @tparam CtrlType Control type.
+        * @param control_id Control ID.
+        * @return Pointer to the control.
+        */
+        template<typename CtrlType = Control>
+        std::shared_ptr<CtrlType> GetControl(UINT control_id)
+        {
+			auto it = std::find_if(m_Controls.begin(), m_Controls.end(), [control_id](const std::shared_ptr<Control>& control) {
+				return control->GetID() == control_id;
+			});
+			if (it != m_Controls.end())
+				return std::dynamic_pointer_cast<CtrlType>(*it);
+			return nullptr;
+        }
 
 	protected:
 		Class m_WindowClass; ///< Window class.
@@ -359,10 +341,9 @@ namespace WPP
 
 	private:
 		std::map<INT, WINDOW_MESSAGE_CALLBACK> m_MessageEvents; ///< Message events.
-		std::map<UINT, COMMAND_ID_MESSAGE_CALLBACK> m_CommandEvents; ///< Command events.
-		std::map<UINT_PTR, WINDOW_NOTIFY_CALLBACK> m_NotifyEvents; ///< Notify events.
-		std::map<UINT_PTR, TIMER_CALLBACK> m_TimerEvents; ///< Timer events.
-		std::map<UINT, std::shared_ptr<Control>> m_MappedControls; ///< Mapped controls.
+		std::map<UINT_PTR, TimerCallback> m_TimerEvents; ///< Timer events.
+		std::map<UINT_PTR, MenuCallback> m_MenuCommandEvents; ///< Menu command events.
+		std::vector<std::shared_ptr<Control>> m_Controls; ///< Controls container.
 	};
 }
 

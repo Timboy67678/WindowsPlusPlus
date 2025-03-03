@@ -7,6 +7,7 @@ MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
 
 }
 
+// Update the OnCreate method to use std::bind for the callback
 LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	CenterWindow();
@@ -27,6 +28,8 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	auto radio_two = radio_grptwo->CreateButton(1010, _T("Radio 2 2"), 0, 370, 150, 25);
 	auto radio_three = radio_grptwo->CreateButton(1011, _T("Radio 2 3"), 0, 395, 150, 25);
 
+	m_LinkControl = CreateLinkControl(1012, _T("<a href=\"https://www.google.com\">Click me!</a>"), 0, 450, 150, 25);
+
 	m_ComboBoxOne->Add(_T("Item 1"));
 	m_ComboBoxOne->Add(_T("Item 2"));
 	m_ComboBoxOne->Add(_T("Item 3"));
@@ -40,38 +43,22 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	m_ListViewOne->AddItem(0, 1, _T("Column Item 1"));
 	m_ListViewOne->AddItem(0, 2, _T("Column Item 2"));
 
-	AddCommandEvent(IDI_BUTTONONE, &MainWindow::OnButtonOne);
-	AddCommandEvent(IDI_CHECKBOXONE, &MainWindow::OnCheckBoxOne);
+	m_ButtonOne->SetButtonClicked(std::bind(&MainWindow::OnButtonOne, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	m_CheckBoxOne->SetButtonClicked(std::bind(&MainWindow::OnCheckBoxOne, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
 	return WPP::Window::OnCreate(hWnd, wParam, lParam);
 }
 
-LRESULT CALLBACK MainWindow::OnButtonOne(INT controlId, HWND hWnd, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MainWindow::OnButtonOne(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-	switch (HIWORD(wParam))
-	{
-	case BN_CLICKED: {
-		static int x = 0;
-		std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
-		m_ButtonOne->SetText(button_counter_str);
-		break;
-	}
-	default:
-		break;
-	}
-
+	static int x = 0;
+	std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
+	m_ButtonOne->SetText(button_counter_str);
 	return FALSE;
 }
 
-LRESULT CALLBACK MainWindow::OnCheckBoxOne(INT controlId, HWND hWnd, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MainWindow::OnCheckBoxOne(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-	switch (HIWORD(wParam))
-	{
-	case BN_CLICKED:
-		m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
-		break;
-	default:
-		break;
-	}
+	m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
 	return FALSE;
 }

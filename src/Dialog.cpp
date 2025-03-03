@@ -42,8 +42,8 @@ namespace WPP
 		for (auto& timer : m_TimerEvents)
 			::KillTimer(m_hWnd, timer.first);
 
-		for (auto& control_pair : m_MappedControls)
-			control_pair.second.reset();
+		for (auto& control_pair : m_Controls)
+			control_pair.reset();
 
 		::DestroyMenu(m_Menu);
 
@@ -75,27 +75,37 @@ namespace WPP
 	{
 		auto it = m_TimerEvents.find((UINT_PTR)wParam);
 		if (it != m_TimerEvents.end())
-			(this->*it->second)();
+			it->second();
 		return FALSE;
 	}
 
 	INT_PTR CALLBACK Dialog::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		if (lParam) {
-			LPNMHDR nm = reinterpret_cast<LPNMHDR>(lParam);
-			auto it = m_NotifyEvents.find(nm->idFrom);
-			if (it != m_NotifyEvents.end()) {
-				return (this->*it->second)(hWnd, nm->idFrom, nm);
-			}
-		}
+		auto nm = reinterpret_cast<LPNMHDR>(lParam);
+		for (auto& control : m_Controls)
+			if(control && nm->idFrom == control->GetID())
+				control->OnNotifyCallback(hWnd, nm);
 		return TRUE;
 	}
 
 	INT_PTR CALLBACK Dialog::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		auto it = m_CommandEvents.find(LOWORD(wParam));
-		if (it != m_CommandEvents.end())
-			return (this->*it->second)(LOWORD(wParam), hWnd, wParam, lParam);
+		UINT commandID = LOWORD(wParam);
+		UINT notificationCode = HIWORD(wParam);
+
+		// Check if the command is a menu command
+		if (notificationCode == 0 && m_MenuCommandEvents.count(commandID) != 0) {
+			m_MenuCommandEvents[commandID](hWnd, wParam, lParam);
+			return TRUE;
+		}
+
+		// Check if the command is from a control
+		auto control = GetControl(commandID);
+		if (control) {
+			control->OnCommandCallback(hWnd, wParam, lParam);
+			return TRUE;
+		}
+
 		return FALSE;
 	}
 
@@ -164,79 +174,4 @@ namespace WPP
 		return FALSE;
 	}
 #pragma endregion
-
-	//Functions From ATL
-	BOOL Dialog::CenterWindow(HWND hWndCenter)
-	{
-		// determine owner window to center against
-		DWORD dwStyle = GetStyle();
-		if (hWndCenter == NULL)
-		{
-			if (dwStyle & WS_CHILD)
-				hWndCenter = ::GetParent(m_hWnd);
-			else
-				hWndCenter = ::GetWindow(m_hWnd, GW_OWNER);
-		}
-
-		// get coordinates of the window relative to its parent
-		RECT rcDlg;
-		::GetWindowRect(m_hWnd, &rcDlg);
-		RECT rcArea;
-		RECT rcCenter;
-		HWND hWndParent;
-
-		if (!(dwStyle & WS_CHILD))
-		{
-			// don't center against invisible or minimized windows
-			if (hWndCenter != NULL)
-			{
-				DWORD dwStyleCenter = ::GetWindowLong(hWndCenter, GWL_STYLE);
-				if (!(dwStyleCenter & WS_VISIBLE) || (dwStyleCenter & WS_MINIMIZE))
-					hWndCenter = NULL;
-			}
-
-			// center within screen coordinates
-			HMONITOR hMonitor = NULL;
-			if (hWndCenter != NULL)
-				hMonitor = ::MonitorFromWindow(hWndCenter, MONITOR_DEFAULTTONEAREST);
-			else
-				hMonitor = ::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
-
-			MONITORINFO minfo;
-			minfo.cbSize = sizeof(MONITORINFO);
-			BOOL bResult = ::GetMonitorInfo(hMonitor, &minfo);
-			rcArea = minfo.rcWork;
-
-			if (hWndCenter == NULL)
-				rcCenter = rcArea;
-			else
-				::GetWindowRect(hWndCenter, &rcCenter);
-		} else { // center within parent client coordinates
-			hWndParent = ::GetParent(m_hWnd);
-			::GetClientRect(hWndParent, &rcArea);
-			::GetClientRect(hWndCenter, &rcCenter);
-			::MapWindowPoints(hWndCenter, hWndParent, (POINT*) &rcCenter, 2);
-		}
-
-		int DlgWidth = rcDlg.right - rcDlg.left;
-		int DlgHeight = rcDlg.bottom - rcDlg.top;
-
-		// find dialog's upper left based on rcCenter
-		int xLeft = (rcCenter.left + rcCenter.right) / 2 - DlgWidth / 2;
-		int yTop = (rcCenter.top + rcCenter.bottom) / 2 - DlgHeight / 2;
-
-		// if the dialog is outside the screen, move it inside
-		if (xLeft + DlgWidth > rcArea.right)
-			xLeft = rcArea.right - DlgWidth;
-		if (xLeft < rcArea.left)
-			xLeft = rcArea.left;
-
-		if (yTop + DlgHeight > rcArea.bottom)
-			yTop = rcArea.bottom - DlgHeight;
-		if (yTop < rcArea.top)
-			yTop = rcArea.top;
-
-		// map screen coordinates to child coordinates
-		return ::SetWindowPos(m_hWnd, NULL, xLeft, yTop, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-	}
 }
