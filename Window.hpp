@@ -15,7 +15,7 @@ namespace WPP
 	class Window : public Hwnd
 	{
 	public:
-		using MenuCallback = std::function<void(HWND, WPARAM, LPARAM)>;
+		using MenuCallback = std::function<void(WPARAM, LPARAM)>;
 		using TimerCallback = std::function<void()>;
 
 		/**

@@ -23,15 +23,15 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 	RegisterControl(IDC_PROGRESS_TEST, std::move(m_progress));
 	RegisterControl(IDC_TAB_TEST, std::move(m_tab));
 
-	RegisterMenuCommand(IDM_EXIT, [this](HWND, WPARAM, LPARAM) {
+	RegisterMenuCommand(IDM_EXIT, [this](WPARAM, LPARAM) {
 		EndDialog();
 	});
 
-	RegisterMenuCommand(IDM_ABOUT, [this](HWND, WPARAM, LPARAM) {
+	RegisterMenuCommand(IDM_ABOUT, [this](WPARAM, LPARAM) {
 		MsgBoxInfo(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
 	});
 
-	m_dostuff->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
+	m_dostuff->SetButtonClicked([this](WPARAM, LPARAM) {
 		m_list->ResetContent();
 		m_combo->ResetContent();
 		m_tree->DeleteAllItems();
@@ -56,11 +56,11 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 		m_tree->Expand(tree);
 	});
 
-	m_check->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
+	m_check->SetButtonClicked([this](WPARAM, LPARAM) {
 		m_dostuff->SetShield(m_check->GetChecked() == BST_CHECKED);
 	});
 
-	m_spin->SetUpDownDeltaPosCallback([this](HWND, LPNMHDR nm) {
+	m_spin->SetUpDownDeltaPosCallback([this](LPNMHDR nm) {
 		auto updn = reinterpret_cast<LPNMUPDOWN>(nm);
 		int minimum, maximum, new_val = updn->iPos + updn->iDelta;
 		m_spin->GetRange32(minimum, maximum);
@@ -75,7 +75,7 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 		}
 	});
 
-	m_track->SetTrackBarThumbPosChanging([this](HWND hWnd, LPNMHDR nm) {
+	m_track->SetTrackBarThumbPosChanging([this](LPNMHDR nm) {
 		auto tbm = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(nm);
 
 		int minimum, maximum, new_val = tbm->dwPos;

@@ -7,7 +7,6 @@ MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
 
 }
 
-// Update the OnCreate method to use std::bind for the callback
 LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	CenterWindow();
@@ -28,10 +27,10 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	auto radio_two = radio_grptwo->CreateButton(1010, _T("Radio 2 2"), 0, 370, 150, 25);
 	auto radio_three = radio_grptwo->CreateButton(1011, _T("Radio 2 3"), 0, 395, 150, 25);
 
-	m_LinkControl = CreateLinkControl(1012, _T("<a href=\"https://www.google.com\">Click me!</a>"), 0, 450, 150, 25);
-	m_LinkControl->SetOnClick([this](HWND, LPNMHDR nm) {
-		auto lnk = reinterpret_cast<PNMLINK>(nm);
-		ShellExecute(NULL, TEXT("open"), lnk->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+	m_LinkControl = CreateLinkControl(1012, _T("<a href=\"https://www.google.com\">Click me!</a>, or better yet, <a href=\"https://facebook.com\">Click Me!</a>"), 0, 450, 250, 25);
+	m_LinkControl->SetOnClick([this](LPNMHDR nm) {
+		auto item = reinterpret_cast<PNMLINK>(nm)->item;
+		ShellExecute(NULL, TEXT("open"), item.szUrl, NULL, NULL, SW_SHOWNORMAL);
 	});
 
 	m_ComboBoxOne->Add(_T("Item 1"));
@@ -47,16 +46,15 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	m_ListViewOne->AddItem(0, 1, _T("Column Item 1"));
 	m_ListViewOne->AddItem(0, 2, _T("Column Item 2"));
 
-	m_ButtonOne->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
+	m_ButtonOne->SetButtonClicked([this](WPARAM, LPARAM) {
 		static int x = 0;
 		std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
 		m_ButtonOne->SetText(button_counter_str);
 	});
 
-	m_CheckBoxOne->SetButtonClicked([this](HWND, WPARAM, LPARAM) {
+	m_CheckBoxOne->SetButtonClicked([this](WPARAM, LPARAM) {
 		m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
 	});
 
 	return WPP::Window::OnCreate(hWnd, wParam, lParam);
 }
-

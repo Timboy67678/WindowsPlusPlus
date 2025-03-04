@@ -84,7 +84,7 @@ namespace WPP
 		auto nm = reinterpret_cast<LPNMHDR>(lParam);
 		for (auto& control : m_Controls)
 			if(control && nm->idFrom == control->GetID())
-				control->OnNotifyCallback(hWnd, nm);
+				control->OnNotifyCallback(nm);
 		return TRUE;
 	}
 
@@ -95,14 +95,14 @@ namespace WPP
 
 		// Check if the command is a menu command
 		if (notificationCode == 0 && m_MenuCommandEvents.count(commandID) != 0) {
-			m_MenuCommandEvents[commandID](hWnd, wParam, lParam);
+			m_MenuCommandEvents[commandID](wParam, lParam);
 			return TRUE;
 		}
 
 		// Check if the command is from a control
 		auto control = GetControl(commandID);
 		if (control) {
-			control->OnCommandCallback(hWnd, wParam, lParam);
+			control->OnCommandCallback(wParam, lParam);
 			return TRUE;
 		}
 
