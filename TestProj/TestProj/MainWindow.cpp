@@ -12,7 +12,17 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	CenterWindow();
 
 	m_ButtonOne = CreateButton(IDI_BUTTONONE, _T("Click Me!"), 0, 0, 150, 25);
+	m_ButtonOne->SetButtonClicked([this](WPARAM, LPARAM) {
+		static int x = 0;
+		std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
+		m_ButtonOne->SetText(button_counter_str);
+	});
+
 	m_CheckBoxOne = CreateCheckBox(IDI_CHECKBOXONE, _T("Check Me!"), 0, 30, 150, 25);
+	m_CheckBoxOne->SetButtonClicked([this](WPARAM, LPARAM) {
+		m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
+	});
+
 	m_ComboBoxOne = CreateComboBox(IDI_COMBOBOXONE, 0, 60, 150, 25);
 	m_EditTextOne = CreateEditText(IDI_EDITTEXTONE, 0, 90, 150, 25, _T("Edit me!"));
 	m_ListViewOne = CreateListView(IDI_LISTVIEWONE, 0, 120, 350, 150);
@@ -45,16 +55,6 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	m_ListViewOne->AddItem(0, 0, _T("Item 1"));
 	m_ListViewOne->AddItem(0, 1, _T("Column Item 1"));
 	m_ListViewOne->AddItem(0, 2, _T("Column Item 2"));
-
-	m_ButtonOne->SetButtonClicked([this](WPARAM, LPARAM) {
-		static int x = 0;
-		std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
-		m_ButtonOne->SetText(button_counter_str);
-	});
-
-	m_CheckBoxOne->SetButtonClicked([this](WPARAM, LPARAM) {
-		m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
-	});
 
 	return WPP::Window::OnCreate(hWnd, wParam, lParam);
 }
