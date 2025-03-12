@@ -4,41 +4,45 @@
 namespace WPP
 {
 	Dialog::Dialog(HINSTANCE instance, int resource_id, int menu_id)
-		: m_MainInstance(instance), Hwnd(resource_id, NULL), m_InternalTimerID(0), m_MenuID(menu_id), m_Menu(NULL)
-	{
-		m_MessageEvents = {
-			{WM_INITDIALOG, &Dialog::OnInitDialog},
-			{WM_CLOSE, &Dialog::OnClose},
-			{WM_TIMER, &Dialog::OnTimer},
-			{WM_NOTIFY, &Dialog::OnNotify},
-			{WM_COMMAND, &Dialog::OnCommand},
-			{WM_DESTROY, &Dialog::OnDestroy},
-			{WM_DISPLAYCHANGE, &Dialog::OnDisplayChange},
-			{WM_MOVE, &Dialog::OnMove},
-			{WM_MENUCOMMAND, &Dialog::OnMenuCommand},
-			{WM_PAINT, &Dialog::OnPaint},
-			{WM_SIZE, &Dialog::OnSize},
-			{WM_KEYDOWN, &Dialog::OnKeyDown},
-			{WM_KEYUP, &Dialog::OnKeyUp},
-			{WM_HSCROLL, &Dialog::OnHScroll},
-			{WM_VSCROLL, &Dialog::OnVScroll},
-			{WM_DROPFILES, &Dialog::OnDropFiles}
-		};
+		: m_MainInstance(instance), Hwnd(resource_id, NULL), m_InternalTimerID(0), m_MenuID(menu_id), m_Menu(NULL) {
+		InitializeMessageEvents();
 	}
 
 	Dialog::Dialog(HWND hWnd)
-		: Hwnd(hWnd), m_InternalTimerID(0), m_MenuID(-1), m_Menu(NULL)
-	{
-		m_MainInstance = (HINSTANCE) ::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+		: Hwnd(hWnd), m_InternalTimerID(0), m_MenuID(-1), m_Menu(NULL) {
+		m_MainInstance = (HINSTANCE)::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+		InitializeMessageEvents();
 	}
 
-	void Dialog::Show(INT show)
-	{
-		::ShowWindow(m_hWnd, show);
+	Dialog::~Dialog() {
+		CleanupResources();
 	}
 
-	void Dialog::EndDialog()
+	void Dialog::InitializeMessageEvents() 
 	{
+		using namespace std::placeholders;
+
+		m_MessageEvents = {
+			{WM_INITDIALOG, std::bind(&Dialog::OnInitDialog, this, _1, _2, _3)},
+			{WM_CLOSE, std::bind(&Dialog::OnClose, this, _1, _2, _3)},
+			{WM_DESTROY, std::bind(&Dialog::OnDestroy, this, _1, _2, _3)},
+			{WM_DISPLAYCHANGE, std::bind(&Dialog::OnDisplayChange, this, _1, _2, _3)},
+			{WM_MOVE, std::bind(&Dialog::OnMove, this, _1, _2, _3)},
+			{WM_COMMAND, std::bind(&Dialog::OnCommand, this, _1, _2, _3)},
+			{WM_MENUCOMMAND, std::bind(&Dialog::OnMenuCommand, this, _1, _2, _3)},
+			{WM_PAINT, std::bind(&Dialog::OnPaint, this, _1, _2, _3)},
+			{WM_TIMER, std::bind(&Dialog::OnTimer, this, _1, _2, _3)},
+			{WM_SIZE, std::bind(&Dialog::OnSize, this, _1, _2, _3)},
+			{WM_KEYDOWN, std::bind(&Dialog::OnKeyDown, this, _1, _2, _3)},
+			{WM_KEYUP, std::bind(&Dialog::OnKeyUp, this, _1, _2, _3)},
+			{WM_NOTIFY, std::bind(&Dialog::OnNotify, this, _1, _2, _3)},
+			{WM_HSCROLL, std::bind(&Dialog::OnHScroll, this, _1, _2, _3)},
+			{WM_VSCROLL, std::bind(&Dialog::OnVScroll, this, _1, _2, _3)},
+			{WM_DROPFILES, std::bind(&Dialog::OnDropFiles, this, _1, _2, _3)}
+		};
+	}
+
+	void Dialog::CleanupResources() {
 		for (auto& timer : m_TimerEvents)
 			::KillTimer(m_hWnd, timer.first);
 
@@ -46,15 +50,21 @@ namespace WPP
 			control_pair.reset();
 
 		::DestroyMenu(m_Menu);
+	}
 
+	void Dialog::Show(INT show) {
+		::ShowWindow(m_hWnd, show);
+	}
+
+	void Dialog::EndDialog() {
+		CleanupResources();
 		::EndDialog(m_hWnd, 0);
 	}
 
-	INT_PTR CALLBACK Dialog::RunDlg(HWND parent, LPVOID param)
-	{
+	INT_PTR CALLBACK Dialog::RunDlg(HWND parent, LPVOID param) {
 		m_Parent = parent;
 		Win32Thunk<DLGPROC, Dialog> thunk(&Dialog::DialogProc, this);
-		return ::DialogBoxParam(m_MainInstance, MAKEINTRESOURCE(m_ItemID), parent, thunk.GetThunk(), (LPARAM) param);
+		return ::DialogBoxParam(m_MainInstance, MAKEINTRESOURCE(m_ItemID), parent, thunk.GetThunk(), (LPARAM)param);
 	}
 
 #pragma region Overidables
@@ -94,9 +104,12 @@ namespace WPP
 		UINT notificationCode = HIWORD(wParam);
 
 		// Check if the command is a menu command
-		if (notificationCode == 0 && m_MenuCommandEvents.count(commandID) != 0) {
-			m_MenuCommandEvents[commandID](wParam, lParam);
-			return TRUE;
+		if (notificationCode == 0) {
+			auto menuCommandIt = m_MenuCommandEvents.find(commandID);
+			if (menuCommandIt != m_MenuCommandEvents.end()) {
+				menuCommandIt->second(wParam, lParam);
+				return TRUE;
+			}
 		}
 
 		// Check if the command is from a control
@@ -159,7 +172,7 @@ namespace WPP
 	{
 		return FALSE;
 	}
-
+	
 	INT_PTR CALLBACK Dialog::OnDropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		return FALSE;
@@ -170,7 +183,7 @@ namespace WPP
 		m_hWnd = hWnd;
 		auto it = m_MessageEvents.find(Msg);
 		if (it != m_MessageEvents.end())
-			return (this->*it->second)(hWnd, wParam, lParam);
+			return it->second(hWnd, wParam, lParam);
 		return FALSE;
 	}
 #pragma endregion

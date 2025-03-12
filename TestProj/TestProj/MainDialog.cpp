@@ -31,7 +31,7 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 		MsgBoxInfo(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
 	});
 
-	m_dostuff->SetButtonClicked([this](WPARAM, LPARAM) {
+	m_dostuff->RegisterCommandCallback(BN_CLICKED, [this](WPARAM, LPARAM) {
 		m_list->ResetContent();
 		m_combo->ResetContent();
 		m_tree->DeleteAllItems();
@@ -56,11 +56,11 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 		m_tree->Expand(tree);
 	});
 
-	m_check->SetButtonClicked([this](WPARAM, LPARAM) {
+	m_check->RegisterCommandCallback(BN_CLICKED, [this](WPARAM, LPARAM) {
 		m_dostuff->SetShield(m_check->GetChecked() == BST_CHECKED);
 	});
 
-	m_spin->SetUpDownDeltaPosCallback([this](LPNMHDR nm) {
+	m_spin->RegisterNotifyCallback(UDN_DELTAPOS, [this](LPNMHDR nm) {
 		auto updn = reinterpret_cast<LPNMUPDOWN>(nm);
 		int minimum, maximum, new_val = updn->iPos + updn->iDelta;
 		m_spin->GetRange32(minimum, maximum);
@@ -75,7 +75,7 @@ INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lPara
 		}
 	});
 
-	m_track->SetTrackBarThumbPosChanging([this](LPNMHDR nm) {
+	m_track->RegisterNotifyCallback(TRBN_THUMBPOSCHANGING, [this](LPNMHDR nm) {
 		auto tbm = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(nm);
 
 		int minimum, maximum, new_val = tbm->dwPos;

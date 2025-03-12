@@ -5,9 +5,7 @@
 
 #define DIALOG_MESSAGE_HANDLER(X) virtual INT_PTR CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
-#define DIALOG_MESSAGE_REF(X) static_cast<WPP::Dialog::DIALOG_MESSAGE_CALLBACK>(X)
-
-#define DIALOG_TIMER_OFFSET_START 0x1374
+constexpr auto DIALOG_TIMER_OFFSET_START = 0x1374;
 
 namespace WPP
 {
@@ -20,8 +18,7 @@ namespace WPP
 	public:
 		using MenuCallback = std::function<void(WPARAM, LPARAM)>;
 		using TimerCallback = std::function<void()>;
-
-		typedef INT_PTR(CALLBACK Dialog::*DIALOG_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
+		using DialogMessageCallback = std::function<INT_PTR(HWND, WPARAM, LPARAM)>;
 
 		/**
 		* @brief Constructs a Dialog object.
@@ -40,7 +37,7 @@ namespace WPP
 		/**
 		* @brief Destroys the Dialog object.
 		*/
-		virtual ~Dialog() = default;
+		virtual ~Dialog();
 
 		DIALOG_MESSAGE_HANDLER(OnInitDialog);
 		DIALOG_MESSAGE_HANDLER(OnClose);
@@ -218,10 +215,14 @@ namespace WPP
 			return MsgBox(buffer, title, MB_OK | MB_ICONWARNING);
 		}
 
+	private:
+		void InitializeMessageEvents();
+		void CleanupResources();
+
 	protected:
 		std::map<UINT_PTR, MenuCallback> m_MenuCommandEvents;
 		std::map<UINT_PTR, TimerCallback> m_TimerEvents;
-		std::map<INT, DIALOG_MESSAGE_CALLBACK> m_MessageEvents;
+		std::map<INT, DialogMessageCallback> m_MessageEvents;
 		std::vector<std::shared_ptr<Control>> m_Controls;
 		
 		UINT_PTR m_InternalTimerID;

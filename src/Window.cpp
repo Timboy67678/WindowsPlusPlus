@@ -7,25 +7,51 @@ namespace WPP
 		: Hwnd(NULL), m_WindowClass(wnd_class), m_WindowName(window_name), m_XPos(x_pos), m_YPos(y_pos),
 		m_Width(width), m_Height(height), m_Style(style), m_MenuID(menu_id), m_Menu(menu), m_Font(font), m_StyleEx(style_ex)
 	{
-		// Initialize message events
+		InitializeMessageEvents();
+	}
+
+	Window::~Window() {
+		CleanupResources();
+	}
+
+	void Window::InitializeMessageEvents()
+	{
+		using namespace std::placeholders;
+
 		m_MessageEvents = {
-			{WM_CREATE, &Window::OnCreate},
-			{WM_CLOSE, &Window::OnClose},
-			{WM_DESTROY, &Window::OnDestroy},
-			{WM_DISPLAYCHANGE, &Window::OnDisplayChange},
-			{WM_MOVE, &Window::OnMove},
-			{WM_COMMAND, &Window::OnCommand},
-			{WM_MENUCOMMAND, &Window::OnMenuCommand},
-			{WM_PAINT, &Window::OnPaint},
-			{WM_TIMER, &Window::OnTimer},
-			{WM_SIZE, &Window::OnSize},
-			{WM_KEYDOWN, &Window::OnKeyDown},
-			{WM_KEYUP, &Window::OnKeyUp},
-			{WM_NOTIFY, &Window::OnNotify},
-			{WM_HSCROLL, &Window::OnHScroll},
-			{WM_VSCROLL, &Window::OnVScroll},
-			{WM_DROPFILES, &Window::OnDropFiles}
+			{WM_CREATE, std::bind(&Window::OnCreate, this, _1, _2, _3)},
+			{WM_CLOSE, std::bind(&Window::OnClose, this, _1, _2, _3)},
+			{WM_DESTROY, std::bind(&Window::OnDestroy, this, _1, _2, _3)},
+			{WM_DISPLAYCHANGE, std::bind(&Window::OnDisplayChange, this, _1, _2, _3)},
+			{WM_MOVE, std::bind(&Window::OnMove, this, _1, _2, _3)},
+			{WM_COMMAND, std::bind(&Window::OnCommand, this, _1, _2, _3)},
+			{WM_MENUCOMMAND, std::bind(&Window::OnMenuCommand, this, _1, _2, _3)},
+			{WM_PAINT, std::bind(&Window::OnPaint, this, _1, _2, _3)},
+			{WM_TIMER, std::bind(&Window::OnTimer, this, _1, _2, _3)},
+			{WM_SIZE, std::bind(&Window::OnSize, this, _1, _2, _3)},
+			{WM_KEYDOWN, std::bind(&Window::OnKeyDown, this, _1, _2, _3)},
+			{WM_KEYUP, std::bind(&Window::OnKeyUp, this, _1, _2, _3)},
+			{WM_NOTIFY, std::bind(&Window::OnNotify, this, _1, _2, _3)},
+			{WM_HSCROLL, std::bind(&Window::OnHScroll, this, _1, _2, _3)},
+			{WM_VSCROLL, std::bind(&Window::OnVScroll, this, _1, _2, _3)},
+			{WM_DROPFILES, std::bind(&Window::OnDropFiles, this, _1, _2, _3)}
 		};
+	}
+
+	void Window::CleanupResources()
+	{
+		for (auto& timer : m_TimerEvents)
+			::KillTimer(m_hWnd, timer.first);
+		for (auto& control_pair : m_Controls) {
+			::DestroyWindow(control_pair->GetHandle());
+			control_pair.reset();
+		}
+
+		::DeleteObject(m_Font);
+		m_Font = NULL;
+
+		::DestroyMenu(m_Menu);
+		::DestroyWindow(m_hWnd);
 	}
 
 	bool Window::RunWindow(HWND parent_window, LPVOID param)
@@ -72,14 +98,14 @@ namespace WPP
 
 		return true;
 	}
-
+	
 	LRESULT Window::WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	{
 		m_hWnd = hWnd;
 		LRESULT ret = FALSE;
 		auto it = m_MessageEvents.find(Msg);
 		if (it != m_MessageEvents.end())
-			ret = (this->*(it->second))(hWnd, wParam, lParam);
+			ret = it->second(hWnd, wParam, lParam);
 
 		if (ret == FALSE) //was handled? otherwise send to default os handler
 			return ::DefWindowProc(hWnd, Msg, wParam, lParam);
@@ -91,10 +117,10 @@ namespace WPP
 	std::shared_ptr<RadioButton> Window::RadioButtonGroup::CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
 	{
 		DWORD style = WS_CHILD | WS_VISIBLE | WS_OVERLAPPED;
-		if (m_RadioButtons.empty()) 
+		if (m_RadioButtons.empty())
 			style |= WS_GROUP;
 
-		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTORADIOBUTTON | style, 
+		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTORADIOBUTTON | style,
 												   x, y, width, height, m_Parent->m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_Parent->m_WindowClass.instance(), NULL);
 		if (!radiobutton_handle)
 			return nullptr;
@@ -102,8 +128,10 @@ namespace WPP
 		::SendMessage(radiobutton_handle, WM_SETFONT, (WPARAM)m_Parent->m_Font, TRUE);
 
 		auto radiobutton = std::make_shared<RadioButton>(control_id, m_Parent->m_hWnd);
-		if (!radiobutton)
+		if (!radiobutton) {
+			::DestroyWindow(radiobutton_handle);
 			return nullptr;
+		}
 
 		radiobutton->SetChecked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_RadioButtons.push_back(radiobutton);
@@ -128,14 +156,16 @@ namespace WPP
 
 	std::shared_ptr<Button> Window::CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
 	{
-		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, 
+		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
 											  x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!button_handle)
 			return nullptr;
 
 		auto button = std::make_shared<Button>(control_id, m_hWnd);
-		if (!button)
+		if (!button) {
+			::DestroyWindow(button_handle);
 			return nullptr;
+		}
 
 		m_Controls.emplace_back(button);
 		return button;
@@ -143,7 +173,7 @@ namespace WPP
 
 	std::shared_ptr<CheckBox> Window::CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
 	{
-		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, 
+		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
 												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!checkbox_handle)
 			return nullptr;
@@ -158,10 +188,10 @@ namespace WPP
 		m_Controls.emplace_back(checkbox);
 		return checkbox;
 	}
-	
+
 	std::shared_ptr<ComboBox> Window::CreateComboBox(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 
+		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
 												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!combobox_handle)
 			return nullptr;
@@ -178,7 +208,7 @@ namespace WPP
 
 	std::shared_ptr<EditText> Window::CreateEditText(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text)
 	{
-		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text, ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text, ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!edittext_handle)
 			return nullptr;
@@ -195,7 +225,7 @@ namespace WPP
 
 	std::shared_ptr<ListBox> Window::CreateListBox(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND listbox_handle = ::CreateWindowEx(0, WC_LISTBOX, _T(""), LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+		HWND listbox_handle = ::CreateWindowEx(0, WC_LISTBOX, _T(""), LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE,
 											   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!listbox_handle)
 			return nullptr;
@@ -212,7 +242,7 @@ namespace WPP
 
 	std::shared_ptr<ListView> Window::CreateListView(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!listview_handle)
 			return nullptr;
@@ -229,7 +259,7 @@ namespace WPP
 
 	std::shared_ptr<TreeView> Window::CreateTreeView(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!treeview_handle)
 			return nullptr;
@@ -246,7 +276,7 @@ namespace WPP
 
 	std::shared_ptr<TabControl> Window::CreateTabControl(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												  x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!tabcontrol_handle)
 			return nullptr;
@@ -263,7 +293,7 @@ namespace WPP
 
 	std::shared_ptr<ProgressBar> Window::CreateProgressBar(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND progressbar_handle = ::CreateWindowEx(0, PROGRESS_CLASS, _T(""), PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+		HWND progressbar_handle = ::CreateWindowEx(0, PROGRESS_CLASS, _T(""), PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!progressbar_handle)
 			return nullptr;
@@ -280,7 +310,7 @@ namespace WPP
 
 	std::shared_ptr<UpDownControl> Window::CreateSpinControl(UINT control_id, int x, int y, int width, int height)
 	{
-		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, 
+		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!spincontrol_handle)
 			return nullptr;
@@ -321,7 +351,7 @@ namespace WPP
 
 	std::shared_ptr<SysLink> Window::CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height)
 	{
-		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_VISIBLE, 
+		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_VISIBLE,
 												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(control_id)), m_WindowClass.instance(), NULL);
 		if (!linkcontrol_handle)
 			return nullptr;
@@ -355,10 +385,6 @@ namespace WPP
 	LRESULT CALLBACK Window::OnDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		QuitWindow();
-		DeleteObject(m_Font);
-		m_Font = NULL;
-		for (auto& timer : m_TimerEvents)
-			::KillTimer(m_hWnd, timer.first);
 		return TRUE;
 	}
 
@@ -378,15 +404,15 @@ namespace WPP
 		return FALSE;
 	}
 
-    LRESULT CALLBACK Window::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
-    {
-        auto it = m_TimerEvents.find(static_cast<UINT_PTR>(wParam));
-        if (it != m_TimerEvents.end()) {
-            it->second();
-            return TRUE;
-        }
-        return FALSE;
-    }
+	LRESULT CALLBACK Window::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		auto it = m_TimerEvents.find(static_cast<UINT_PTR>(wParam));
+		if (it != m_TimerEvents.end()) {
+			it->second();
+			return TRUE;
+		}
+		return FALSE;
+	}
 
 	LRESULT CALLBACK Window::OnSize(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
@@ -461,15 +487,12 @@ namespace WPP
 
 	void Window::CloseWindow()
 	{
-		::DestroyWindow(m_hWnd);
+		QuitWindow();
 	}
 
 	void Window::QuitWindow(INT exit_code)
 	{
-		m_WindowRunning = false;
-		for (auto& control : m_Controls)
-			control.reset();
-
+		m_WindowRunning = false;	
 		::PostQuitMessage(exit_code);
 	}
 
@@ -521,5 +544,5 @@ namespace WPP
 		return MsgBox(buffer, title, MB_OK | MB_ICONWARNING);
 	}
 #pragma endregion
-	
+
 }

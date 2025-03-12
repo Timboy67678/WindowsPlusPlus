@@ -6,8 +6,6 @@
 
 #define WINDOW_MESSAGE_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
-#define WINDOW_MESSAGE_REF(X) static_cast<WPP::Window::WINDOW_MESSAGE_CALLBACK>(X)
-
 #define WINDOW_TIMER_OFFSET_START 0x2374
 
 namespace WPP
@@ -17,13 +15,7 @@ namespace WPP
 	public:
 		using MenuCallback = std::function<void(WPARAM, LPARAM)>;
 		using TimerCallback = std::function<void()>;
-
-		/**
-		 * @typedef WINDOW_MESSAGE_CALLBACK
-		 * @brief Callback type for window messages.
-		 */
-		typedef LRESULT(CALLBACK Window::*WINDOW_MESSAGE_CALLBACK)(HWND hWnd, WPARAM wParam, LPARAM lParam);
-
+		using WindowMessageCallback = std::function<LRESULT(HWND, WPARAM, LPARAM)>;
 
 		/**
 		 * @struct Class
@@ -131,6 +123,8 @@ namespace WPP
 				: m_Parent(parent)
 			{}
 
+			virtual ~RadioButtonGroup() = default;
+
 			/**
 			* @brief Creates a radio button.
 			* @param control_id Control ID.
@@ -175,7 +169,7 @@ namespace WPP
 		/**
 		 * @brief Destructor.
 		 */
-		virtual ~Window() = default;
+		virtual ~Window();
 
 		WINDOW_MESSAGE_HANDLER(OnCreate);
 		WINDOW_MESSAGE_HANDLER(OnClose);
@@ -327,6 +321,10 @@ namespace WPP
 			return nullptr;
         }
 
+	private:
+		void InitializeMessageEvents();
+		void CleanupResources();
+
 	protected:
 		Class m_WindowClass; ///< Window class.
 		int m_XPos, m_YPos, m_Width, m_Height; ///< Window position and size.
@@ -338,9 +336,7 @@ namespace WPP
 		UINT_PTR m_InternalTimerID = 0; ///< Internal timer ID.
 		std::atomic_bool m_WindowRunning = false; ///< Window running flag.
 		std::unique_ptr<Win32Thunk<WNDPROC, Window>> m_WindowProcThunk; ///< Window procedure thunk.
-
-	private:
-		std::map<INT, WINDOW_MESSAGE_CALLBACK> m_MessageEvents; ///< Message events.
+		std::map<INT, WindowMessageCallback> m_MessageEvents; ///< Message events.
 		std::map<UINT_PTR, TimerCallback> m_TimerEvents; ///< Timer events.
 		std::map<UINT_PTR, MenuCallback> m_MenuCommandEvents; ///< Menu command events.
 		std::vector<std::shared_ptr<Control>> m_Controls; ///< Controls container.
