@@ -2,7 +2,6 @@
 #define __WINDOW_H__
 
 #include "winplusplus.h"
-#include "Thunk.hpp"
 
 #define WINDOW_MESSAGE_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
@@ -136,7 +135,7 @@ namespace WPP
 			* @param initial_state Initial state of the button.
 			* @return Pointer to the created radio button.
 			*/
-			std::shared_ptr<RadioButton> CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = FALSE);
+			std::shared_ptr<RadioButton> CreateButton(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = FALSE);
 
 			/**
 			* @brief Gets the index of the selected radio button.
@@ -264,18 +263,18 @@ namespace WPP
 		std::shared_ptr<Window::RadioButtonGroup> CreateRadioButtonGroup();
 
 		// Create window controls
-		std::shared_ptr<Button> CreateButton(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
-		std::shared_ptr<CheckBox> CreateCheckBox(UINT control_id, LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
-		std::shared_ptr<ComboBox> CreateComboBox(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<EditText> CreateEditText(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		std::shared_ptr<ListBox> CreateListBox(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<ListView> CreateListView(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<TreeView> CreateTreeView(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<TabControl> CreateTabControl(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<ProgressBar> CreateProgressBar(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<UpDownControl> CreateSpinControl(UINT control_id, int x, int y, int width, int height);
-		std::shared_ptr<RichEdit> CreateRichEdit(UINT control_id, int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		std::shared_ptr<SysLink> CreateLinkControl(UINT control_id, LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<Button> CreateButton(LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<CheckBox> CreateCheckBox(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
+		std::shared_ptr<ComboBox> CreateComboBox(int x, int y, int width, int height);
+		std::shared_ptr<EditText> CreateEditText(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+		std::shared_ptr<ListBox> CreateListBox(int x, int y, int width, int height);
+		std::shared_ptr<ListView> CreateListView(int x, int y, int width, int height);
+		std::shared_ptr<TreeView> CreateTreeView(int x, int y, int width, int height);
+		std::shared_ptr<TabControl> CreateTabControl(int x, int y, int width, int height);
+		std::shared_ptr<ProgressBar> CreateProgressBar(int x, int y, int width, int height);
+		std::shared_ptr<UpDownControl> CreateSpinControl(int x, int y, int width, int height);
+		std::shared_ptr<RichEdit> CreateRichEdit(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+		std::shared_ptr<SysLink> CreateLinkControl(LPCTSTR text, int x, int y, int width, int height);
 
 		/**
 		 * @brief Registers a menu control callback.
@@ -333,9 +332,9 @@ namespace WPP
 		HFONT m_Font; ///< Font handle.
 		int m_MenuID; ///< Menu ID.
 		DWORD m_Style, m_StyleEx; ///< Window styles.
+		UINT m_ControlID = WM_USER+1; ///< Control ID index.
 		UINT_PTR m_InternalTimerID = 0; ///< Internal timer ID.
 		std::atomic_bool m_WindowRunning = false; ///< Window running flag.
-		std::unique_ptr<Win32Thunk<WNDPROC, Window>> m_WindowProcThunk; ///< Window procedure thunk.
 		std::map<INT, WindowMessageCallback> m_MessageEvents; ///< Message events.
 		std::map<UINT_PTR, TimerCallback> m_TimerEvents; ///< Timer events.
 		std::map<UINT_PTR, MenuCallback> m_MenuCommandEvents; ///< Menu command events.

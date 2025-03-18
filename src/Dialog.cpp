@@ -60,10 +60,10 @@ namespace WPP
 		CleanupResources();
 		::EndDialog(m_hWnd, 0);
 	}
-
+	
 	INT_PTR CALLBACK Dialog::RunDlg(HWND parent, LPVOID param) {
 		m_Parent = parent;
-		Win32Thunk<DLGPROC, Dialog> thunk(&Dialog::DialogProc, this);
+		Win32Thunk<DLGPROC, Dialog> thunk{ &Dialog::DialogProc, this };
 		return ::DialogBoxParam(m_MainInstance, MAKEINTRESOURCE(m_ItemID), parent, thunk.GetThunk(), (LPARAM)param);
 	}
 

@@ -11,33 +11,33 @@ LRESULT CALLBACK MainWindow::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	CenterWindow();
 
-	m_ButtonOne = CreateButton(IDI_BUTTONONE, _T("Click Me!"), 0, 0, 150, 25);
+	m_ButtonOne = CreateButton(_T("Click Me!"), 0, 0, 150, 25);
 	m_ButtonOne->RegisterCommandCallback(BN_CLICKED, [this](WPARAM, LPARAM) {
 		static int x = 0;
 		std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
 		m_ButtonOne->SetText(button_counter_str);
 	});
 	
-	m_CheckBoxOne = CreateCheckBox(IDI_CHECKBOXONE, _T("Check Me!"), 0, 30, 150, 25);
+	m_CheckBoxOne = CreateCheckBox(_T("Check Me!"), 0, 30, 150, 25);
 	m_CheckBoxOne->RegisterCommandCallback(BN_CLICKED, [this](WPARAM, LPARAM) {
 		m_ButtonOne->SetShield(m_CheckBoxOne->GetChecked() == BST_CHECKED);
 	});
 
-	m_ComboBoxOne = CreateComboBox(IDI_COMBOBOXONE, 0, 60, 150, 25);
-	m_EditTextOne = CreateEditText(IDI_EDITTEXTONE, 0, 90, 150, 25, _T("Edit me!"));
-	m_ListViewOne = CreateListView(IDI_LISTVIEWONE, 0, 120, 350, 150);
+	m_ComboBoxOne = CreateComboBox(0, 60, 150, 25);
+	m_EditTextOne = CreateEditText(0, 90, 150, 25, _T("Edit me!"));
+	m_ListViewOne = CreateListView(0, 120, 350, 150);
 
 	m_RadioButtonGroup = CreateRadioButtonGroup();
-	auto radiobuttonone = m_RadioButtonGroup->CreateButton(IDI_RADIOBUTTONONE, _T("Radio 1"), 0, 270, 150, 25, TRUE);
-	auto radiobuttontwo = m_RadioButtonGroup->CreateButton(IDI_RADIOBUTTONTWO, _T("Radio 2"), 0, 295, 150, 25);
-	auto radiobuttonthree = m_RadioButtonGroup->CreateButton(IDI_RADIOBUTTONTHREE, _T("Radio 3"), 0, 320, 150, 25);
+	auto radiobuttonone = m_RadioButtonGroup->CreateButton(_T("Radio 1"), 0, 270, 150, 25, TRUE);
+	auto radiobuttontwo = m_RadioButtonGroup->CreateButton(_T("Radio 2"), 0, 295, 150, 25);
+	auto radiobuttonthree = m_RadioButtonGroup->CreateButton(_T("Radio 3"), 0, 320, 150, 25);
 
 	auto radio_grptwo = CreateRadioButtonGroup();
-	auto radio_one = radio_grptwo->CreateButton(1009, _T("Radio 2 1"), 0, 345, 150, 25, TRUE);
-	auto radio_two = radio_grptwo->CreateButton(1010, _T("Radio 2 2"), 0, 370, 150, 25);
-	auto radio_three = radio_grptwo->CreateButton(1011, _T("Radio 2 3"), 0, 395, 150, 25);
+	auto radio_one = radio_grptwo->CreateButton(_T("Radio 2 1"), 0, 345, 150, 25, TRUE);
+	auto radio_two = radio_grptwo->CreateButton(_T("Radio 2 2"), 0, 370, 150, 25);
+	auto radio_three = radio_grptwo->CreateButton(_T("Radio 2 3"), 0, 395, 150, 25);
 
-	m_LinkControl = CreateLinkControl(1012, _T("<a href=\"https://www.google.com\">Click me!</a>, or better yet, <a href=\"https://facebook.com\">Click Me!</a>"), 0, 450, 250, 25);
+	m_LinkControl = CreateLinkControl(_T("<a href=\"https://www.google.com\">Click me!</a>, or better yet, <a href=\"https://facebook.com\">Click Me!</a>"), 0, 450, 250, 25);
 	m_LinkControl->RegisterNotifyCallback(NM_CLICK, [this](LPNMHDR nm) {
 		auto item = reinterpret_cast<PNMLINK>(nm)->item;
 		ShellExecute(NULL, TEXT("open"), item.szUrl, NULL, NULL, SW_SHOWNORMAL);
