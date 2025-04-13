@@ -25,6 +25,7 @@ namespace WPP
 		m_MessageEvents = {
 			{WM_INITDIALOG, std::bind(&Dialog::OnInitDialog, this, _1, _2, _3)},
 			{WM_CLOSE, std::bind(&Dialog::OnClose, this, _1, _2, _3)},
+			{WM_QUIT, std::bind(&Dialog::OnQuit, this, _1, _2, _3)},
 			{WM_DESTROY, std::bind(&Dialog::OnDestroy, this, _1, _2, _3)},
 			{WM_DISPLAYCHANGE, std::bind(&Dialog::OnDisplayChange, this, _1, _2, _3)},
 			{WM_MOVE, std::bind(&Dialog::OnMove, this, _1, _2, _3)},
@@ -49,11 +50,19 @@ namespace WPP
 		for (auto& control_pair : m_Controls)
 			control_pair.reset();
 
+		m_TimerEvents.clear();
+		m_MenuCommandEvents.clear();
+		m_Controls.clear();
+
 		::DestroyMenu(m_Menu);
 	}
 
-	void Dialog::Show(INT show) {
-		::ShowWindow(m_hWnd, show);
+	void Dialog::Show() {
+		::ShowWindow(m_hWnd, SW_SHOWNORMAL);
+	}
+
+	void Dialog::Hide() {
+		::ShowWindow(m_hWnd, SW_HIDE);
 	}
 
 	void Dialog::EndDialog() {
@@ -78,6 +87,11 @@ namespace WPP
 	INT_PTR CALLBACK Dialog::OnClose(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		EndDialog();
+		return FALSE;
+	}
+
+	INT_PTR CALLBACK Dialog::OnQuit(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
 		return FALSE;
 	}
 

@@ -11,8 +11,13 @@ namespace WPP
 		InitializeMessageEvents();
 	}
 
-	Window::~Window() {
-		CleanupResources();
+	Window::~Window() 
+	{
+		if (m_WindowRunning)
+		{
+			::PostQuitMessage(0);
+			CleanupResources();
+		}
 	}
 
 	void Window::InitializeMessageEvents()
@@ -22,6 +27,7 @@ namespace WPP
 		m_MessageEvents = {
 			{WM_CREATE, std::bind(&Window::OnCreate, this, _1, _2, _3)},
 			{WM_CLOSE, std::bind(&Window::OnClose, this, _1, _2, _3)},
+			{WM_QUIT, std::bind(&Window::OnQuit, this, _1, _2, _3)},
 			{WM_DESTROY, std::bind(&Window::OnDestroy, this, _1, _2, _3)},
 			{WM_DISPLAYCHANGE, std::bind(&Window::OnDisplayChange, this, _1, _2, _3)},
 			{WM_MOVE, std::bind(&Window::OnMove, this, _1, _2, _3)},
@@ -48,11 +54,15 @@ namespace WPP
 			control_pair.reset();
 		}
 
-		::DeleteObject(m_Font);
-		m_Font = NULL;
+		m_Controls.clear();
+		m_TimerEvents.clear();
+		m_MenuCommandEvents.clear();
 
-		::DestroyMenu(m_Menu);
-		::DestroyWindow(m_hWnd);
+		::DeleteObject(m_Font); m_Font = NULL;
+		::DestroyMenu(m_Menu); m_Menu = NULL;
+		::DestroyWindow(m_hWnd); m_hWnd = NULL;
+
+		m_ControlID = WM_USER + 1; // reset counter
 	}
 
 	bool Window::RunWindow(HWND parent_window, LPVOID param)
@@ -72,7 +82,7 @@ namespace WPP
 		if (!m_hWnd)
 			return false;
 
-		Show(SW_SHOWNORMAL);
+		Show();
 
 		if (m_Font == NULL)
 			m_Font = ::CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -88,7 +98,8 @@ namespace WPP
 		m_WindowRunning = true;
 
 		MSG msg;
-		while (m_WindowRunning && ::GetMessage(&msg, NULL, NULL, NULL)) {
+		while (m_WindowRunning && ::GetMessage(&msg, NULL, NULL, NULL)) 
+		{
 			if (!::IsDialogMessage(m_hWnd, &msg)) {
 				::TranslateMessage(&msg);
 				::DispatchMessage(&msg);
@@ -395,7 +406,7 @@ namespace WPP
 #pragma warning(pop)
 #pragma endregion
 
-#pragma region Overidables
+#pragma region Window Message Handlers
 	LRESULT CALLBACK Window::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		if (m_MenuID != -1)
@@ -406,13 +417,17 @@ namespace WPP
 
 	LRESULT CALLBACK Window::OnClose(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		CloseWindow();
-		return FALSE;
+		Quit();
+		return TRUE;
+	}
+
+	LRESULT CALLBACK Window::OnQuit(HWND hWnd, WPARAM wParam, LPARAM lParam)
+	{
+		return TRUE;
 	}
 
 	LRESULT CALLBACK Window::OnDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
-		QuitWindow();
 		return TRUE;
 	}
 
@@ -508,20 +523,25 @@ namespace WPP
 	}
 #pragma endregion
 
-	void Window::Show(INT show)
+	void Window::Show()
 	{
-		::ShowWindow(m_hWnd, show);
+		::ShowWindow(m_hWnd, SW_SHOWNORMAL);
 	}
 
-	void Window::CloseWindow()
+	void Window::Hide()
 	{
-		QuitWindow();
+		::ShowWindow(m_hWnd, SW_HIDE);
 	}
 
-	void Window::QuitWindow(INT exit_code)
+	void Window::Close()
 	{
-		m_WindowRunning = false;	
-		::PostQuitMessage(exit_code);
+		::CloseWindow(m_hWnd);
+	}
+
+	void Window::Quit(INT exit_code)
+	{
+		m_WindowRunning = false;
+		CleanupResources();
 	}
 
 #pragma region Message Box Abstracts

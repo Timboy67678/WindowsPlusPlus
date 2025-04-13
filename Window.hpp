@@ -172,6 +172,7 @@ namespace WPP
 
 		WINDOW_MESSAGE_HANDLER(OnCreate);
 		WINDOW_MESSAGE_HANDLER(OnClose);
+		WINDOW_MESSAGE_HANDLER(OnQuit);
 		WINDOW_MESSAGE_HANDLER(OnTimer);
 		WINDOW_MESSAGE_HANDLER(OnNotify);
 		WINDOW_MESSAGE_HANDLER(OnCommand);
@@ -241,20 +242,24 @@ namespace WPP
 
 		/**
 		 * @brief Shows the window.
-		 * @param show Show state.
 		 */
-		void Show(INT show = SW_NORMAL);
+		void Show();
+
+		/**
+		 * @brief Hides the window.
+		 */
+		void Hide();
 
 		/**
 		 * @brief Closes the window.
 		 */
-		void CloseWindow();
+		void Close();
 
 		/**
 		 * @brief Quits the window.
 		 * @param exit_code Exit code.
 		 */
-		void QuitWindow(INT exit_code = 0);
+		void Quit(INT exit_code = 0);
 
 		/**
 		* @brief Creates a radio button group.
@@ -309,16 +314,18 @@ namespace WPP
         * @param control_id Control ID.
         * @return Pointer to the control.
         */
-        template<typename CtrlType = Control>
-        std::shared_ptr<CtrlType> GetControl(UINT control_id)
-        {
+		template<typename CtrlType = Control>
+		inline std::shared_ptr<CtrlType> GetControl(UINT control_id)
+		{
 			auto it = std::find_if(m_Controls.begin(), m_Controls.end(), [control_id](const std::shared_ptr<Control>& control) {
-				return control->GetID() == control_id;
+				return control && control->GetID() == control_id;
 			});
-			if (it != m_Controls.end())
+
+			if (it != m_Controls.end() && *it) {
 				return std::dynamic_pointer_cast<CtrlType>(*it);
+			}
 			return nullptr;
-        }
+		}
 
 	private:
 		void InitializeMessageEvents();

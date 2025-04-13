@@ -41,6 +41,7 @@ namespace WPP
 
 		DIALOG_MESSAGE_HANDLER(OnInitDialog);
 		DIALOG_MESSAGE_HANDLER(OnClose);
+		DIALOG_MESSAGE_HANDLER(OnQuit);
 		DIALOG_MESSAGE_HANDLER(OnTimer);
 		DIALOG_MESSAGE_HANDLER(OnNotify);
 		DIALOG_MESSAGE_HANDLER(OnCommand);
@@ -76,9 +77,13 @@ namespace WPP
 
 		/**
 		* @brief Shows the dialog.
-		* @param show The show state (default is SW_NORMAL).
 		*/
-		void Show(INT show = SW_NORMAL);
+		void Show();
+
+		/**
+		* @brief Hides the dialog.
+		*/
+		void Hide();
 
 		/**
 		* @brief Ends the dialog.
