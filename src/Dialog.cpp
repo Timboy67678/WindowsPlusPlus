@@ -1,202 +1,184 @@
-#include "../Dialog.hpp"
+#include "../dialog.hpp"
 #include "../Thunk.hpp"
 
-namespace WPP
+namespace wpp
 {
-	Dialog::Dialog(HINSTANCE instance, int resource_id, int menu_id)
-		: m_MainInstance(instance), Hwnd(resource_id, NULL), m_InternalTimerID(0), m_MenuID(menu_id), m_Menu(NULL) {
-		InitializeMessageEvents();
+	dialog::dialog(HINSTANCE instance, int resource_id, int menu_id)
+		: m_main_instance(instance), hwnd(resource_id, NULL), m_internal_timerid(0), m_menu_id(menu_id), m_menu(NULL) {
+		init_message_events();
 	}
 
-	Dialog::Dialog(HWND hWnd)
-		: Hwnd(hWnd), m_InternalTimerID(0), m_MenuID(-1), m_Menu(NULL) {
-		m_MainInstance = (HINSTANCE)::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
-		InitializeMessageEvents();
+	dialog::dialog(HWND hWnd)
+		: hwnd(hWnd), m_internal_timerid(0), m_menu_id(-1), m_menu(NULL) {
+		m_main_instance = (HINSTANCE)::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+		init_message_events();
 	}
 
-	Dialog::~Dialog() {
-		CleanupResources();
+	dialog::~dialog() {
+		cleanup();
 	}
 
-	void Dialog::InitializeMessageEvents() 
-	{
+	void dialog::init_message_events() {
 		using namespace std::placeholders;
 
-		m_MessageEvents = {
-			{WM_INITDIALOG, std::bind(&Dialog::OnInitDialog, this, _1, _2, _3)},
-			{WM_CLOSE, std::bind(&Dialog::OnClose, this, _1, _2, _3)},
-			{WM_QUIT, std::bind(&Dialog::OnQuit, this, _1, _2, _3)},
-			{WM_DESTROY, std::bind(&Dialog::OnDestroy, this, _1, _2, _3)},
-			{WM_DISPLAYCHANGE, std::bind(&Dialog::OnDisplayChange, this, _1, _2, _3)},
-			{WM_MOVE, std::bind(&Dialog::OnMove, this, _1, _2, _3)},
-			{WM_COMMAND, std::bind(&Dialog::OnCommand, this, _1, _2, _3)},
-			{WM_MENUCOMMAND, std::bind(&Dialog::OnMenuCommand, this, _1, _2, _3)},
-			{WM_PAINT, std::bind(&Dialog::OnPaint, this, _1, _2, _3)},
-			{WM_TIMER, std::bind(&Dialog::OnTimer, this, _1, _2, _3)},
-			{WM_SIZE, std::bind(&Dialog::OnSize, this, _1, _2, _3)},
-			{WM_KEYDOWN, std::bind(&Dialog::OnKeyDown, this, _1, _2, _3)},
-			{WM_KEYUP, std::bind(&Dialog::OnKeyUp, this, _1, _2, _3)},
-			{WM_NOTIFY, std::bind(&Dialog::OnNotify, this, _1, _2, _3)},
-			{WM_HSCROLL, std::bind(&Dialog::OnHScroll, this, _1, _2, _3)},
-			{WM_VSCROLL, std::bind(&Dialog::OnVScroll, this, _1, _2, _3)},
-			{WM_DROPFILES, std::bind(&Dialog::OnDropFiles, this, _1, _2, _3)}
+		m_message_events = {
+			{WM_INITDIALOG, std::bind(&dialog::on_init_dialog, this, _1, _2, _3)},
+			{WM_CLOSE, std::bind(&dialog::on_close, this, _1, _2, _3)},
+			{WM_QUIT, std::bind(&dialog::on_quit, this, _1, _2, _3)},
+			{WM_DESTROY, std::bind(&dialog::on_destroy, this, _1, _2, _3)},
+			{WM_DISPLAYCHANGE, std::bind(&dialog::on_display_change, this, _1, _2, _3)},
+			{WM_MOVE, std::bind(&dialog::on_move, this, _1, _2, _3)},
+			{WM_COMMAND, std::bind(&dialog::on_command, this, _1, _2, _3)},
+			{WM_MENUCOMMAND, std::bind(&dialog::on_menu_command, this, _1, _2, _3)},
+			{WM_PAINT, std::bind(&dialog::on_paint, this, _1, _2, _3)},
+			{WM_TIMER, std::bind(&dialog::on_timer, this, _1, _2, _3)},
+			{WM_SIZE, std::bind(&dialog::on_size, this, _1, _2, _3)},
+			{WM_KEYDOWN, std::bind(&dialog::on_key_down, this, _1, _2, _3)},
+			{WM_KEYUP, std::bind(&dialog::on_key_up, this, _1, _2, _3)},
+			{WM_NOTIFY, std::bind(&dialog::on_notify, this, _1, _2, _3)},
+			{WM_HSCROLL, std::bind(&dialog::on_h_scroll, this, _1, _2, _3)},
+			{WM_VSCROLL, std::bind(&dialog::on_v_scroll, this, _1, _2, _3)},
+			{WM_DROPFILES, std::bind(&dialog::on_drop_files, this, _1, _2, _3)}
 		};
 	}
 
-	void Dialog::CleanupResources() {
-		for (auto& timer : m_TimerEvents)
-			::KillTimer(m_hWnd, timer.first);
+	void dialog::cleanup() {
+		for (auto& timer : m_timer_events)
+			::KillTimer(m_handle, timer.first);
 
-		for (auto& control_pair : m_Controls)
+		for (auto& control_pair : m_controls)
 			control_pair.reset();
 
-		m_TimerEvents.clear();
-		m_MenuCommandEvents.clear();
-		m_Controls.clear();
+		m_timer_events.clear();
+		m_menu_command_events.clear();
+		m_controls.clear();
 
-		::DestroyMenu(m_Menu);
+		::DestroyMenu(m_menu);
 	}
 
-	void Dialog::Show() {
-		::ShowWindow(m_hWnd, SW_SHOWNORMAL);
+	void dialog::show_dialog() {
+		::ShowWindow(m_handle, SW_SHOWNORMAL);
 	}
 
-	void Dialog::Hide() {
-		::ShowWindow(m_hWnd, SW_HIDE);
+	void dialog::hide_dialog() {
+		::ShowWindow(m_handle, SW_HIDE);
 	}
 
-	void Dialog::EndDialog() {
-		CleanupResources();
-		::EndDialog(m_hWnd, 0);
-	}
-	
-	INT_PTR CALLBACK Dialog::RunDlg(HWND parent, LPVOID param) {
-		m_Parent = parent;
-		Win32Thunk<DLGPROC, Dialog> thunk{ &Dialog::DialogProc, this };
-		return ::DialogBoxParam(m_MainInstance, MAKEINTRESOURCE(m_ItemID), parent, thunk.GetThunk(), (LPARAM)param);
+	void dialog::end_dialog() {
+		cleanup();
+		::EndDialog(m_handle, 0);
 	}
 
-#pragma region Overidables
-	INT_PTR CALLBACK Dialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		if (m_MenuID != -1) 
-			m_Menu = ::LoadMenu(m_MainInstance, MAKEINTRESOURCE(m_MenuID));
+	INT_PTR dialog::run_dlg(HWND parent, LPVOID param) {
+		m_parent_handle = parent;
+		Win32Thunk<DLGPROC, dialog> thunk{ &dialog::dialog_proc, this };
+		return ::DialogBoxParam(m_main_instance, MAKEINTRESOURCE(m_item_id), parent, thunk.GetThunk(), (LPARAM)param);
+	}
+
+#pragma region Overrides
+	INT_PTR dialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (m_menu_id != -1)
+			m_menu = ::LoadMenu(m_main_instance, MAKEINTRESOURCE(m_menu_id));
 		return TRUE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnClose(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		EndDialog();
+	INT_PTR dialog::on_close(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		end_dialog();
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnQuit(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_quit(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		auto it = m_TimerEvents.find((UINT_PTR)wParam);
-		if (it != m_TimerEvents.end())
+	INT_PTR dialog::on_timer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		auto it = m_timer_events.find((UINT_PTR)wParam);
+		if (it != m_timer_events.end())
 			it->second();
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_notify(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		auto nm = reinterpret_cast<LPNMHDR>(lParam);
-		for (auto& control : m_Controls)
-			if(control && nm->idFrom == control->GetID())
-				control->OnNotifyCallback(nm);
+		for (auto& control : m_controls)
+			if (control && nm->idFrom == control->get_id())
+				control->on_notify_callback(nm);
 		return TRUE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_command(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		UINT commandID = LOWORD(wParam);
 		UINT notificationCode = HIWORD(wParam);
 
 		// Check if the command is a menu command
 		if (notificationCode == 0) {
-			auto menuCommandIt = m_MenuCommandEvents.find(commandID);
-			if (menuCommandIt != m_MenuCommandEvents.end()) {
+			auto menuCommandIt = m_menu_command_events.find(commandID);
+			if (menuCommandIt != m_menu_command_events.end()) {
 				menuCommandIt->second(wParam, lParam);
 				return TRUE;
 			}
 		}
 
 		// Check if the command is from a control
-		auto control = GetControl(commandID);
+		auto control = get_control(commandID);
 		if (control) {
-			control->OnCommandCallback(wParam, lParam);
+			control->on_command_callback(wParam, lParam);
 			return TRUE;
 		}
 
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		EndDialog();
+	INT_PTR dialog::on_destroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		end_dialog();
 		return TRUE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnDisplayChange(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_display_change(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+
+	INT_PTR dialog::on_move(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnMenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_menu_command(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_paint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnSize(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnKeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_key_down(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnKeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_key_up(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnHScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_h_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR CALLBACK Dialog::OnVScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		return FALSE;
-	}
-	
-	INT_PTR CALLBACK Dialog::OnDropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	INT_PTR dialog::on_v_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	INT_PTR Dialog::DialogProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-	{
-		m_hWnd = hWnd;
-		auto it = m_MessageEvents.find(Msg);
-		if (it != m_MessageEvents.end())
+	INT_PTR dialog::on_drop_files(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		return FALSE;
+	}
+
+	INT_PTR dialog::dialog_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+		m_handle = hWnd;
+		auto it = m_message_events.find(Msg);
+		if (it != m_message_events.end())
 			return it->second(hWnd, wParam, lParam);
 		return FALSE;
 	}

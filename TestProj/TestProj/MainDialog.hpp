@@ -2,26 +2,26 @@
 
 #include "stdafx.h"
 
-class MainDialog : public Dialog
-{
-public:
-	MainDialog(HINSTANCE hInstance) : Dialog(hInstance, IDD_MAINDLG, IDC_TESTPROJ)
-	{}
 
-	DIALOG_MESSAGE_HANDLER(OnInitDialog) override;
+class MainDialog : public dialog {
+public:
+    MainDialog(HINSTANCE hInstance) : dialog(hInstance, IDD_MAINDLG, IDC_TESTPROJ) {
+    }
+
+    message_handler on_init_dialog override;
 
 private:
-	std::shared_ptr<ComboBox> m_combo;
-	std::shared_ptr<Button> m_dostuff;
-	std::shared_ptr<CheckBox> m_check;
-	std::shared_ptr<ListBox> m_list;
-	std::shared_ptr<RichEdit> m_richedit;
-	std::shared_ptr<EditText> m_spinedit;
-	std::shared_ptr<ScrollBar> m_scroll;
-	std::shared_ptr<ListView> m_view;
-	std::shared_ptr<TreeView> m_tree;
-	std::shared_ptr<TrackBar> m_track;
-	std::shared_ptr<UpDownControl> m_spin;
-	std::shared_ptr<ProgressBar> m_progress;
-	std::shared_ptr<TabControl> m_tab;
+    std::shared_ptr<combo_box> m_combo;
+    std::shared_ptr<button> m_dostuff;
+    std::shared_ptr<check_box> m_check;
+    std::shared_ptr<list_box> m_list;
+    std::shared_ptr<rich_edit_text> m_richedit;
+    std::shared_ptr<edit_text> m_spinedit;
+    std::shared_ptr<scrollbar> m_scroll;
+    std::shared_ptr<list_view> m_view;
+    std::shared_ptr<tree_view> m_tree;
+    std::shared_ptr<track_bar> m_track;
+    std::shared_ptr<up_down_control> m_spin;
+    std::shared_ptr<progress_bar> m_progress;
+    std::shared_ptr<tab_control> m_tab;
 };

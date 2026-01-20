@@ -3,22 +3,20 @@
 
 #include "winplusplus.h"
 
-#define DIALOG_MESSAGE_HANDLER(X) virtual INT_PTR CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
-
 constexpr auto DIALOG_TIMER_OFFSET_START = 0x1374;
 
-namespace WPP
+namespace wpp
 {
 	/**
 	* @class Dialog
 	* @brief A class representing a dialog window.
 	*/
-	class Dialog : public Hwnd
-	{
+	class dialog : public hwnd {
 	public:
-		using MenuCallback = std::function<void(WPARAM, LPARAM)>;
-		using TimerCallback = std::function<void()>;
-		using DialogMessageCallback = std::function<INT_PTR(HWND, WPARAM, LPARAM)>;
+		using menu_callback = std::function<void(WPARAM, LPARAM)>;
+		using timer_callback = std::function<void()>;
+		using dialog_message_callback = std::function<INT_PTR(HWND, WPARAM, LPARAM)>;
+		using message_handler = INT_PTR(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
 		/**
 		* @brief Constructs a Dialog object.
@@ -26,36 +24,36 @@ namespace WPP
 		* @param resource_id The resource ID of the dialog.
 		* @param menu_id The menu ID of the dialog (default is -1).
 		*/
-		Dialog(HINSTANCE instance, int resource_id, int menu_id = -1);
+		dialog(HINSTANCE instance, int resource_id, int menu_id = -1);
 
 		/**
 		* @brief Constructs a Dialog object from an existing window handle.
 		* @param hWnd The window handle.
 		*/
-		Dialog(HWND hWnd);
+		dialog(HWND hWnd);
 
 		/**
 		* @brief Destroys the Dialog object.
 		*/
-		virtual ~Dialog();
+		virtual ~dialog() noexcept;
 
-		DIALOG_MESSAGE_HANDLER(OnInitDialog);
-		DIALOG_MESSAGE_HANDLER(OnClose);
-		DIALOG_MESSAGE_HANDLER(OnQuit);
-		DIALOG_MESSAGE_HANDLER(OnTimer);
-		DIALOG_MESSAGE_HANDLER(OnNotify);
-		DIALOG_MESSAGE_HANDLER(OnCommand);
-		DIALOG_MESSAGE_HANDLER(OnDestroy);
-		DIALOG_MESSAGE_HANDLER(OnDisplayChange);
-		DIALOG_MESSAGE_HANDLER(OnMove);
-		DIALOG_MESSAGE_HANDLER(OnMenuCommand);
-		DIALOG_MESSAGE_HANDLER(OnPaint);
-		DIALOG_MESSAGE_HANDLER(OnSize);
-		DIALOG_MESSAGE_HANDLER(OnKeyDown);
-		DIALOG_MESSAGE_HANDLER(OnKeyUp);
-		DIALOG_MESSAGE_HANDLER(OnHScroll);
-		DIALOG_MESSAGE_HANDLER(OnVScroll);
-		DIALOG_MESSAGE_HANDLER(OnDropFiles);
+		virtual message_handler on_init_dialog;
+		virtual message_handler on_close;
+		virtual message_handler on_quit;
+		virtual message_handler on_timer;
+		virtual message_handler on_notify;
+		virtual message_handler on_command;
+		virtual message_handler on_destroy;
+		virtual message_handler on_display_change;
+		virtual message_handler on_move;
+		virtual message_handler on_menu_command;
+		virtual message_handler on_paint;
+		virtual message_handler on_size;
+		virtual message_handler on_key_down;
+		virtual message_handler on_key_up;
+		virtual message_handler on_h_scroll;
+		virtual message_handler on_v_scroll;
+		virtual message_handler on_drop_files;
 
 		/**
 		* @brief Runs the dialog.
@@ -63,7 +61,7 @@ namespace WPP
 		* @param param Additional parameter (default is NULL).
 		* @return The result of the dialog procedure.
 		*/
-		virtual INT_PTR CALLBACK RunDlg(HWND parent = NULL, LPVOID param = NULL);
+		virtual INT_PTR run_dlg(HWND parent = NULL, LPVOID param = NULL);
 
 		/**
 		* @brief The dialog procedure.
@@ -73,32 +71,31 @@ namespace WPP
 		* @param lParam Additional message information.
 		* @return The result of the message processing.
 		*/
-		virtual INT_PTR DialogProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+		virtual INT_PTR dialog_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 		/**
 		* @brief Shows the dialog.
 		*/
-		void Show();
+		void show_dialog();
 
 		/**
 		* @brief Hides the dialog.
 		*/
-		void Hide();
+		void hide_dialog();
 
 		/**
 		* @brief Ends the dialog.
 		*/
-		void EndDialog();
+		void end_dialog();
 
 		/**
 		* @brief Registers a menu command
 		*/
-		void RegisterMenuCommand(UINT_PTR menu_id, MenuCallback callback)
-		{
+		void register_menu_command(UINT_PTR menu_id, menu_callback callback) {
 			if (callback)
-				m_MenuCommandEvents[menu_id] = std::move(callback);
+				m_menu_command_events[menu_id] = std::move(callback);
 			else
-				m_MenuCommandEvents.erase(menu_id);
+				m_menu_command_events.erase(menu_id);
 		}
 
 		/**
@@ -107,26 +104,24 @@ namespace WPP
 		* @param callback The callback function.
 		*/
 		template < typename DC >
-		void AddTimer(INT timer_elapse, DC callback)
-		{
-			const UINT_PTR timer_id = ++m_InternalTimerID + DIALOG_TIMER_OFFSET_START;
-			if (::SetTimer(m_hWnd, timer_id, timer_elapse, NULL) != 0)
-				m_TimerEvents[timer_id] = DIALOG_TIMER_REF(callback);
+		void add_timer(INT timer_elapse, DC callback) {
+			const UINT_PTR timer_id = ++m_internal_timerid + DIALOG_TIMER_OFFSET_START;
+			if (::SetTimer(m_handle, timer_id, timer_elapse, NULL) != 0)
+				m_timer_events[timer_id] = DIALOG_TIMER_REF(callback);
 		}
 
 		/**
 		* @brief Registers a control.
 		* @param control_id The control ID.
-		* @param ctrl The control object.
+		* @param ctrl The control object (output parameter).
 		* @return TRUE if successful, FALSE otherwise.
 		*/
-		template <typename CtrlType = Control>
-		bool RegisterControl(UINT control_id, std::shared_ptr<CtrlType>&& ctrl)
-		{
-			ctrl = std::make_shared<CtrlType>(control_id, m_hWnd);
+		template<typename CtrlType = control>
+		bool register_control(UINT control_id, std::shared_ptr<CtrlType>& ctrl) {
+			ctrl = std::make_shared<CtrlType>(control_id, m_handle);
 
 			if (ctrl != nullptr)
-				m_Controls.emplace_back(ctrl);
+				m_controls.emplace_back(ctrl);
 
 			return ctrl != nullptr;
 		}
@@ -136,11 +131,10 @@ namespace WPP
 		* @param control_id The control ID.
 		* @return The control object.
 		*/
-		template< typename CtrlType = Control>
-		std::shared_ptr<CtrlType> GetControl(UINT control_id)
-		{
-			for (auto& control : m_Controls)
-				if (control && control->GetID() == control_id)
+		template<typename CtrlType = control>
+		std::shared_ptr<CtrlType> get_control(UINT control_id) {
+			for (auto& control : m_controls)
+				if (control && control->get_id() == control_id)
 					return std::dynamic_pointer_cast<CtrlType>(control);
 			return nullptr;
 		}
@@ -152,9 +146,8 @@ namespace WPP
 		* @param type The type of the message box.
 		* @return The result of the message box.
 		*/
-		virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type)
-		{
-			return ::MessageBox(m_hWnd, message, title, type);
+		virtual int message_box(LPCTSTR message, LPCTSTR title, UINT type) {
+			return ::MessageBox(m_handle, message, title, type);
 		}
 
 		/**
@@ -164,8 +157,7 @@ namespace WPP
 		* @param ... The format arguments.
 		* @return The result of the message box.
 		*/
-		virtual int MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...)
-		{
+		virtual int message_box_info(LPCTSTR title, LPCTSTR fmt, ...) {
 			TCHAR buffer[1024 * 6] = { 0 };
 			va_list va;
 			va_start(va, fmt);
@@ -175,7 +167,7 @@ namespace WPP
 			_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
 #endif
 			va_end(va);
-			return MsgBox(buffer, title, MB_OK | MB_ICONINFORMATION);
+			return message_box(buffer, title, MB_OK | MB_ICONINFORMATION);
 		}
 
 		/**
@@ -185,8 +177,7 @@ namespace WPP
 		* @param ... The format arguments.
 		* @return The result of the message box.
 		*/
-		virtual int MsgBoxError(LPCTSTR title, LPCTSTR fmt, ...)
-		{
+		virtual int message_box_error(LPCTSTR title, LPCTSTR fmt, ...) {
 			TCHAR buffer[1024 * 6] = { 0 };
 			va_list va;
 			va_start(va, fmt);
@@ -196,7 +187,7 @@ namespace WPP
 			_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
 #endif
 			va_end(va);
-			return MsgBox(buffer, title, MB_OK | MB_ICONERROR);
+			return message_box(buffer, title, MB_OK | MB_ICONERROR);
 		}
 
 		/**
@@ -206,8 +197,7 @@ namespace WPP
 		* @param ... The format arguments.
 		* @return The result of the message box.
 		*/
-		virtual int MsgBoxWarn(LPCTSTR title, LPCTSTR fmt, ...)
-		{
+		virtual int message_box_warn(LPCTSTR title, LPCTSTR fmt, ...) {
 			TCHAR buffer[1024 * 6] = { 0 };
 			va_list va;
 			va_start(va, fmt);
@@ -217,26 +207,26 @@ namespace WPP
 			_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
 #endif
 			va_end(va);
-			return MsgBox(buffer, title, MB_OK | MB_ICONWARNING);
+			return message_box(buffer, title, MB_OK | MB_ICONWARNING);
 		}
 
 	private:
-		void InitializeMessageEvents();
-		void CleanupResources();
+		void init_message_events();
+		void cleanup();
 
 	protected:
-		std::map<UINT_PTR, MenuCallback> m_MenuCommandEvents;
-		std::map<UINT_PTR, TimerCallback> m_TimerEvents;
-		std::map<INT, DialogMessageCallback> m_MessageEvents;
-		std::vector<std::shared_ptr<Control>> m_Controls;
-		
-		UINT_PTR m_InternalTimerID;
+		std::map<UINT_PTR, menu_callback> m_menu_command_events;
+		std::map<UINT_PTR, timer_callback> m_timer_events;
+		std::map<INT, dialog_message_callback> m_message_events;
+		std::vector<std::shared_ptr<control>> m_controls;
 
-		HINSTANCE m_MainInstance;
+		UINT_PTR m_internal_timerid;
 
-		int m_MenuID;
+		HINSTANCE m_main_instance;
 
-		HMENU m_Menu;
+		int m_menu_id;
+
+		HMENU m_menu;
 	};
 }
 

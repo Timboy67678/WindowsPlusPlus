@@ -21,7 +21,10 @@
 #include "resource.h"
 
 #include "..\..\winplusplus.h"
-using namespace WPP;
+#include "..\..\dialog.hpp"
+#include "..\..\window.hpp"
+
+using namespace wpp;
 
 #pragma comment(lib, "winplusplus.lib")
 #pragma comment(lib, "comctl32.lib")

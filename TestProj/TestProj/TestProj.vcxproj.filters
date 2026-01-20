@@ -30,6 +30,9 @@
     <ClInclude Include="MainDialog.hpp">
       <Filter>Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="MainWindow.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TestProj.cpp">
@@ -40,6 +43,9 @@
     </ClCompile>
     <ClCompile Include="MainDialog.cpp">
       <Filter>Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

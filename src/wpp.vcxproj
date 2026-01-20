@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -29,27 +29,27 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -90,7 +90,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -98,7 +98,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -110,7 +110,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <ProgramDataBaseFileName>$(SolutionDir)lib\x86\$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -130,7 +130,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <ProgramDataBaseFileName>$(SolutionDir)lib\x86\$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -142,14 +142,37 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Dialog.cpp" />
-    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Dialog.hpp" />
-    <ClInclude Include="..\Interfaces.hpp" />
+    <ClInclude Include="..\common.hpp" />
+    <ClInclude Include="..\controls.hpp" />
+    <ClInclude Include="..\controls\animation.hpp" />
+    <ClInclude Include="..\controls\button.hpp" />
+    <ClInclude Include="..\controls\combo_box.hpp" />
+    <ClInclude Include="..\controls\control.hpp" />
+    <ClInclude Include="..\controls\dateandtime_controls.hpp" />
+    <ClInclude Include="..\controls\edit_text.hpp" />
+    <ClInclude Include="..\controls\header.hpp" />
+    <ClInclude Include="..\controls\hotkey.hpp" />
+    <ClInclude Include="..\controls\image_list.hpp" />
+    <ClInclude Include="..\controls\list_box.hpp" />
+    <ClInclude Include="..\controls\list_view.hpp" />
+    <ClInclude Include="..\controls\misc_controls.hpp" />
+    <ClInclude Include="..\controls\progress_bar.hpp" />
+    <ClInclude Include="..\controls\scroll_bar.hpp" />
+    <ClInclude Include="..\controls\static_control.hpp" />
+    <ClInclude Include="..\controls\status_bar.hpp" />
+    <ClInclude Include="..\controls\tab_control.hpp" />
+    <ClInclude Include="..\controls\toolbar.hpp" />
+    <ClInclude Include="..\controls\tooltip.hpp" />
+    <ClInclude Include="..\controls\track_bar.hpp" />
+    <ClInclude Include="..\controls\tree_view.hpp" />
+    <ClInclude Include="..\controls\updown_control.hpp" />
+    <ClInclude Include="..\dialog.hpp" />
     <ClInclude Include="..\Thunk.hpp" />
-    <ClInclude Include="..\Window.hpp" />
+    <ClInclude Include="..\window.hpp" />
     <ClInclude Include="..\winplusplus.h" />
   </ItemGroup>
   <ItemGroup>

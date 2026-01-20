@@ -3,126 +3,123 @@
 
 #include "winplusplus.h"
 
-#define WINDOW_MESSAGE_HANDLER(X) virtual LRESULT CALLBACK X(HWND hWnd, WPARAM wParam, LPARAM lParam)
+constexpr auto WINDOW_TIMER_OFFSET_START = 0x2374;
 
-#define WINDOW_TIMER_OFFSET_START 0x2374
-
-namespace WPP
+namespace wpp
 {
-	class Window : public Hwnd
-	{
-	public:
-		using MenuCallback = std::function<void(WPARAM, LPARAM)>;
-		using TimerCallback = std::function<void()>;
-		using WindowMessageCallback = std::function<LRESULT(HWND, WPARAM, LPARAM)>;
+	/**
+	* @struct window_class
+	* @brief Encapsulates window class information.
+	*/
+	struct window_class {
+		friend class window;
 
 		/**
-		 * @struct Class
-		 * @brief Encapsulates window class information.
+		 * @brief Default constructor.
 		 */
-		struct Class {
-			friend class Window;
+		window_class() = default;
 
-			/**
-			 * @brief Default constructor.
-			 */
-			Class() = default;
+		/**
+		 * @brief Parameterized constructor.
+		 * @param name Class name.
+		 * @param instance Instance handle.
+		 * @param icon Icon handle.
+		 * @param cursor Cursor handle.
+		 * @param background Background brush.
+		 * @param menu Menu name.
+		 * @param style Class style.
+		 * @param extra Extra bytes.
+		 */
+		window_class(LPCTSTR name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
+					 HBRUSH background = (HBRUSH)(COLOR_WINDOW), LPCTSTR menu = NULL, UINT style = 0, int extra = 0) {
+			ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
+			m_window_class.cbSize = sizeof(WNDCLASSEX);
+			m_window_class.style = style;
+			m_window_class.cbClsExtra = 0;
+			m_window_class.cbWndExtra = extra;
+			m_window_class.hInstance = instance;
+			m_window_class.hIcon = icon;
+			m_window_class.hCursor = cursor;
+			m_window_class.hbrBackground = background;
+			m_window_class.lpszMenuName = menu;
+			m_window_class.lpszClassName = name;
+			m_window_class.hIconSm = icon;
+		}
 
-			/**
-			 * @brief Parameterized constructor.
-			 * @param name Class name.
-			 * @param instance Instance handle.
-			 * @param icon Icon handle.
-			 * @param cursor Cursor handle.
-			 * @param background Background brush.
-			 * @param menu Menu name.
-			 * @param style Class style.
-			 * @param extra Extra bytes.
-			 */
-			Class(LPCTSTR name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
-				  HBRUSH background = (HBRUSH)(COLOR_WINDOW), LPCTSTR menu = NULL, UINT style = 0, int extra = 0)
-			{
-				ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
-				m_window_class.cbSize = sizeof(WNDCLASSEX);
-				m_window_class.style = style;
-				m_window_class.cbClsExtra = 0;
-				m_window_class.cbWndExtra = extra;
-				m_window_class.hInstance = instance;
-				m_window_class.hIcon = icon;
-				m_window_class.hCursor = cursor;
-				m_window_class.hbrBackground = background;
-				m_window_class.lpszMenuName = menu;
-				m_window_class.lpszClassName = name;
-				m_window_class.hIconSm = icon;
-			}
+	protected:
+		/**
+		 * @brief Gets the instance handle.
+		 * @return Instance handle.
+		 */
+		HINSTANCE instance() const { return m_window_class.hInstance; }
 
-		protected:
-			/**
-			 * @brief Gets the instance handle.
-			 * @return Instance handle.
-			 */
-			HINSTANCE instance() const { return m_window_class.hInstance; }
+		/**
+		 * @brief Gets the class name.
+		 * @return Class name.
+		 */
+		LPCTSTR class_name() const { return m_window_class.lpszClassName; }
 
-			/**
-			 * @brief Gets the class name.
-			 * @return Class name.
-			 */
-			LPCTSTR class_name() const { return m_window_class.lpszClassName; }
+		/**
+		 * @brief Gets the class style.
+		 * @return Class style.
+		 */
+		UINT style() const { return m_window_class.style; }
 
-			/**
-			 * @brief Gets the class style.
-			 * @return Class style.
-			 */
-			UINT style() const { return m_window_class.style; }
+		/**
+		 * @brief Registers the window class.
+		 */
+		void Register() {
+			m_class_atom = RegisterClassEx(&m_window_class);
+		}
 
-			/**
-			 * @brief Registers the window class.
-			 */
-			void Register() {
-				m_class_atom = RegisterClassEx(&m_window_class);
-			}
+		/**
+		 * @brief Unregisters the window class.
+		 */
+		void Unregister() {
+			UnregisterClass(m_window_class.lpszClassName, m_window_class.hInstance);
+			m_class_atom = NULL;
+		}
 
-			/**
-			 * @brief Unregisters the window class.
-			 */
-			void Unregister() {
-				UnregisterClass(m_window_class.lpszClassName, m_window_class.hInstance);
-				m_class_atom = NULL;
-			}
+		/**
+		 * @brief Gets the class atom.
+		 * @return Class atom.
+		 */
+		ATOM& atom() { return m_class_atom; }
 
-			/**
-			 * @brief Gets the class atom.
-			 * @return Class atom.
-			 */
-			ATOM& atom() { return m_class_atom; }
+		/**
+		 * @brief Gets the window class structure.
+		 * @return Window class structure.
+		 */
+		WNDCLASSEX& get() { return m_window_class; }
 
-			/**
-			 * @brief Gets the window class structure.
-			 * @return Window class structure.
-			 */
-			WNDCLASSEX& get() { return m_window_class; }
+	private:
+		WNDCLASSEX m_window_class; ///< Window class structure.
+		ATOM m_class_atom = NULL; ///< Class atom.
+	};
 
-		private:
-			WNDCLASSEX m_window_class; ///< Window class structure.
-			ATOM m_class_atom = NULL; ///< Class atom.
-		};
+	class window : public hwnd {
+	public:
+		using menu_callback = std::function<void(WPARAM, LPARAM)>;
+		using timer_callback = std::function<void()>;
+		using window_message_callback = std::function<LRESULT(HWND, WPARAM, LPARAM)>;
+		using message_handler = LRESULT(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
 		/**
 		* @class RadioButtonGroup
 		* @brief Manages a group of radio buttons within a window.
 		*/
-		class RadioButtonGroup {
-			friend class Window;
+		class radio_button_group {
+			friend class window;
 		public:
 			/**
 			* @brief Constructor.
 			* @param parent Pointer to the parent window.
 			*/
-			RadioButtonGroup(Window* parent)
-				: m_Parent(parent)
-			{}
+			radio_button_group(window* parent)
+				: m_parent(parent) {
+			}
 
-			virtual ~RadioButtonGroup() = default;
+			virtual ~radio_button_group() = default;
 
 			/**
 			* @brief Creates a radio button.
@@ -135,17 +132,17 @@ namespace WPP
 			* @param initial_state Initial state of the button.
 			* @return Pointer to the created radio button.
 			*/
-			std::shared_ptr<RadioButton> CreateButton(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = FALSE);
+			std::shared_ptr<radio_button> create_button(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = FALSE);
 
 			/**
 			* @brief Gets the index of the selected radio button.
 			* @return Index of the selected radio button.
 			*/
-			int SelectedIndex();
+			int selected_index();
 
 		private:
-			std::vector<std::shared_ptr<RadioButton>> m_RadioButtons; ///< Vector of radio buttons.
-			Window* m_Parent; ///< Pointer to the parent window.
+			std::vector<std::shared_ptr<radio_button>> m_radio_buttons; ///< Vector of radio buttons.
+			window* m_parent; ///< Pointer to the parent window.
 		};
 
 		/**
@@ -162,37 +159,37 @@ namespace WPP
 		 * @param param Additional parameters.
 		 * @param style_ex Extended window style.
 		 */
-		Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
+		window(window_class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
 			   int menu_id = -1, HMENU menu = NULL, HFONT font = NULL, DWORD style_ex = 0);
 
 		/**
 		 * @brief Destructor.
 		 */
-		virtual ~Window();
+		virtual ~window() noexcept;
 
-		WINDOW_MESSAGE_HANDLER(OnCreate);
-		WINDOW_MESSAGE_HANDLER(OnClose);
-		WINDOW_MESSAGE_HANDLER(OnQuit);
-		WINDOW_MESSAGE_HANDLER(OnTimer);
-		WINDOW_MESSAGE_HANDLER(OnNotify);
-		WINDOW_MESSAGE_HANDLER(OnCommand);
-		WINDOW_MESSAGE_HANDLER(OnDestroy);
-		WINDOW_MESSAGE_HANDLER(OnDisplayChange);
-		WINDOW_MESSAGE_HANDLER(OnMove);
-		WINDOW_MESSAGE_HANDLER(OnMenuCommand);
-		WINDOW_MESSAGE_HANDLER(OnPaint);
-		WINDOW_MESSAGE_HANDLER(OnSize);
-		WINDOW_MESSAGE_HANDLER(OnKeyDown);
-		WINDOW_MESSAGE_HANDLER(OnKeyUp);
-		WINDOW_MESSAGE_HANDLER(OnHScroll);
-		WINDOW_MESSAGE_HANDLER(OnVScroll);
-		WINDOW_MESSAGE_HANDLER(OnDropFiles);
+		virtual message_handler on_create;
+		virtual message_handler on_close;
+		virtual message_handler on_quit;
+		virtual message_handler on_timer;
+		virtual message_handler on_notify;
+		virtual message_handler on_command;
+		virtual message_handler on_destroy;
+		virtual message_handler on_display_change;
+		virtual message_handler on_move;
+		virtual message_handler on_menu_command;
+		virtual message_handler on_paint;
+		virtual message_handler on_size;
+		virtual message_handler on_key_down;
+		virtual message_handler on_key_up;
+		virtual message_handler on_h_scroll;
+		virtual message_handler on_v_scroll;
+		virtual message_handler on_drop_files;
 
 		/**
 		 * @brief Runs the window message loop.
 		 * @return True if window was created and ran, false otherwise.
 		 */
-		virtual bool WINAPI RunWindow(HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
+		virtual bool run_window(HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
 
 		/**
 		 * @brief Window procedure.
@@ -202,7 +199,7 @@ namespace WPP
 		 * @param lParam LPARAM.
 		 * @return Result of message processing.
 		 */
-		virtual LRESULT WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+		virtual LRESULT window_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 		/**
 		 * @brief Displays a message box.
@@ -211,7 +208,7 @@ namespace WPP
 		 * @param type Message box type.
 		 * @return Result of the message box.
 		 */
-		virtual int MsgBox(LPCTSTR message, LPCTSTR title, UINT type);
+		virtual int message_box(LPCTSTR message, LPCTSTR title, UINT type);
 
 		/**
 		 * @brief Displays an information message box.
@@ -220,7 +217,7 @@ namespace WPP
 		 * @param ... Additional arguments.
 		 * @return Result of the message box.
 		 */
-		virtual int MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...);
+		virtual int message_box_info(LPCTSTR title, LPCTSTR fmt, ...);
 
 		/**
 		 * @brief Displays an error message box.
@@ -229,7 +226,7 @@ namespace WPP
 		 * @param ... Additional arguments.
 		 * @return Result of the message box.
 		 */
-		virtual int MsgBoxError(LPCTSTR title, LPCTSTR fmt, ...);
+		virtual int message_box_error(LPCTSTR title, LPCTSTR fmt, ...);
 
 		/**
 		 * @brief Displays a warning message box.
@@ -238,60 +235,60 @@ namespace WPP
 		 * @param ... Additional arguments.
 		 * @return Result of the message box.
 		 */
-		virtual int MsgBoxWarn(LPCTSTR title, LPCTSTR fmt, ...);
+		virtual int message_box_warn(LPCTSTR title, LPCTSTR fmt, ...);
 
 		/**
 		 * @brief Shows the window.
 		 */
-		void Show();
+		void show_window();
 
 		/**
 		 * @brief Hides the window.
 		 */
-		void Hide();
+		void hide_window();
 
 		/**
 		 * @brief Closes the window.
 		 */
-		void Close();
+		void close_window();
 
 		/**
 		 * @brief Quits the window.
 		 * @param exit_code Exit code.
 		 */
-		void Quit(INT exit_code = 0);
+		void quit_window(INT exit_code = 0);
 
 		/**
 		* @brief Creates a radio button group.
 		* @return Pointer to the created radio button group.
 		*/
-		std::shared_ptr<Window::RadioButtonGroup> CreateRadioButtonGroup();
+		std::shared_ptr<window::radio_button_group> create_radio_button_group();
 
 		// Create window controls
-		std::shared_ptr<Button> CreateButton(LPCTSTR text, int x, int y, int width, int height);
-		std::shared_ptr<CheckBox> CreateCheckBox(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
-		std::shared_ptr<ComboBox> CreateComboBox(int x, int y, int width, int height);
-		std::shared_ptr<EditText> CreateEditText(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		std::shared_ptr<ListBox> CreateListBox(int x, int y, int width, int height);
-		std::shared_ptr<ListView> CreateListView(int x, int y, int width, int height);
-		std::shared_ptr<TreeView> CreateTreeView(int x, int y, int width, int height);
-		std::shared_ptr<TabControl> CreateTabControl(int x, int y, int width, int height);
-		std::shared_ptr<ProgressBar> CreateProgressBar(int x, int y, int width, int height);
-		std::shared_ptr<UpDownControl> CreateSpinControl(int x, int y, int width, int height);
-		std::shared_ptr<RichEdit> CreateRichEdit(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		std::shared_ptr<SysLink> CreateLinkControl(LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<button> create_button(LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<check_box> create_check_box(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
+		std::shared_ptr<combo_box> create_combo_box(int x, int y, int width, int height);
+		std::shared_ptr<edit_text> create_edit_text(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+		std::shared_ptr<list_box> create_list_box(int x, int y, int width, int height);
+		std::shared_ptr<list_view> create_list_view(int x, int y, int width, int height);
+		std::shared_ptr<tree_view> create_tree_view(int x, int y, int width, int height);
+		std::shared_ptr<tab_control> create_tab_control(int x, int y, int width, int height);
+		std::shared_ptr<progress_bar> create_progress_bar(int x, int y, int width, int height);
+		std::shared_ptr<up_down_control> create_spin_control(int x, int y, int width, int height);
+		std::shared_ptr<rich_edit_text> create_rich_edit(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+		std::shared_ptr<sys_link> create_link_control(LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<up_down_control> create_updown_control(int x, int y, int width, int height);
 
 		/**
 		 * @brief Registers a menu control callback.
 		 * @param control_id Control ID.
 		 * @param callback Callback for the menu item.
 		 */
-		void RegisterMenuCommand(UINT_PTR menu_id, MenuCallback callback)
-		{
+		void register_menu_command(UINT_PTR menu_id, menu_callback callback) {
 			if (callback)
-				m_MenuCommandEvents[menu_id] = std::move(callback);
+				m_menu_command_events[menu_id] = std::move(callback);
 			else
-				m_MenuCommandEvents.erase(menu_id);
+				m_menu_command_events.erase(menu_id);
 		}
 
 		/**
@@ -301,51 +298,49 @@ namespace WPP
 		 * @param callback Callback function.
 		 */
 		template<typename DC>
-		void AddTimer(INT timer_elapse, DC callback)
-		{
-			const UINT_PTR timer_id = ++m_InternalTimerID + WINDOW_TIMER_OFFSET_START;
-			if (::SetTimer(m_hWnd, timer_id, timer_elapse, NULL) != 0)
-				m_TimerEvents[timer_id] = WINDOW_TIMER_REF(callback);
+		void add_timer(INT timer_elapse, DC callback) {
+			const UINT_PTR timer_id = ++m_internal_timer_id + WINDOW_TIMER_OFFSET_START;
+			if (::SetTimer(m_handle, timer_id, timer_elapse, NULL) != 0)
+				m_timer_events[timer_id] = callback;
 		}
 
-        /**
-        * @brief Gets a control by ID.
-        * @tparam CtrlType Control type.
-        * @param control_id Control ID.
-        * @return Pointer to the control.
-        */
-		template<typename CtrlType = Control>
-		inline std::shared_ptr<CtrlType> GetControl(UINT control_id)
-		{
-			auto it = std::find_if(m_Controls.begin(), m_Controls.end(), [control_id](const std::shared_ptr<Control>& control) {
-				return control && control->GetID() == control_id;
+		/**
+		* @brief Gets a control by ID.
+		* @tparam CtrlType Control type.
+		* @param control_id Control ID.
+		* @return Pointer to the control.
+		*/
+		template<typename CtrlType = control>
+		inline std::shared_ptr<CtrlType> get_control(UINT control_id) {
+			auto it = std::find_if(m_controls.begin(), m_controls.end(), [control_id](const std::shared_ptr<control>& control) {
+				return control && control->get_id() == control_id;
 			});
 
-			if (it != m_Controls.end() && *it) {
+			if (it != m_controls.end() && *it) {
 				return std::dynamic_pointer_cast<CtrlType>(*it);
 			}
 			return nullptr;
 		}
 
 	private:
-		void InitializeMessageEvents();
-		void CleanupResources();
+		void init_message_events();
+		void cleanup();
 
 	protected:
-		Class m_WindowClass; ///< Window class.
-		int m_XPos, m_YPos, m_Width, m_Height; ///< Window position and size.
-		std::tstring m_WindowName; ///< Window name.
-		HMENU m_Menu; ///< Menu handle.
-		HFONT m_Font; ///< Font handle.
-		int m_MenuID; ///< Menu ID.
-		DWORD m_Style, m_StyleEx; ///< Window styles.
-		UINT m_ControlID = WM_USER+1; ///< Control ID index.
-		UINT_PTR m_InternalTimerID = 0; ///< Internal timer ID.
-		std::atomic_bool m_WindowRunning = false; ///< Window running flag.
-		std::map<INT, WindowMessageCallback> m_MessageEvents; ///< Message events.
-		std::map<UINT_PTR, TimerCallback> m_TimerEvents; ///< Timer events.
-		std::map<UINT_PTR, MenuCallback> m_MenuCommandEvents; ///< Menu command events.
-		std::vector<std::shared_ptr<Control>> m_Controls; ///< Controls container.
+		window_class m_window_class; ///< Window class.
+		int m_x_pos, m_y_pos, m_width, m_height; ///< Window position and size.
+		std::tstring m_window_name; ///< Window name.
+		HMENU m_menu_handle; ///< Menu handle.
+		HFONT m_font; ///< Font handle.
+		int m_menu_id; ///< Menu ID.
+		DWORD m_style, m_style_ex; ///< Window styles.
+		UINT m_control_id = WM_USER + 1; ///< Control ID index.
+		UINT_PTR m_internal_timer_id = 0; ///< Internal timer ID.
+		std::atomic_bool m_window_running = false; ///< Window running flag.
+		std::map<INT, window_message_callback> m_message_events; ///< Message events.
+		std::map<UINT_PTR, timer_callback> m_timer_events; ///< Timer events.
+		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
+		std::vector<std::shared_ptr<control>> m_controls; ///< Controls container.
 	};
 }
 

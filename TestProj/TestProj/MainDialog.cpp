@@ -7,105 +7,102 @@
 #define MAX_VISIBLE_ITEMS 8
 #define SYSTEM32_PATH TEXT("C:\\Windows\\System32\\*.exe")
 
-INT_PTR CALLBACK MainDialog::OnInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
-{
-	RegisterControl(IDC_TEST_CHECK, std::move(m_check));
-	RegisterControl(IDC_LISTBOX_TEST, std::move(m_list));
-	RegisterControl(IDC_OK_BTN, std::move(m_dostuff));
-	RegisterControl(IDC_COMB_TEST, std::move(m_combo));
-	RegisterControl(IDC_RICHEDIT_TEST, std::move(m_richedit));
-	RegisterControl(IDC_EDIT_SPIN, std::move(m_spinedit));
-	RegisterControl(IDC_SCROLLBAR_TEST, std::move(m_scroll));
-	RegisterControl(IDC_LISTVIEW_TEST, std::move(m_view));
-	RegisterControl(IDC_TREE_TEST, std::move(m_tree));
-	RegisterControl(IDC_SLIDER_TEST, std::move(m_track));
-	RegisterControl(IDC_SPIN_TEST, std::move(m_spin));
-	RegisterControl(IDC_PROGRESS_TEST, std::move(m_progress));
-	RegisterControl(IDC_TAB_TEST, std::move(m_tab));
+INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+    register_control(IDC_TEST_CHECK, m_check);
+    register_control(IDC_LISTBOX_TEST, m_list);
+    register_control(IDC_OK_BTN, m_dostuff);
+    register_control(IDC_COMB_TEST, m_combo);
+    register_control(IDC_RICHEDIT_TEST, m_richedit);
+    register_control(IDC_EDIT_SPIN, m_spinedit);
+    register_control(IDC_SCROLLBAR_TEST, m_scroll);
+    register_control(IDC_LISTVIEW_TEST, m_view);
+    register_control(IDC_TREE_TEST, m_tree);
+    register_control(IDC_SLIDER_TEST, m_track);
+    register_control(IDC_SPIN_TEST, m_spin);
+    register_control(IDC_PROGRESS_TEST, m_progress);
+    register_control(IDC_TAB_TEST, m_tab);
 
-	RegisterMenuCommand(IDM_EXIT, [this](WPARAM, LPARAM) {
-		EndDialog();
-	});
+    register_menu_command(IDM_EXIT, [this](WPARAM, LPARAM) {
+        end_dialog();
+    });
 
-	RegisterMenuCommand(IDM_ABOUT, [this](WPARAM, LPARAM) {
-		MsgBoxInfo(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
-	});
+    register_menu_command(IDM_ABOUT, [this](WPARAM, LPARAM) {
+        message_box_info(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
+    });
 
-	m_dostuff->RegisterCommandCallback(BN_CLICKED, [this](WPARAM, LPARAM) {
-		m_list->ResetContent();
-		m_combo->ResetContent();
-		m_tree->DeleteAllItems();
+    m_dostuff->register_command_callback(BN_CLICKED, [this](WPARAM, LPARAM) {
+        m_list->reset_content();
+        m_combo->reset_content();
+        m_tree->delete_all_items();
 
-		if (m_tab->GetItemCount() < MAX_TAB_ITEMS)
-			m_tab->AddItem((TEXT("Tab ") + std::to_tstring(m_tab->GetItemCount() + 1)).c_str());
+        if (m_tab->get_item_count() < MAX_TAB_ITEMS)
+            m_tab->add_item((TEXT("Tab ") + std::to_tstring(m_tab->get_item_count() + 1)).c_str());
 
-		m_list->AddDir(0, SYSTEM32_PATH);
-		m_combo->AddDir(0, SYSTEM32_PATH);
+        m_list->add_dir(0, SYSTEM32_PATH);
+        m_combo->add_dir(0, SYSTEM32_PATH);
 
-		m_combo->SetMinVisible(MAX_VISIBLE_ITEMS);
+        m_combo->set_min_visible(MAX_VISIBLE_ITEMS);
 
-		HTREEITEM trees[MAX_VISIBLE_ITEMS] = { 0 };
-		HTREEITEM tree = m_tree->InsertItem(TEXT("Main Item"), NULL, NULL);
+        HTREEITEM trees[MAX_VISIBLE_ITEMS] = { 0 };
+        HTREEITEM tree = m_tree->insert_item(TEXT("Main Item"), NULL, NULL);
 
-		for (int i = 0; i < ARRAYSIZE(trees); i++)
-			trees[i] = m_tree->InsertItem(TEXT("Sub Item"), i == 0 ? tree : trees[i - 1], NULL);
+        for (int i = 0; i < ARRAYSIZE(trees); i++)
+            trees[i] = m_tree->insert_item(TEXT("Sub Item"), i == 0 ? tree : trees[i - 1], NULL);
 
-		for (int i = ARRAYSIZE(trees) - 1; i >= 0; i--)
-			m_tree->Expand(trees[i]);
+        for (int i = ARRAYSIZE(trees) - 1; i >= 0; i--)
+            m_tree->expand(trees[i]);
 
-		m_tree->Expand(tree);
-	});
+        m_tree->expand(tree);
+    });
 
-	m_check->RegisterCommandCallback(BN_CLICKED, [this](WPARAM, LPARAM) {
-		m_dostuff->SetShield(m_check->GetChecked() == BST_CHECKED);
-	});
+    m_check->register_command_callback(BN_CLICKED, [this](WPARAM, LPARAM) {
+        m_dostuff->set_shield(m_check->get_checked() == BST_CHECKED);
+    });
 
-	m_spin->RegisterNotifyCallback(UDN_DELTAPOS, [this](LPNMHDR nm) {
-		auto updn = reinterpret_cast<LPNMUPDOWN>(nm);
-		int minimum, maximum, new_val = updn->iPos + updn->iDelta;
-		m_spin->GetRange32(minimum, maximum);
+    m_spin->register_notify_callback(UDN_DELTAPOS, [this](LPNMHDR nm) {
+        auto updn = reinterpret_cast<LPNMUPDOWN>(nm);
+        int minimum, maximum, new_val = updn->iPos + updn->iDelta;
+        m_spin->get_range32(minimum, maximum);
 
-		if (new_val >= minimum && new_val <= maximum)
-		{
-			m_progress->SetPos(new_val);
-			m_track->SetPos(new_val);
-			m_scroll->SetScrollPos(new_val);
-			m_spinedit->SetText(std::to_tstring(new_val));
-			m_richedit->AppendText((TEXT("Delta is ") + std::to_tstring(updn->iDelta) + TEXT("\n")).c_str());
-		}
-	});
+        if (new_val >= minimum && new_val <= maximum) {
+            m_progress->set_pos(new_val);
+            m_track->set_pos(new_val);
+            m_scroll->set_scroll_pos(new_val);
+            m_spinedit->set_text(std::to_tstring(new_val));
+            m_richedit->append_text((TEXT("Delta is ") + std::to_tstring(updn->iDelta) + TEXT("\n")).c_str());
+        }
+    });
 
-	m_track->RegisterNotifyCallback(TRBN_THUMBPOSCHANGING, [this](LPNMHDR nm) {
-		auto tbm = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(nm);
+    m_track->register_notify_callback(TRBN_THUMBPOSCHANGING, [this](LPNMHDR nm) {
+        auto tbm = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(nm);
 
-		int minimum, maximum, new_val = tbm->dwPos;
-		m_track->GetRange(minimum, maximum);
+        int minimum, maximum, new_val = tbm->dwPos;
+        m_track->get_range(minimum, maximum);
 
-		if (new_val >= minimum && new_val <= maximum)
-		{
-			m_progress->SetPos(new_val);
-			m_spin->SetPos(new_val);
-			m_scroll->SetScrollPos(new_val);
-			m_spinedit->SetText(std::to_tstring(new_val));
-		}
-	});
+        if (new_val >= minimum && new_val <= maximum) {
+            m_progress->set_pos(new_val);
+            m_spin->set_pos(new_val);
+            m_scroll->set_scroll_pos(new_val);
+            m_spinedit->set_text(std::to_tstring(new_val));
+        }
+    });
 
-	m_combo->SetCueBannerText(L"ComboBox control item test");
+    m_combo->set_banner_text(L"ComboBox control item test");
 
-	if (!(m_track->GetStyle() & TBS_NOTIFYBEFOREMOVE))
-		m_track->AddStyle(TBS_NOTIFYBEFOREMOVE);
+    if (!(m_track->get_style() & TBS_NOTIFYBEFOREMOVE))
+        m_track->add_style(TBS_NOTIFYBEFOREMOVE);
 
-	m_spin->SetBuddy(m_spinedit->GetHandle());
-	m_spinedit->SetTextLimit(4);
+    m_spin->set_buddy(m_spinedit->get_handle());
+    m_spinedit->set_text_limit(4);
 
-	int nMin, nMax;
+    int nMin, nMax;
 
-	m_progress->SetRange32(MAX_RANGES);
-	m_progress->GetRange(nMin, nMax);
+    m_progress->set_range32(MAX_RANGES);
+    m_progress->get_range(nMin, nMax);
 
-	m_track->SetRange(nMin, nMax);
-	m_spin->SetRange(nMin, nMax);
-	m_scroll->SetScrollRange(nMin, nMax);
+    m_track->set_range(nMin, nMax);
+    m_spin->set_range(nMin, nMax);
+    m_scroll->set_scroll_range(nMin, nMax);
 
-	return Dialog::OnInitDialog(hWnd, wParam, lParam);
+    return dialog::on_init_dialog(hWnd, wParam, lParam);
 }

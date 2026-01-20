@@ -1,122 +1,114 @@
-#include "..\Window.hpp"
+#include "..\window.hpp"
 #include "..\Thunk.hpp"
 
-namespace WPP
+namespace wpp
 {
-	Window::Window(Class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style,
+	window::window(window_class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style,
 				   int menu_id, HMENU menu, HFONT font, DWORD style_ex)
-		: Hwnd(NULL), m_WindowClass(wnd_class), m_WindowName(window_name), m_XPos(x_pos), m_YPos(y_pos),
-		m_Width(width), m_Height(height), m_Style(style), m_MenuID(menu_id), m_Menu(menu), m_Font(font), m_StyleEx(style_ex)
-	{
-		InitializeMessageEvents();
+		: hwnd(NULL), m_window_class(wnd_class), m_window_name(window_name), m_x_pos(x_pos), m_y_pos(y_pos),
+		m_width(width), m_height(height), m_style(style), m_menu_id(menu_id), m_menu_handle(menu), m_font(font), m_style_ex(style_ex) {
+		init_message_events();
 	}
 
-	Window::~Window() 
-	{
-		if (m_WindowRunning)
-		{
+	window::~window() {
+		if (m_window_running) {
 			::PostQuitMessage(0);
-			CleanupResources();
+			cleanup();
 		}
 	}
 
-	void Window::InitializeMessageEvents()
-	{
+	void window::init_message_events() {
 		using namespace std::placeholders;
 
-		m_MessageEvents = {
-			{WM_CREATE, std::bind(&Window::OnCreate, this, _1, _2, _3)},
-			{WM_CLOSE, std::bind(&Window::OnClose, this, _1, _2, _3)},
-			{WM_QUIT, std::bind(&Window::OnQuit, this, _1, _2, _3)},
-			{WM_DESTROY, std::bind(&Window::OnDestroy, this, _1, _2, _3)},
-			{WM_DISPLAYCHANGE, std::bind(&Window::OnDisplayChange, this, _1, _2, _3)},
-			{WM_MOVE, std::bind(&Window::OnMove, this, _1, _2, _3)},
-			{WM_COMMAND, std::bind(&Window::OnCommand, this, _1, _2, _3)},
-			{WM_MENUCOMMAND, std::bind(&Window::OnMenuCommand, this, _1, _2, _3)},
-			{WM_PAINT, std::bind(&Window::OnPaint, this, _1, _2, _3)},
-			{WM_TIMER, std::bind(&Window::OnTimer, this, _1, _2, _3)},
-			{WM_SIZE, std::bind(&Window::OnSize, this, _1, _2, _3)},
-			{WM_KEYDOWN, std::bind(&Window::OnKeyDown, this, _1, _2, _3)},
-			{WM_KEYUP, std::bind(&Window::OnKeyUp, this, _1, _2, _3)},
-			{WM_NOTIFY, std::bind(&Window::OnNotify, this, _1, _2, _3)},
-			{WM_HSCROLL, std::bind(&Window::OnHScroll, this, _1, _2, _3)},
-			{WM_VSCROLL, std::bind(&Window::OnVScroll, this, _1, _2, _3)},
-			{WM_DROPFILES, std::bind(&Window::OnDropFiles, this, _1, _2, _3)}
+		m_message_events = {
+			{WM_CREATE, std::bind(&window::on_create, this, _1, _2, _3)},
+			{WM_CLOSE, std::bind(&window::on_close, this, _1, _2, _3)},
+			{WM_QUIT, std::bind(&window::on_quit, this, _1, _2, _3)},
+			{WM_DESTROY, std::bind(&window::on_destroy, this, _1, _2, _3)},
+			{WM_DISPLAYCHANGE, std::bind(&window::on_display_change, this, _1, _2, _3)},
+			{WM_MOVE, std::bind(&window::on_move, this, _1, _2, _3)},
+			{WM_COMMAND, std::bind(&window::on_command, this, _1, _2, _3)},
+			{WM_MENUCOMMAND, std::bind(&window::on_menu_command, this, _1, _2, _3)},
+			{WM_PAINT, std::bind(&window::on_paint, this, _1, _2, _3)},
+			{WM_TIMER, std::bind(&window::on_timer, this, _1, _2, _3)},
+			{WM_SIZE, std::bind(&window::on_size, this, _1, _2, _3)},
+			{WM_KEYDOWN, std::bind(&window::on_key_down, this, _1, _2, _3)},
+			{WM_KEYUP, std::bind(&window::on_key_up, this, _1, _2, _3)},
+			{WM_NOTIFY, std::bind(&window::on_notify, this, _1, _2, _3)},
+			{WM_HSCROLL, std::bind(&window::on_h_scroll, this, _1, _2, _3)},
+			{WM_VSCROLL, std::bind(&window::on_v_scroll, this, _1, _2, _3)},
+			{WM_DROPFILES, std::bind(&window::on_drop_files, this, _1, _2, _3)}
 		};
 	}
 
-	void Window::CleanupResources()
-	{
-		for (auto& timer : m_TimerEvents)
-			::KillTimer(m_hWnd, timer.first);
-		for (auto& control_pair : m_Controls) {
-			::DestroyWindow(control_pair->GetHandle());
+	void window::cleanup() {
+		for (auto& timer : m_timer_events)
+			::KillTimer(m_handle, timer.first);
+		for (auto& control_pair : m_controls) {
+			::DestroyWindow(control_pair->get_handle());
 			control_pair.reset();
 		}
 
-		m_Controls.clear();
-		m_TimerEvents.clear();
-		m_MenuCommandEvents.clear();
+		m_controls.clear();
+		m_timer_events.clear();
+		m_menu_command_events.clear();
 
-		::DeleteObject(m_Font); m_Font = NULL;
-		::DestroyMenu(m_Menu); m_Menu = NULL;
-		::DestroyWindow(m_hWnd); m_hWnd = NULL;
+		::DeleteObject(m_font); m_font = NULL;
+		::DestroyMenu(m_menu_handle); m_menu_handle = NULL;
+		::DestroyWindow(m_handle); m_handle = NULL;
 
-		m_ControlID = WM_USER + 1; // reset counter
+		m_control_id = WM_USER + 1; // reset counter
 	}
 
-	bool Window::RunWindow(HWND parent_window, LPVOID param)
-	{
-		m_Parent = parent_window;
+	bool window::run_window(HWND parent_window, LPVOID param) {
+		m_parent_handle = parent_window;
 
-		if (m_WindowClass.atom() != NULL)
-			m_WindowClass.Unregister();
+		if (m_window_class.atom() != NULL)
+			m_window_class.Unregister();
 
-		Win32Thunk<WNDPROC, Window> thunk{ &Window::WindowProc, this };
-		m_WindowClass.get().lpfnWndProc = thunk.GetThunk();
-		m_WindowClass.Register();
+		Win32Thunk<WNDPROC, window> thunk{ &window::window_proc, this };
+		m_window_class.get().lpfnWndProc = thunk.GetThunk();
+		m_window_class.Register();
 
-		m_hWnd = ::CreateWindowEx(m_StyleEx, m_WindowClass.class_name(), m_WindowName.c_str(), m_Style,
-								  m_XPos, m_YPos, m_Width, m_Height, m_Parent, m_Menu, m_WindowClass.instance(), param);
+		m_handle = ::CreateWindowEx(m_style_ex, m_window_class.class_name(), m_window_name.c_str(), m_style,
+									m_x_pos, m_y_pos, m_width, m_height, m_parent_handle, m_menu_handle, m_window_class.instance(), param);
 
-		if (!m_hWnd)
+		if (!m_handle)
 			return false;
 
-		Show();
+		show_window();
 
-		if (m_Font == NULL)
-			m_Font = ::CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
+		if (m_font == NULL)
+			m_font = ::CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
 								  CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("MS Shell Dlg"));
 
-		SetFont(m_Font);
+		set_font(m_font);
 
-		for (auto& control : m_Controls)
-			control->SetFont(m_Font);
+		for (auto& control : m_controls)
+			control->set_font(m_font);
 
-		::UpdateWindow(m_hWnd);
+		::UpdateWindow(m_handle);
 
-		m_WindowRunning = true;
+		m_window_running = true;
 
 		MSG msg;
-		while (m_WindowRunning && ::GetMessage(&msg, NULL, NULL, NULL)) 
-		{
-			if (!::IsDialogMessage(m_hWnd, &msg)) {
+		while (m_window_running && ::GetMessage(&msg, NULL, NULL, NULL)) {
+			if (!::IsDialogMessage(m_handle, &msg)) {
 				::TranslateMessage(&msg);
 				::DispatchMessage(&msg);
 			}
 		}
 
-		m_WindowRunning = false;
+		m_window_running = false;
 
 		return true;
 	}
-	
-	LRESULT Window::WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-	{
-		m_hWnd = hWnd;
+
+	LRESULT window::window_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+		m_handle = hWnd;
 		LRESULT ret = FALSE;
-		auto it = m_MessageEvents.find(Msg);
-		if (it != m_MessageEvents.end())
+		auto it = m_message_events.find(Msg);
+		if (it != m_message_events.end())
 			ret = it->second(hWnd, wParam, lParam);
 
 		if (ret == FALSE) //was handled? otherwise send to default os handler
@@ -128,240 +120,226 @@ namespace WPP
 #pragma region Window Control Creators
 #pragma warning(push)
 #pragma warning(disable: 4312)
-	std::shared_ptr<RadioButton> Window::RadioButtonGroup::CreateButton(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
-	{
-		auto control_id = m_Parent->m_ControlID++;
+	std::shared_ptr<radio_button> window::radio_button_group::create_button(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state) {
+		auto control_id = m_parent->m_control_id++;
 
 		DWORD style = WS_CHILD | WS_VISIBLE | WS_OVERLAPPED;
-		if (m_RadioButtons.empty())
+		if (m_radio_buttons.empty())
 			style |= WS_GROUP;
 
 		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTORADIOBUTTON | style,
-												   x, y, width, height, m_Parent->m_hWnd, reinterpret_cast<HMENU>(control_id), m_Parent->m_WindowClass.instance(), NULL);
+												   x, y, width, height, m_parent->m_handle, reinterpret_cast<HMENU>(control_id), m_parent->m_window_class.instance(), NULL);
 		if (!radiobutton_handle)
 			return nullptr;
 
-		auto radiobutton = std::make_shared<RadioButton>(control_id, m_Parent->m_hWnd);
+		auto radiobutton = std::make_shared<radio_button>(control_id, m_parent->m_handle);
 		if (!radiobutton) {
 			::DestroyWindow(radiobutton_handle);
 			return nullptr;
 		}
 
-		radiobutton->SetChecked(initial_state ? BST_CHECKED : BST_UNCHECKED);
-		m_RadioButtons.push_back(radiobutton);
-		m_Parent->m_Controls.emplace_back(radiobutton);
+		radiobutton->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
+		m_radio_buttons.push_back(radiobutton);
+		m_parent->m_controls.emplace_back(radiobutton);
 
 		return radiobutton;
 	}
 
-	int Window::RadioButtonGroup::SelectedIndex()
-	{
-		for (size_t index = 0; index < m_RadioButtons.size(); ++index) {
-			if (m_RadioButtons[index]->GetChecked() == BST_CHECKED)
+	int window::radio_button_group::selected_index() {
+		for (size_t index = 0; index < m_radio_buttons.size(); ++index) {
+			if (m_radio_buttons[index]->get_checked() == BST_CHECKED)
 				return static_cast<int>(index);
 		}
 		return -1;
 	}
 
-	std::shared_ptr<Window::RadioButtonGroup> Window::CreateRadioButtonGroup()
-	{
-		return std::make_shared<RadioButtonGroup>(this);
+	std::shared_ptr<window::radio_button_group> window::create_radio_button_group() {
+		return std::make_shared<radio_button_group>(this);
 	}
 
-	std::shared_ptr<Button> Window::CreateButton(LPCTSTR text, int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<button> window::create_button(LPCTSTR text, int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
-											  x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!button_handle)
 			return nullptr;
 
-		auto button = std::make_shared<Button>(control_id, m_hWnd);
-		if (!button) {
+		auto button_ctrl = std::make_shared<button>(control_id, m_handle);
+		if (!button_ctrl) {
 			::DestroyWindow(button_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(button);
-		return button;
+		m_controls.emplace_back(button_ctrl);
+		return button_ctrl;
 	}
 
-	std::shared_ptr<CheckBox> Window::CreateCheckBox(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<check_box> window::create_check_box(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state) {
+		auto control_id = m_control_id++;
 
 		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
-												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!checkbox_handle)
 			return nullptr;
 
-		auto checkbox = std::make_shared<CheckBox>(control_id, m_hWnd);
+		auto checkbox = std::make_shared<check_box>(control_id, m_handle);
 		if (!checkbox) {
 			::DestroyWindow(checkbox_handle);
 			return nullptr;
 		}
 
-		checkbox->SetChecked(initial_state ? BST_CHECKED : BST_UNCHECKED);
-		m_Controls.emplace_back(checkbox);
+		checkbox->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
+		m_controls.emplace_back(checkbox);
 		return checkbox;
 	}
 
-	std::shared_ptr<ComboBox> Window::CreateComboBox(int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<combo_box> window::create_combo_box(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!combobox_handle)
 			return nullptr;
 
-		auto combobox = std::make_shared<ComboBox>(control_id, m_hWnd);
+		auto combobox = std::make_shared<combo_box>(control_id, m_handle);
 		if (!combobox) {
 			::DestroyWindow(combobox_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(combobox);
+		m_controls.emplace_back(combobox);
 		return combobox;
 	}
 
-	std::shared_ptr<EditText> Window::CreateEditText(int x, int y, int width, int height, LPCTSTR initial_text)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<edit_text> window::create_edit_text(int x, int y, int width, int height, LPCTSTR initial_text) {
+		auto control_id = m_control_id++;
 
 		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text, ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE,
-												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!edittext_handle)
 			return nullptr;
 
-		auto edittext = std::make_shared<EditText>(control_id, m_hWnd);
+		auto edittext = std::make_shared<edit_text>(control_id, m_handle);
 		if (!edittext) {
 			::DestroyWindow(edittext_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(edittext);
+		m_controls.emplace_back(edittext);
 		return edittext;
 	}
 
-	std::shared_ptr<ListBox> Window::CreateListBox(int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<list_box> window::create_list_box(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND listbox_handle = ::CreateWindowEx(0, WC_LISTBOX, _T(""), LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE,
-											   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+											   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!listbox_handle)
 			return nullptr;
 
-		auto listbox = std::make_shared<ListBox>(control_id, m_hWnd);
+		auto listbox = std::make_shared<list_box>(control_id, m_handle);
 		if (!listbox) {
 			::DestroyWindow(listbox_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(listbox);
+		m_controls.emplace_back(listbox);
 		return listbox;
 	}
 
-	std::shared_ptr<ListView> Window::CreateListView(int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<list_view> window::create_list_view(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE,
-												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!listview_handle)
 			return nullptr;
 
-		auto listview = std::make_shared<ListView>(control_id, m_hWnd);
+		auto listview = std::make_shared<list_view>(control_id, m_handle);
 		if (!listview) {
 			::DestroyWindow(listview_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(listview);
+		m_controls.emplace_back(listview);
 		return listview;
 	}
 
-	std::shared_ptr<TreeView> Window::CreateTreeView(int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<tree_view> window::create_tree_view(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
-												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!treeview_handle)
 			return nullptr;
 
-		auto treeview = std::make_shared<TreeView>(control_id, m_hWnd);
+		auto treeview = std::make_shared<tree_view>(control_id, m_handle);
 		if (!treeview) {
 			::DestroyWindow(treeview_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(treeview);
+		m_controls.emplace_back(treeview);
 		return treeview;
 	}
 
-	std::shared_ptr<TabControl> Window::CreateTabControl(int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<tab_control> window::create_tab_control(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
-												  x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!tabcontrol_handle)
 			return nullptr;
 
-		auto tabcontrol = std::make_shared<TabControl>(control_id, m_hWnd);
+		auto tabcontrol = std::make_shared<tab_control>(control_id, m_handle);
 		if (!tabcontrol) {
 			::DestroyWindow(tabcontrol_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(tabcontrol);
+		m_controls.emplace_back(tabcontrol);
 		return tabcontrol;
 	}
 
-	std::shared_ptr<ProgressBar> Window::CreateProgressBar(int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<progress_bar> window::create_progress_bar(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND progressbar_handle = ::CreateWindowEx(0, PROGRESS_CLASS, _T(""), PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE,
-												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!progressbar_handle)
 			return nullptr;
 
-		auto progressbar = std::make_shared<ProgressBar>(control_id, m_hWnd);
+		auto progressbar = std::make_shared<progress_bar>(control_id, m_handle);
 		if (!progressbar) {
 			::DestroyWindow(progressbar_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(progressbar);
+		m_controls.emplace_back(progressbar);
 		return progressbar;
 	}
 
-	std::shared_ptr<UpDownControl> Window::CreateSpinControl(int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<up_down_control> window::create_spin_control(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE,
-												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!spincontrol_handle)
 			return nullptr;
 
-		auto spincontrol = std::make_shared<UpDownControl>(control_id, m_hWnd);
+		auto spincontrol = std::make_shared<up_down_control>(control_id, m_handle);
 		if (!spincontrol) {
 			::DestroyWindow(spincontrol_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(spincontrol);
+		m_controls.emplace_back(spincontrol);
 		return spincontrol;
 	}
 
-	std::shared_ptr<RichEdit> Window::CreateRichEdit(int x, int y, int width, int height, LPCTSTR initial_text)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<rich_edit_text> window::create_rich_edit(int x, int y, int width, int height, LPCTSTR initial_text) {
+		auto control_id = m_control_id++;
 
 		if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) {
 			if (::LoadLibrary(TEXT("Riched20.dll")) == NULL) {
@@ -370,152 +348,151 @@ namespace WPP
 		}
 
 		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text, ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE,
-												x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!richedit_handle) {
 			return nullptr;
 		}
 
-		auto richedit = std::make_shared<RichEdit>(control_id, m_hWnd);
+		auto richedit = std::make_shared<rich_edit_text>(control_id, m_handle);
 		if (!richedit) {
 			::DestroyWindow(richedit_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(richedit);
+		m_controls.emplace_back(richedit);
 		return richedit;
 	}
 
-	std::shared_ptr<SysLink> Window::CreateLinkControl(LPCTSTR text, int x, int y, int width, int height)
-	{
-		auto control_id = m_ControlID++;
+	std::shared_ptr<sys_link> window::create_link_control(LPCTSTR text, int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
 
 		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_VISIBLE,
-												   x, y, width, height, m_hWnd, reinterpret_cast<HMENU>(control_id), m_WindowClass.instance(), NULL);
+												   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!linkcontrol_handle)
 			return nullptr;
 
-		auto linkcontrol = std::make_shared<SysLink>(control_id, m_hWnd);
+		auto linkcontrol = std::make_shared<sys_link>(control_id, m_handle);
 		if (!linkcontrol) {
 			::DestroyWindow(linkcontrol_handle);
 			return nullptr;
 		}
 
-		m_Controls.emplace_back(linkcontrol);
+		m_controls.emplace_back(linkcontrol);
 		return linkcontrol;
 	}
+
+	std::shared_ptr<up_down_control> window::create_updown_control(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
+
+		HWND updown_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE,
+											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		if (!updown_handle)
+			return nullptr;
+		auto updown = std::make_shared<up_down_control>(control_id, m_handle);
+		if (!updown) {
+			::DestroyWindow(updown_handle);
+			return nullptr;
+		}
+		m_controls.emplace_back(updown);
+		return updown;
+	}
+
 #pragma warning(pop)
 #pragma endregion
 
 #pragma region Window Message Handlers
-	LRESULT CALLBACK Window::OnCreate(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		if (m_MenuID != -1)
-			m_Menu = ::LoadMenu(m_WindowClass.instance(), MAKEINTRESOURCE(m_MenuID));
+	LRESULT window::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (m_menu_id != -1)
+			m_menu_handle = ::LoadMenu(m_window_class.instance(), MAKEINTRESOURCE(m_menu_id));
 
 		return TRUE;
 	}
 
-	LRESULT CALLBACK Window::OnClose(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		Quit();
+	LRESULT window::on_close(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		quit_window();
 		return TRUE;
 	}
 
-	LRESULT CALLBACK Window::OnQuit(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_quit(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return TRUE;
 	}
 
-	LRESULT CALLBACK Window::OnDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_destroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return TRUE;
 	}
 
-	LRESULT CALLBACK Window::OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_paint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnDisplayChange(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		::InvalidateRect(m_hWnd, NULL, FALSE);
+	LRESULT window::on_display_change(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		::InvalidateRect(m_handle, NULL, FALSE);
 		return TRUE;
 	}
 
-	LRESULT CALLBACK Window::OnMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_move(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnTimer(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
-		auto it = m_TimerEvents.find(static_cast<UINT_PTR>(wParam));
-		if (it != m_TimerEvents.end()) {
+	LRESULT window::on_timer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		auto it = m_timer_events.find(static_cast<UINT_PTR>(wParam));
+		if (it != m_timer_events.end()) {
 			it->second();
 			return TRUE;
 		}
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnSize(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnKeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_key_down(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnKeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_key_up(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnNotify(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_notify(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		auto nm = reinterpret_cast<LPNMHDR>(lParam);
-		for (auto& control : m_Controls)
-			if (control && nm->idFrom == control->GetID())
-				control->OnNotifyCallback(nm);
+		for (auto& control : m_controls)
+			if (control && nm->idFrom == control->get_id())
+				control->on_notify_callback(nm);
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnHScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_h_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnVScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_v_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnDropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_drop_files(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnMenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_menu_command(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 
-	LRESULT CALLBACK Window::OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
-	{
+	LRESULT window::on_command(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		UINT commandID = LOWORD(wParam);
 		UINT notificationCode = HIWORD(wParam);
 
 		// Check if the command is a menu command
-		if (notificationCode == 0 && m_MenuCommandEvents.count(commandID) != 0) {
-			m_MenuCommandEvents[commandID](wParam, lParam);
+		if (notificationCode == 0 && m_menu_command_events.count(commandID) != 0) {
+			m_menu_command_events[commandID](wParam, lParam);
 			return TRUE;
 		}
 
 		// Check if the command is from a control
-		auto control = GetControl(commandID);
+		auto control = get_control(commandID);
 		if (control) {
-			control->OnCommandCallback(wParam, lParam);
+			control->on_command_callback(wParam, lParam);
 			return TRUE;
 		}
 
@@ -523,35 +500,29 @@ namespace WPP
 	}
 #pragma endregion
 
-	void Window::Show()
-	{
-		::ShowWindow(m_hWnd, SW_SHOWNORMAL);
+	void window::show_window() {
+		::ShowWindow(m_handle, SW_SHOWNORMAL);
 	}
 
-	void Window::Hide()
-	{
-		::ShowWindow(m_hWnd, SW_HIDE);
+	void window::hide_window() {
+		::ShowWindow(m_handle, SW_HIDE);
 	}
 
-	void Window::Close()
-	{
-		::CloseWindow(m_hWnd);
+	void window::close_window() {
+		::CloseWindow(m_handle);
 	}
 
-	void Window::Quit(INT exit_code)
-	{
-		m_WindowRunning = false;
-		CleanupResources();
+	void window::quit_window(INT exit_code) {
+		m_window_running = false;
+		cleanup();
 	}
 
 #pragma region Message Box Abstracts
-	int Window::MsgBox(LPCTSTR message, LPCTSTR title, UINT type)
-	{
-		return ::MessageBox(m_hWnd, message, title, type);
+	int window::message_box(LPCTSTR message, LPCTSTR title, UINT type) {
+		return ::MessageBox(m_handle, message, title, type);
 	}
 
-	int Window::MsgBoxInfo(LPCTSTR title, LPCTSTR fmt, ...)
-	{
+	int window::message_box_info(LPCTSTR title, LPCTSTR fmt, ...) {
 		TCHAR buffer[1024 * 6] = { 0 };
 		va_list va;
 		va_start(va, fmt);
@@ -561,11 +532,10 @@ namespace WPP
 		_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
 #endif
 		va_end(va);
-		return MsgBox(buffer, title, MB_OK | MB_ICONINFORMATION);
+		return message_box(buffer, title, MB_OK | MB_ICONINFORMATION);
 	}
 
-	int Window::MsgBoxError(LPCTSTR title, LPCTSTR fmt, ...)
-	{
+	int window::message_box_error(LPCTSTR title, LPCTSTR fmt, ...) {
 		TCHAR buffer[1024 * 6] = { 0 };
 		va_list va;
 		va_start(va, fmt);
@@ -575,11 +545,10 @@ namespace WPP
 		_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
 #endif
 		va_end(va);
-		return MsgBox(buffer, title, MB_OK | MB_ICONERROR);
+		return message_box(buffer, title, MB_OK | MB_ICONERROR);
 	}
 
-	int Window::MsgBoxWarn(LPCTSTR title, LPCTSTR fmt, ...)
-	{
+	int window::message_box_warn(LPCTSTR title, LPCTSTR fmt, ...) {
 		TCHAR buffer[1024 * 6] = { 0 };
 		va_list va;
 		va_start(va, fmt);
@@ -589,7 +558,7 @@ namespace WPP
 		_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
 #endif
 		va_end(va);
-		return MsgBox(buffer, title, MB_OK | MB_ICONWARNING);
+		return message_box(buffer, title, MB_OK | MB_ICONWARNING);
 	}
 #pragma endregion
 

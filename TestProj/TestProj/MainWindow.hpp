@@ -2,23 +2,19 @@
 
 #include "stdafx.h"
 
-#define DEFAULT_WINDOW_WIDTH 800
-#define DEFAULT_WINDOW_HEIGHT 600
-
-class MainWindow : public WPP::Window
-{
+class MainWindow : public window {
 public:
-	MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance = NULL);
+    MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance = NULL);
 
-	WINDOW_MESSAGE_HANDLER(OnCreate);
+    message_handler on_create;
 
 private:
-	std::shared_ptr<WPP::Button> m_ButtonOne;
-	std::shared_ptr<WPP::CheckBox> m_CheckBoxOne;
-	std::shared_ptr<WPP::ComboBox> m_ComboBoxOne;
-	std::shared_ptr<WPP::EditText> m_EditTextOne;
-	std::shared_ptr<WPP::ListView> m_ListViewOne;
-	std::shared_ptr<WPP::Window::RadioButtonGroup> m_RadioButtonGroup;
-	std::shared_ptr<WPP::SysLink> m_LinkControl;
+    std::shared_ptr<button> m_ButtonOne;
+    std::shared_ptr<check_box> m_CheckBoxOne;
+    std::shared_ptr<combo_box> m_ComboBoxOne;
+    std::shared_ptr<edit_text> m_EditTextOne;
+    std::shared_ptr<list_view> m_ListViewOne;
+    std::shared_ptr<window::radio_button_group> m_RadioButtonGroup;
+    std::shared_ptr<sys_link> m_LinkControl;
 };
 
