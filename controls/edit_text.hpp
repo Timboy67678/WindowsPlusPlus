@@ -13,7 +13,6 @@ namespace wpp
 	public:
 		using control::control;
 
-		edit_text& on_update(command_callback callback) { register_command_callback(EN_UPDATE, std::move(callback)); return *this; }
 		edit_text& on_change(command_callback callback) { register_command_callback(EN_CHANGE, std::move(callback)); return *this; }
 		edit_text& on_errspace(command_callback callback) { register_command_callback(EN_ERRSPACE, std::move(callback)); return *this; }
 		edit_text& on_maxtext(command_callback callback) { register_command_callback(EN_MAXTEXT, std::move(callback)); return *this; }

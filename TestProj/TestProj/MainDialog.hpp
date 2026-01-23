@@ -16,7 +16,7 @@ private:
     std::shared_ptr<list_box> m_list;
     std::shared_ptr<rich_edit_text> m_richedit;
     std::shared_ptr<edit_text> m_spinedit;
-    std::shared_ptr<scrollbar> m_scroll;
+    std::shared_ptr<scroll_bar> m_scroll;
     std::shared_ptr<list_view> m_view;
     std::shared_ptr<tree_view> m_tree;
     std::shared_ptr<track_bar> m_track;

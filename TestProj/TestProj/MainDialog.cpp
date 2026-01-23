@@ -59,7 +59,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         m_dostuff->set_shield(m_check->get_checked() == BST_CHECKED);
     });
 
-    m_spin->register_notify_callback(UDN_DELTAPOS, [this](LPNMHDR nm) {
+    m_spin->on_delta_pos([this](LPNMHDR nm) {
         auto updn = reinterpret_cast<LPNMUPDOWN>(nm);
         int minimum, maximum, new_val = updn->iPos + updn->iDelta;
         m_spin->get_range32(minimum, maximum);
@@ -73,7 +73,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         }
     });
 
-    m_track->register_notify_callback(TRBN_THUMBPOSCHANGING, [this](LPNMHDR nm) {
+    m_track->on_thumb_pos_changing([this](LPNMHDR nm) {
         auto tbm = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(nm);
 
         int minimum, maximum, new_val = tbm->dwPos;

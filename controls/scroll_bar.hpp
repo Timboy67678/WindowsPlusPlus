@@ -3,7 +3,7 @@
 
 namespace wpp
 {
-	class scrollbar : public control {
+	class scroll_bar : public control {
 	public:
 		using control::control;
 

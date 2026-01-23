@@ -39,7 +39,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto radio_three = radio_grptwo->create_button(_T("Radio 2 3"), 0, 395, 150, 25);
 
     m_LinkControl = create_link_control(_T("<a href=\"https://www.google.com\">Click me!</a>, or better yet, <a href=\"https://facebook.com\">Click Me!</a>"), 0, 450, 250, 25);
-    m_LinkControl->register_notify_callback(NM_CLICK, [this](LPNMHDR nm) {
+    m_LinkControl->on_click([this](LPNMHDR nm) {
         auto item = reinterpret_cast<PNMLINK>(nm)->item;
         ShellExecuteW(NULL, L"open", item.szUrl, NULL, NULL, SW_SHOWNORMAL);
     });

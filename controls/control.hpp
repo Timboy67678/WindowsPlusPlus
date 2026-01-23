@@ -260,16 +260,16 @@ namespace wpp
 		control(HWND handle) : hwnd(handle) {
 		}
 
-		virtual control& on_click(notify_callback callback) { register_notify_callback(NM_CLICK, std::move(callback)); return *this; }
-		virtual control& on_double_click(notify_callback callback) { register_notify_callback(NM_DBLCLK, std::move(callback)); return *this; }
-		virtual control& on_right_click(notify_callback callback) { register_notify_callback(NM_RCLICK, std::move(callback)); return *this; }
-		virtual control& on_right_double_click(notify_callback callback) { register_notify_callback(NM_RDBLCLK, std::move(callback)); return *this; }
-		virtual control& on_return(notify_callback callback) { register_notify_callback(NM_RETURN, std::move(callback)); return *this; }
-		virtual control& on_set_focus(notify_callback callback) { register_notify_callback(NM_SETFOCUS, std::move(callback)); return *this; }
-		virtual control& on_kill_focus(notify_callback callback) { register_notify_callback(NM_KILLFOCUS, std::move(callback)); return *this; }
-		virtual control& on_hover(notify_callback callback) { register_notify_callback(NM_HOVER, std::move(callback)); return *this; }
-		virtual control& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, std::move(callback)); return *this; }
-		virtual control& on_released_capture(notify_callback callback) { register_notify_callback(NM_RELEASEDCAPTURE, std::move(callback)); return *this; }
+		control& on_click(notify_callback callback) { register_notify_callback(NM_CLICK, std::move(callback)); return *this; }
+		control& on_double_click(notify_callback callback) { register_notify_callback(NM_DBLCLK, std::move(callback)); return *this; }
+		control& on_right_click(notify_callback callback) { register_notify_callback(NM_RCLICK, std::move(callback)); return *this; }
+		control& on_right_double_click(notify_callback callback) { register_notify_callback(NM_RDBLCLK, std::move(callback)); return *this; }
+		control& on_return(notify_callback callback) { register_notify_callback(NM_RETURN, std::move(callback)); return *this; }
+		control& on_set_focus(notify_callback callback) { register_notify_callback(NM_SETFOCUS, std::move(callback)); return *this; }
+		control& on_kill_focus(notify_callback callback) { register_notify_callback(NM_KILLFOCUS, std::move(callback)); return *this; }
+		control& on_hover(notify_callback callback) { register_notify_callback(NM_HOVER, std::move(callback)); return *this; }
+		control& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, std::move(callback)); return *this; }
+		control& on_released_capture(notify_callback callback) { register_notify_callback(NM_RELEASEDCAPTURE, std::move(callback)); return *this; }
 
 		void set_item(HWND parent, int item_id) {
 			m_item_id = item_id;
