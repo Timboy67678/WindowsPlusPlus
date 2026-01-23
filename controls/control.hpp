@@ -74,7 +74,7 @@ namespace wpp
 		}
 
 		virtual BOOL set_text(const std::tstring& text) {
-			if (!m_handle) return FALSE;  // Safety check
+			if (!m_handle) return FALSE;
 			return ::SetWindowText(m_handle, text.c_str());
 		}
 

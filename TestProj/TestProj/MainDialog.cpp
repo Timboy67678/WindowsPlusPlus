@@ -87,6 +87,13 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         }
     });
 
+    m_scroll->on_scroll([this](bool is_horizontal, int scroll_pos, int scroll_request) {
+        m_progress->set_pos(scroll_pos);
+        m_spin->set_pos(scroll_pos);
+        m_track->set_pos(scroll_pos);
+        m_spinedit->set_text(std::to_tstring(scroll_pos));
+    });
+
     m_combo->set_banner_text(L"ComboBox control item test");
 
     if (!(m_track->get_style() & TBS_NOTIFYBEFOREMOVE))
@@ -106,3 +113,4 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     return dialog::on_init_dialog(hWnd, wParam, lParam);
 }
+

@@ -164,10 +164,26 @@ namespace wpp
 	}
 
 	INT_PTR dialog::on_h_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (lParam != 0) {
+			HWND hScrollBar = reinterpret_cast<HWND>(lParam);
+			auto scrollbar = get_control_by_handle<scroll_bar>(hScrollBar);
+			if (scrollbar) {
+				scrollbar->on_scroll_event(true, HIWORD(wParam), LOWORD(wParam));
+				return TRUE;
+			}
+		}
 		return FALSE;
 	}
 
 	INT_PTR dialog::on_v_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (lParam != 0) {
+			HWND hScrollBar = reinterpret_cast<HWND>(lParam);
+			auto scrollbar = get_control_by_handle<scroll_bar>(hScrollBar);
+			if (scrollbar) {
+				scrollbar->on_scroll_event(false, HIWORD(wParam), LOWORD(wParam));
+				return TRUE;
+			}
+		}
 		return FALSE;
 	}
 

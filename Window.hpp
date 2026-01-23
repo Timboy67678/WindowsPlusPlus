@@ -326,6 +326,17 @@ namespace wpp
 			return nullptr;
 		}
 
+		template<typename CtrlType = control>
+		inline std::shared_ptr<CtrlType> get_control_by_handle(HWND handle) {
+			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const std::shared_ptr<control>& control) {
+				return control && control->get_handle() == handle;
+			});
+			if (it != m_controls.end() && *it) {
+				return std::dynamic_pointer_cast<CtrlType>(*it);
+			}
+			return nullptr;
+		}
+
 	private:
 		void init_message_events();
 		void cleanup();

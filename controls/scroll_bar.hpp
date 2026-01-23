@@ -5,7 +5,16 @@ namespace wpp
 {
 	class scroll_bar : public control {
 	public:
+		friend class dialog;
+		friend class window;
 		using control::control;
+		using scroll_callback = std::function<void(bool, int, int)>;
+
+		scroll_bar& on_scroll(scroll_callback callback) {
+			if(callback)
+				m_scroll_callbacks.push_back(std::move(callback));
+			return *this;
+		}
 
 		int get_scroll_pos() const {
 			return ::GetScrollPos(m_handle, SB_CTL);
@@ -136,7 +145,7 @@ namespace wpp
 			int maxPos = get_max_pos();
 			UINT page = get_page_size();
 			int actualMax = maxPos - (int)page + 1;
-			
+
 			if (nPos < minPos) return minPos;
 			if (nPos > actualMax) return actualMax;
 			return nPos;
@@ -182,7 +191,7 @@ namespace wpp
 			int maxPos = get_max_pos();
 			UINT page = get_page_size();
 			int actualMax = maxPos - (int)page + 1;
-			
+
 			if (actualMax == minPos) return 0.0;
 			return (double)(pos - minPos) / (double)(actualMax - minPos) * 100.0;
 		}
@@ -190,12 +199,12 @@ namespace wpp
 		void set_percent(double percent, BOOL bRedraw = TRUE) {
 			if (percent < 0.0) percent = 0.0;
 			if (percent > 100.0) percent = 100.0;
-			
+
 			int minPos = get_min_pos();
 			int maxPos = get_max_pos();
 			UINT page = get_page_size();
 			int actualMax = maxPos - (int)page + 1;
-			
+
 			int pos = minPos + (int)((actualMax - minPos) * percent / 100.0);
 			set_scroll_pos(pos, bRedraw);
 		}
@@ -220,7 +229,7 @@ namespace wpp
 			SCROLLBARINFO info = { sizeof(SCROLLBARINFO) };
 			if (get_info(&info)) {
 				return (info.rgstate[0] & STATE_SYSTEM_UNAVAILABLE) == 0 &&
-				       (info.rgstate[0] & STATE_SYSTEM_PRESSED) == 0;
+					(info.rgstate[0] & STATE_SYSTEM_PRESSED) == 0;
 			}
 			return TRUE;
 		}
@@ -229,7 +238,7 @@ namespace wpp
 			SCROLLBARINFO info = { sizeof(SCROLLBARINFO) };
 			if (get_info(&info)) {
 				return (info.rgstate[1] & STATE_SYSTEM_UNAVAILABLE) == 0 &&
-				       (info.rgstate[1] & STATE_SYSTEM_PRESSED) == 0;
+					(info.rgstate[1] & STATE_SYSTEM_PRESSED) == 0;
 			}
 			return TRUE;
 		}
@@ -334,6 +343,16 @@ namespace wpp
 		void reset() {
 			set_scroll_pos(get_min_pos(), TRUE);
 		}
+
+	private:
+		void on_scroll_event(bool is_horizontal, int scroll_pos, int scroll_request) {
+			for (const auto& callback : m_scroll_callbacks) {
+				if (callback)
+					callback(is_horizontal, scroll_pos, scroll_request);
+			}
+		}
+
+		std::vector<scroll_callback> m_scroll_callbacks;
 	};
 }
 

@@ -502,10 +502,26 @@ namespace wpp
 	}
 
 	LRESULT window::on_h_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (lParam != 0) {
+			HWND control_handle = reinterpret_cast<HWND>(lParam);
+			auto control = get_control_by_handle<scroll_bar>(control_handle);
+			if (control) {
+				control->on_scroll_event(true, HIWORD(wParam), LOWORD(wParam));
+				return TRUE;
+			}
+		}
 		return FALSE;
 	}
 
 	LRESULT window::on_v_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (lParam != 0) {
+			HWND control_handle = reinterpret_cast<HWND>(lParam);
+			auto control = get_control_by_handle<scroll_bar>(control_handle);
+			if (control) {
+				control->on_scroll_event(false, HIWORD(wParam), LOWORD(wParam));
+				return TRUE;
+			}
+		}
 		return FALSE;
 	}
 
