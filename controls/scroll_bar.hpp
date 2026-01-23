@@ -3,12 +3,17 @@
 
 namespace wpp
 {
+	enum class scroll_orientation {
+		horizontal,
+		vertical
+	};
+
 	class scroll_bar : public control {
 	public:
 		friend class dialog;
 		friend class window;
 		using control::control;
-		using scroll_callback = std::function<void(bool, int, int)>;
+		using scroll_callback = std::function<void(scroll_orientation, WPARAM, LPARAM)>;
 
 		scroll_bar& on_scroll(scroll_callback callback) {
 			if(callback)
@@ -345,10 +350,10 @@ namespace wpp
 		}
 
 	private:
-		void on_scroll_event(bool is_horizontal, int scroll_pos, int scroll_request) {
+		void on_scroll_event(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
 			for (const auto& callback : m_scroll_callbacks) {
 				if (callback)
-					callback(is_horizontal, scroll_pos, scroll_request);
+					callback(orientation, wParam, lParam);
 			}
 		}
 

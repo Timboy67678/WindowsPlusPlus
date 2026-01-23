@@ -5,7 +5,7 @@
 #define MAX_RANGES 0, 100
 #define MAX_TAB_ITEMS 7
 #define MAX_VISIBLE_ITEMS 8
-#define SYSTEM32_PATH TEXT("C:\\Windows\\System32\\*.exe")
+#define SYSTEM32_PATH TEXT("C:\\Windows\\SysWOW64\\*.exe")
 
 INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     register_control(IDC_TEST_CHECK, m_check);
@@ -87,7 +87,8 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         }
     });
 
-    m_scroll->on_scroll([this](bool is_horizontal, int scroll_pos, int scroll_request) {
+    m_scroll->on_scroll([this](scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
+        int scroll_pos = m_scroll->get_scroll_pos();
         m_progress->set_pos(scroll_pos);
         m_spin->set_pos(scroll_pos);
         m_track->set_pos(scroll_pos);
