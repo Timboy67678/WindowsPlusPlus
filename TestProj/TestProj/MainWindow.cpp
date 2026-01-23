@@ -13,14 +13,14 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     center_window();
 
     m_ButtonOne = create_button(_T("Click Me!"), 0, 0, 150, 25);
-    m_ButtonOne->register_command_callback(BN_CLICKED, [this](WPARAM, LPARAM) {
+    m_ButtonOne->on_click([this](WPARAM, LPARAM) {
         static int x = 0;
         std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
         m_ButtonOne->set_text(button_counter_str);
     });
 
     m_CheckBoxOne = create_check_box(_T("Check Me!"), 0, 30, 150, 25);
-    m_CheckBoxOne->register_command_callback(BN_CLICKED, [this](WPARAM, LPARAM) {
+    m_CheckBoxOne->on_click([this](WPARAM, LPARAM) {
         m_ButtonOne->set_shield(m_CheckBoxOne->get_checked() == BST_CHECKED);
     });
 
@@ -41,7 +41,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     m_LinkControl = create_link_control(_T("<a href=\"https://www.google.com\">Click me!</a>, or better yet, <a href=\"https://facebook.com\">Click Me!</a>"), 0, 450, 250, 25);
     m_LinkControl->register_notify_callback(NM_CLICK, [this](LPNMHDR nm) {
         auto item = reinterpret_cast<PNMLINK>(nm)->item;
-        ShellExecute(NULL, TEXT("open"), item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+        ShellExecuteW(NULL, L"open", item.szUrl, NULL, NULL, SW_SHOWNORMAL);
     });
 
     m_ComboBoxOne->add(_T("Item 1"));

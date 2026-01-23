@@ -37,6 +37,13 @@ namespace wpp
 	public:
 		using control::control;
 
+		tooltip& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, callback); return *this; }
+		tooltip& on_show(notify_callback callback) { register_notify_callback(TTN_SHOW, callback); return *this; }
+		tooltip& on_pop(notify_callback callback) { register_notify_callback(TTN_POP, callback); return *this; }
+		tooltip& on_link_click(notify_callback callback) { register_notify_callback(TTN_LINKCLICK, callback); return *this; }
+		tooltip& on_get_disp_info(notify_callback callback) { register_notify_callback(TTN_GETDISPINFO, callback); return *this; }
+		tooltip& on_need_text(notify_callback callback) { return on_get_disp_info(callback); }
+
 		void get_text(LPTOOLINFO lpToolInfo) const {
 			SendMessage(m_handle, TTM_GETTEXT, 0, (LPARAM)lpToolInfo);
 		}

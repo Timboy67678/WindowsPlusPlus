@@ -7,6 +7,13 @@ namespace wpp
 	public:
 		using control::control;
 
+		list_box& on_dbl_click(command_callback cb) { register_command_callback(LBN_DBLCLK, cb); return *this; }
+		list_box& on_err_space(command_callback cb) { register_command_callback(LBN_ERRSPACE, cb); return *this; }
+		list_box& on_kill_focus(command_callback cb) { register_command_callback(LBN_KILLFOCUS, cb); return *this; }
+		list_box& on_sel_change(command_callback cb) { register_command_callback(LBN_SELCHANGE, cb); return *this; }
+		list_box& on_sel_cancel(command_callback cb) { register_command_callback(LBN_SELCANCEL, cb); return *this; }
+		list_box& on_set_focus(command_callback cb) { register_command_callback(LBN_SETFOCUS, cb); return *this; }
+
 		int get_list_count() {
 			return ListBox_GetCount(m_handle);
 		}

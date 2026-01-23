@@ -2,13 +2,12 @@
 
 #include "stdafx.h"
 
-
 class MainDialog : public dialog {
 public:
     MainDialog(HINSTANCE hInstance) : dialog(hInstance, IDD_MAINDLG, IDC_TESTPROJ) {
     }
 
-    message_handler on_init_dialog override;
+    message_handler on_init_dialog;
 
 private:
     std::shared_ptr<combo_box> m_combo;

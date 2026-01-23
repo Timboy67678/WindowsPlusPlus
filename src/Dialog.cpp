@@ -38,7 +38,7 @@ namespace wpp
 			{WM_NOTIFY, std::bind(&dialog::on_notify, this, _1, _2, _3)},
 			{WM_HSCROLL, std::bind(&dialog::on_h_scroll, this, _1, _2, _3)},
 			{WM_VSCROLL, std::bind(&dialog::on_v_scroll, this, _1, _2, _3)},
-			{WM_DROPFILES, std::bind(&dialog::on_drop_files, this, _1, _2, _3)}
+			{WM_DROPFILES, std::bind(&dialog::on_drop_files, this, _1, _2, _3)},
 		};
 	}
 
@@ -100,7 +100,7 @@ namespace wpp
 
 	INT_PTR dialog::on_notify(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		auto nm = reinterpret_cast<LPNMHDR>(lParam);
-		for (auto& control : m_controls)
+		for (const auto& control : m_controls)
 			if (control && nm->idFrom == control->get_id())
 				control->on_notify_callback(nm);
 		return TRUE;

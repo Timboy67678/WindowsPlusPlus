@@ -30,7 +30,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         message_box_info(TEXT("TestProj"), TEXT("TestProj.exe - Test project for use in WinPlusPlus!"));
     });
 
-    m_dostuff->register_command_callback(BN_CLICKED, [this](WPARAM, LPARAM) {
+    m_dostuff->on_click([this](WPARAM, LPARAM) {
         m_list->reset_content();
         m_combo->reset_content();
         m_tree->delete_all_items();
@@ -55,7 +55,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         m_tree->expand(tree);
     });
 
-    m_check->register_command_callback(BN_CLICKED, [this](WPARAM, LPARAM) {
+    m_check->on_click([this](WPARAM, LPARAM) {
         m_dostuff->set_shield(m_check->get_checked() == BST_CHECKED);
     });
 

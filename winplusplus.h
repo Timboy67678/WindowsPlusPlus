@@ -9,5 +9,6 @@
 // Common includes
 #include "common.hpp"
 #include "controls.hpp"
+
 #endif //__WINPLUSPLUS_H__
 

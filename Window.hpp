@@ -184,6 +184,8 @@ namespace wpp
 		virtual message_handler on_h_scroll;
 		virtual message_handler on_v_scroll;
 		virtual message_handler on_drop_files;
+		virtual message_handler on_ctl_color_edit;
+		virtual message_handler on_ctl_color_static;
 
 		/**
 		 * @brief Runs the window message loop.
@@ -267,6 +269,8 @@ namespace wpp
 		// Create window controls
 		std::shared_ptr<button> create_button(LPCTSTR text, int x, int y, int width, int height);
 		std::shared_ptr<check_box> create_check_box(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
+		std::shared_ptr<group_box> create_group_box(LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<static_control> create_static_control(LPCTSTR text, int x, int y, int width, int height);
 		std::shared_ptr<combo_box> create_combo_box(int x, int y, int width, int height);
 		std::shared_ptr<edit_text> create_edit_text(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
 		std::shared_ptr<list_box> create_list_box(int x, int y, int width, int height);

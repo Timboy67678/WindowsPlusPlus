@@ -7,6 +7,28 @@ namespace wpp
 	public:
 		using control::control;
 
+		header& on_begin_drag(notify_callback callback) { register_notify_callback(HDN_BEGINDRAG, callback); return *this; }
+		header& on_begin_filter_edit(notify_callback callback) { register_notify_callback(HDN_BEGINFILTEREDIT, callback); return *this; }
+		header& on_begin_track(notify_callback callback) { register_notify_callback(HDN_BEGINTRACK, callback); return *this; }
+		header& on_divider_double_click(notify_callback callback) { register_notify_callback(HDN_DIVIDERDBLCLICK, callback); return *this; }
+		header& on_drop_down(notify_callback callback) { register_notify_callback(HDN_DROPDOWN, callback); return *this; }
+		header& on_end_drag(notify_callback callback) { register_notify_callback(HDN_ENDDRAG, callback); return *this; }
+		header& on_end_filter_edit(notify_callback callback) { register_notify_callback(HDN_ENDFILTEREDIT, callback); return *this; }
+		header& on_end_track(notify_callback callback) { register_notify_callback(HDN_ENDTRACK, callback); return *this; }
+		header& on_filter_btn_click(notify_callback callback) { register_notify_callback(HDN_FILTERBTNCLICK, callback); return *this; }
+		header& on_filter_change(notify_callback callback) { register_notify_callback(HDN_FILTERCHANGE, callback); return *this; }
+		header& on_get_disp_info(notify_callback callback) { register_notify_callback(HDN_GETDISPINFO, callback); return *this; }
+		header& on_item_changed(notify_callback callback) { register_notify_callback(HDN_ITEMCHANGED, callback); return *this; }
+		header& on_item_changing(notify_callback callback) { register_notify_callback(HDN_ITEMCHANGING, callback); return *this; }
+		header& on_item_click(notify_callback callback) { register_notify_callback(HDN_ITEMCLICK, callback); return *this; }
+		header& on_item_keydown(notify_callback callback) { register_notify_callback(HDN_ITEMKEYDOWN, callback); return *this; }
+		header& on_item_state_icon_click(notify_callback callback) { register_notify_callback(HDN_ITEMSTATEICONCLICK, callback); return *this; }
+		header& on_overflow_click(notify_callback callback) { register_notify_callback(HDN_OVERFLOWCLICK, callback); return *this; }
+		header& on_track(notify_callback callback) { register_notify_callback(HDN_TRACK, callback); return *this; }
+		header& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, callback); return *this; }
+		header& on_rclick(notify_callback callback) { register_notify_callback(NM_RCLICK, callback); return *this; }
+		header& on_released_capture(notify_callback callback) { register_notify_callback(NM_RELEASEDCAPTURE, callback); return *this; }
+
 		int get_item_count() const {
 			return Header_GetItemCount(m_handle);
 		}
@@ -141,7 +163,7 @@ namespace wpp
 			hdi.mask = HDI_TEXT;
 			hdi.pszText = buffer;
 			hdi.cchTextMax = 256;
-			
+
 			if (get_item(nIndex, &hdi)) {
 				return std::tstring(buffer);
 			}
@@ -542,7 +564,7 @@ namespace wpp
 		void auto_size_column(int nIndex) {
 			RECT rc = get_item_rect(nIndex);
 			int width = rc.right - rc.left;
-			
+
 			HDC hdc = GetDC(m_handle);
 			if (hdc) {
 				std::tstring text = get_item_text(nIndex);
@@ -551,7 +573,7 @@ namespace wpp
 				width = size.cx + 20;
 				ReleaseDC(m_handle, hdc);
 			}
-			
+
 			set_item_width(nIndex, width);
 		}
 

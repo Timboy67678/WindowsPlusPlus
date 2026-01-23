@@ -7,6 +7,10 @@ namespace wpp
 	public:
 		using control::control;
 
+		button& on_click(command_callback cb) { register_command_callback(BN_CLICKED, cb); return *this; }
+		button& on_dbl_click(command_callback cb) { register_command_callback(BN_DBLCLK, cb); return *this; }
+		button& on_mouseover(notify_callback cb) {register_notify_callback(BCN_HOTITEMCHANGE, cb); return *this; }
+
 		int get_checked() const {
 			return Button_GetCheck(m_handle);
 		}
@@ -54,7 +58,7 @@ namespace wpp
 			::SetActiveWindow(current_focus);
 		}
 
-		void click() {
+		void click() const {
 			emulate_click();
 		}
 
@@ -70,19 +74,19 @@ namespace wpp
 			return Button_GetCheck(m_handle) == BST_INDETERMINATE;
 		}
 
-		void check() {
+		void check() const {
 			set_checked(BST_CHECKED);
 		}
 
-		void uncheck() {
+		void uncheck() const {
 			set_checked(BST_UNCHECKED);
 		}
 
-		void set_indeterminate() {
+		void set_indeterminate() const {
 			set_checked(BST_INDETERMINATE);
 		}
 
-		void toggle() {
+		void toggle() const {
 			int current = get_checked();
 			if (current == BST_CHECKED) {
 				uncheck();
@@ -149,15 +153,15 @@ namespace wpp
 			return get_icon() != NULL || get_bitmap() != NULL;
 		}
 
-		void remove_icon() {
+		void remove_icon() const {
 			set_icon(NULL);
 		}
 
-		void remove_bitmap() {
+		void remove_bitmap() const {
 			set_bitmap(NULL);
 		}
 
-		void remove_image() {
+		void remove_image() const {
 			remove_icon();
 			remove_bitmap();
 		}

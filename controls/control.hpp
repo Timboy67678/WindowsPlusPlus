@@ -1,15 +1,7 @@
 #ifndef __INTERFACES_H__
 #define __INTERFACES_H__
 
-/********************************************************************************/
-/* All of these are taken from WTL, so big thanks to the author, info is below */
-/********************************************************************************/
-
-// The use and distribution terms for this software are covered by the
-// Microsoft Public License (http://opensource.org/licenses/MS-PL)
-// which can be found in the file MS-PL.txt at the root folder.
-
-#include "common.hpp"
+#include "..\common.hpp"
 
 namespace wpp
 {
@@ -31,13 +23,13 @@ namespace wpp
 		virtual HWND set_parent(HWND parent) {
 			HWND oldParent = ::SetParent(m_handle, parent);
 			m_parent_handle = parent;
-			
+
 			if (parent == NULL) {
 				modify_style(WS_CHILD, WS_POPUP);
 			} else {
 				modify_style(WS_POPUP, WS_CHILD);
 			}
-			
+
 			return oldParent;
 		}
 
@@ -58,7 +50,7 @@ namespace wpp
 			if (!m_handle) return std::tstring();
 			int length = ::GetWindowTextLength(m_handle);
 			if (length == 0) return std::tstring();
-			
+
 			std::vector<TCHAR> buffer(length + 1);
 			::GetWindowText(m_handle, buffer.data(), length + 1);
 			return std::tstring(buffer.data());
@@ -115,7 +107,7 @@ namespace wpp
 		}
 
 		virtual DWORD get_style() const {
-			return (DWORD)::GetWindowLong(m_handle, GWL_STYLE); 
+			return (DWORD)::GetWindowLong(m_handle, GWL_STYLE);
 		}
 
 		virtual DWORD add_style(DWORD dwStyle) {
@@ -275,6 +267,7 @@ namespace wpp
 		}
 
 		void register_command_callback(UINT command, command_callback callback) {
+			if (callback == nullptr) return;
 			m_notify_callbacks[command] = std::move(callback);
 		}
 
@@ -283,6 +276,7 @@ namespace wpp
 		}
 
 		void register_notify_callback(UINT notifyCode, notify_callback callback) {
+			if (callback == nullptr) return;
 			m_NotifyCallbacks[notifyCode] = std::move(callback);
 		}
 
@@ -302,7 +296,7 @@ namespace wpp
 		void on_command_callback(WPARAM wParam, LPARAM lParam) {
 			UINT command = HIWORD(wParam);
 			auto it = m_notify_callbacks.find(command);
-			if (it != m_notify_callbacks.end() && it->second)
+			if (it != m_notify_callbacks.end() && it->second != nullptr)
 				it->second(wParam, lParam);
 		}
 
@@ -383,14 +377,14 @@ namespace wpp
 		HWND attach_child(HWND hChild) const {
 			if (hChild) {
 				HWND oldParent = ::SetParent(hChild, m_handle);
-				
+
 				// Ensure child has WS_CHILD style
 				LONG_PTR style = ::GetWindowLongPtr(hChild, GWL_STYLE);
 				if (!(style & WS_CHILD)) {
 					style = (style & ~WS_POPUP) | WS_CHILD;
 					::SetWindowLongPtr(hChild, GWL_STYLE, style);
 				}
-				
+
 				return oldParent;
 			}
 			return NULL;
@@ -403,14 +397,14 @@ namespace wpp
 		HWND detach_child(HWND hChild, HWND hNewParent = NULL) const {
 			if (hChild) {
 				HWND oldParent = ::SetParent(hChild, hNewParent);
-				
+
 				// If becoming top-level, adjust styles
 				if (hNewParent == NULL) {
 					LONG_PTR style = ::GetWindowLongPtr(hChild, GWL_STYLE);
 					style = (style & ~WS_CHILD) | WS_POPUP;
 					::SetWindowLongPtr(hChild, GWL_STYLE, style);
 				}
-				
+
 				return oldParent;
 			}
 			return NULL;
@@ -431,18 +425,18 @@ namespace wpp
 		}
 
 		// Enumerate children with callback (avoids copying)
-		template<typename Func>
-		void for_each_child(Func callback) const {
+		void for_each_child(std::function<bool(control)> callback) const {
+			if (callback == nullptr) return;
 			HWND hChild = ::GetWindow(m_handle, GW_CHILD);
 			while (hChild) {
-				callback(control{ hChild });
+				if (!callback(control{ hChild })) break;
 				hChild = ::GetWindow(hChild, GW_HWNDNEXT);
 			}
 		}
 
 		// Find child by predicate
-		template<typename Predicate>
-		std::optional<control> find_child(Predicate pred) const {
+		std::optional<control> find_child(std::function<bool(control)> pred) const {
+			if (pred == nullptr) return std::nullopt;
 			HWND hChild = ::GetWindow(m_handle, GW_CHILD);
 			while (hChild) {
 				control child{ hChild };

@@ -4,8 +4,8 @@
 #include "controls/control.hpp"
 
 #include "controls/image_list.hpp"
-#include "controls/static_control.hpp"
 #include "controls/button.hpp"
+#include "controls/static_control.hpp"
 #include "controls/list_box.hpp"
 #include "controls/edit_text.hpp"
 #include "controls/combo_box.hpp"

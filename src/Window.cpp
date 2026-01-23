@@ -37,7 +37,9 @@ namespace wpp
 			{WM_NOTIFY, std::bind(&window::on_notify, this, _1, _2, _3)},
 			{WM_HSCROLL, std::bind(&window::on_h_scroll, this, _1, _2, _3)},
 			{WM_VSCROLL, std::bind(&window::on_v_scroll, this, _1, _2, _3)},
-			{WM_DROPFILES, std::bind(&window::on_drop_files, this, _1, _2, _3)}
+			{WM_DROPFILES, std::bind(&window::on_drop_files, this, _1, _2, _3)},
+			{WM_CTLCOLOREDIT, std::bind(&window::on_ctl_color_edit, this, _1, _2, _3)},
+			{WM_CTLCOLORSTATIC, std::bind(&window::on_ctl_color_static, this, _1, _2, _3)},
 		};
 	}
 
@@ -192,6 +194,42 @@ namespace wpp
 		checkbox->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_controls.emplace_back(checkbox);
 		return checkbox;
+	}
+
+	std::shared_ptr<group_box> window::create_group_box(LPCTSTR text, int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
+
+		HWND groupbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_GROUPBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		if (!groupbox_handle)
+			return nullptr;
+
+		auto groupbox = std::make_shared<group_box>(control_id, m_handle);
+		if (!groupbox) {
+			::DestroyWindow(groupbox_handle);
+			return nullptr;
+		}
+
+		m_controls.emplace_back(groupbox);
+		return groupbox;
+	}
+
+	std::shared_ptr<static_control> window::create_static_control(LPCTSTR text, int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
+
+		HWND static_handle = ::CreateWindowEx(0, WC_STATIC, text, SS_LEFT | WS_CHILD | WS_VISIBLE,
+											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		if (!static_handle)
+			return nullptr;
+		
+		auto static_ctrl = std::make_shared<static_control>(control_id, m_handle);
+		if (!static_ctrl) {
+			::DestroyWindow(static_handle);
+			return nullptr;
+		}
+
+		m_controls.emplace_back(static_ctrl);
+		return static_ctrl;
 	}
 
 	std::shared_ptr<combo_box> window::create_combo_box(int x, int y, int width, int height) {
@@ -472,6 +510,14 @@ namespace wpp
 	}
 
 	LRESULT window::on_drop_files(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		return FALSE;
+	}
+
+	LRESULT window::on_ctl_color_edit(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		return FALSE;
+	}
+
+	LRESULT window::on_ctl_color_static(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return FALSE;
 	}
 

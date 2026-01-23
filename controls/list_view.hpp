@@ -7,6 +7,45 @@ namespace wpp
 	public:
 		using control::control;
 
+		list_view& on_click(notify_callback callback) { register_notify_callback(NM_CLICK, std::move(callback)); return *this; }
+		list_view& on_double_click(notify_callback callback) { register_notify_callback(NM_DBLCLK, std::move(callback)); return *this; }
+		list_view& on_right_click(notify_callback callback) { register_notify_callback(NM_RCLICK, std::move(callback)); return *this; }
+		list_view& on_right_double_click(notify_callback callback) { register_notify_callback(NM_RDBLCLK, std::move(callback)); return *this; }
+		list_view& on_return(notify_callback callback) { register_notify_callback(NM_RETURN, std::move(callback)); return *this; }
+		list_view& on_set_focus(notify_callback callback) { register_notify_callback(NM_SETFOCUS, std::move(callback)); return *this; }
+		list_view& on_kill_focus(notify_callback callback) { register_notify_callback(NM_KILLFOCUS, std::move(callback)); return *this; }
+		list_view& on_hover(notify_callback callback) { register_notify_callback(NM_HOVER, std::move(callback)); return *this; }
+		list_view& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, std::move(callback)); return *this; }
+		list_view& on_begin_drag(notify_callback callback) { register_notify_callback(LVN_BEGINDRAG, std::move(callback)); return *this; }
+		list_view& on_begin_right_drag(notify_callback callback) { register_notify_callback(LVN_BEGINRDRAG, std::move(callback)); return *this; }
+		list_view& on_begin_label_edit(notify_callback callback) { register_notify_callback(LVN_BEGINLABELEDIT, std::move(callback)); return *this; }
+		list_view& on_end_label_edit(notify_callback callback) { register_notify_callback(LVN_ENDLABELEDIT, std::move(callback)); return *this; }
+		list_view& on_column_click(notify_callback callback) { register_notify_callback(LVN_COLUMNCLICK, std::move(callback)); return *this; }
+		list_view& on_delete_item(notify_callback callback) { register_notify_callback(LVN_DELETEITEM, std::move(callback)); return *this; }
+		list_view& on_delete_all_items(notify_callback callback) { register_notify_callback(LVN_DELETEALLITEMS, std::move(callback)); return *this; }
+		list_view& on_item_changed(notify_callback callback) { register_notify_callback(LVN_ITEMCHANGED, std::move(callback)); return *this; }
+		list_view& on_item_changing(notify_callback callback) { register_notify_callback(LVN_ITEMCHANGING, std::move(callback)); return *this; }
+		list_view& on_insert_item(notify_callback callback) { register_notify_callback(LVN_INSERTITEM, std::move(callback)); return *this; }
+		list_view& on_item_activate(notify_callback callback) { register_notify_callback(LVN_ITEMACTIVATE, std::move(callback)); return *this; }
+		list_view& on_key_down(notify_callback callback) { register_notify_callback(LVN_KEYDOWN, std::move(callback)); return *this; }
+		list_view& on_marquee_begin(notify_callback callback) { register_notify_callback(LVN_MARQUEEBEGIN, std::move(callback)); return *this; }
+		list_view& on_get_display_info(notify_callback callback) { register_notify_callback(LVN_GETDISPINFO, std::move(callback)); return *this; }
+		list_view& on_set_display_info(notify_callback callback) { register_notify_callback(LVN_SETDISPINFO, std::move(callback)); return *this; }
+		list_view& on_od_cache_hint(notify_callback callback) { register_notify_callback(LVN_ODCACHEHINT, std::move(callback)); return *this; }
+		list_view& on_od_find_item(notify_callback callback) { register_notify_callback(LVN_ODFINDITEM, std::move(callback)); return *this; }
+		list_view& on_od_state_changed(notify_callback callback) { register_notify_callback(LVN_ODSTATECHANGED, std::move(callback)); return *this; }
+		list_view& on_hot_track(notify_callback callback) { register_notify_callback(LVN_HOTTRACK, std::move(callback)); return *this; }
+		list_view& on_get_info_tip(notify_callback callback) { register_notify_callback(LVN_GETINFOTIP, std::move(callback)); return *this; }
+		list_view& on_begin_scroll(notify_callback callback) { register_notify_callback(LVN_BEGINSCROLL, std::move(callback)); return *this; }
+		list_view& on_end_scroll(notify_callback callback) { register_notify_callback(LVN_ENDSCROLL, std::move(callback)); return *this; }
+		list_view& on_link_click(notify_callback callback) { register_notify_callback(LVN_LINKCLICK, std::move(callback)); return *this; }
+		list_view& on_get_empty_markup(notify_callback callback) { register_notify_callback(LVN_GETEMPTYMARKUP, std::move(callback)); return *this; }
+		list_view& on_column_overflow_click(notify_callback callback) { register_notify_callback(LVN_COLUMNOVERFLOWCLICK, std::move(callback)); return *this; }
+		list_view& on_column_dropdown(notify_callback callback) { register_notify_callback(LVN_COLUMNDROPDOWN, std::move(callback)); return *this; }
+		list_view& on_incremental_search(notify_callback callback) { register_notify_callback(LVN_INCREMENTALSEARCH, std::move(callback)); return *this; }
+		list_view& on_begin_group_rename(notify_callback callback) { register_notify_callback(LVN_BEGINLABELEDIT, std::move(callback)); return *this; }
+		list_view& on_end_group_rename(notify_callback callback) { register_notify_callback(LVN_ENDLABELEDIT, std::move(callback)); return *this; }
+
 		COLORREF get_back_color() const {
 			return ListView_GetBkColor(m_handle);
 		}

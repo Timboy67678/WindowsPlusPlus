@@ -44,6 +44,14 @@ namespace wpp
 		iterator begin() const { return iterator(this, 0); }
 		iterator end() const { return iterator(this, get_count()); }
 
+		combo_box& on_sel_change(command_callback callback) { register_command_callback(CBN_SELCHANGE, callback); return *this; }
+		combo_box& on_sel_end_ok(command_callback callback) { register_command_callback(CBN_SELENDOK, callback); return *this; }
+		combo_box& on_sel_end_cancel(command_callback callback) { register_command_callback(CBN_SELENDCANCEL, callback); return *this; }
+		combo_box& on_dropdown(command_callback callback) { register_command_callback(CBN_DROPDOWN, callback); return *this; }
+		combo_box& on_close_up(command_callback callback) { register_command_callback(CBN_CLOSEUP, callback); return *this; }
+		combo_box& on_edit_change(command_callback callback) { register_command_callback(CBN_EDITCHANGE, callback); return *this; }
+		combo_box& on_edit_update(command_callback callback) { register_command_callback(CBN_EDITUPDATE, callback); return *this; }
+
 		int get_count() const {
 			return ComboBox_GetCount(m_handle);
 		}
@@ -756,6 +764,66 @@ namespace wpp
 	class combo_box_ex : public control {
 	public:
 		using control::control;
+
+		combo_box_ex& on_sel_change(command_callback callback) {
+			register_command_callback(CBN_SELCHANGE, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_sel_end_ok(command_callback callback) {
+			register_command_callback(CBN_SELENDOK, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_sel_end_cancel(command_callback callback) {
+			register_command_callback(CBN_SELENDCANCEL, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_dropdown(command_callback callback) {
+			register_command_callback(CBN_DROPDOWN, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_close_up(command_callback callback) {
+			register_command_callback(CBN_CLOSEUP, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_edit_change(command_callback callback) {
+			register_command_callback(CBN_EDITCHANGE, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_edit_update(command_callback callback) {
+			register_command_callback(CBN_EDITUPDATE, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_begin_edit(notify_callback callback) {
+			register_notify_callback(CBEN_BEGINEDIT, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_end_edit(notify_callback callback) {
+			register_notify_callback(CBEN_ENDEDIT, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_insert_item(notify_callback callback) {
+			register_notify_callback(CBEN_INSERTITEM, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_delete_item(notify_callback callback) {
+			register_notify_callback(CBEN_DELETEITEM, callback);
+			return *this;
+		}
+
+		combo_box_ex& on_get_disp_info(notify_callback callback) {
+			register_notify_callback(CBEN_GETDISPINFO, callback);
+			return *this;
+		}
 
 		image_list get_image_list() const {
 			return image_list{ (HIMAGELIST)SendMessage(m_handle, CBEM_GETIMAGELIST, 0, 0L) };

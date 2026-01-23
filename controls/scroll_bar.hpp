@@ -48,8 +48,8 @@ namespace wpp
 			::ShowScrollBar(m_handle, SB_CTL, bShow);
 		}
 
-		BOOL enable_scrollbar(UINT nArrowFlags = ESB_ENABLE_BOTH) {
-			return ::EnableScrollBar(m_handle, SB_CTL, nArrowFlags);
+		BOOL enable_scrollbar(BOOL bEnable) {
+			return ::EnableScrollBar(m_handle, SB_CTL, bEnable ? ESB_ENABLE_BOTH : ESB_DISABLE_BOTH);
 		}
 
 		int get_min_pos() const {

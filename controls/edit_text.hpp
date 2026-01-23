@@ -13,6 +13,14 @@ namespace wpp
 	public:
 		using control::control;
 
+		edit_text& on_update(command_callback callback) { register_command_callback(EN_UPDATE, std::move(callback)); return *this; }
+		edit_text& on_change(command_callback callback) { register_command_callback(EN_CHANGE, std::move(callback)); return *this; }
+		edit_text& on_errspace(command_callback callback) { register_command_callback(EN_ERRSPACE, std::move(callback)); return *this; }
+		edit_text& on_maxtext(command_callback callback) { register_command_callback(EN_MAXTEXT, std::move(callback)); return *this; }
+		edit_text& on_setfocus(command_callback callback) { register_command_callback(EN_SETFOCUS, std::move(callback)); return *this; }
+		edit_text& on_killfocus(command_callback callback) { register_command_callback(EN_KILLFOCUS, std::move(callback)); return *this; }
+		edit_text& on_update(command_callback callback) { register_command_callback(EN_UPDATE, std::move(callback)); return *this; }
+
 		BOOL can_undo() {
 			return Edit_CanUndo(m_handle);
 		}
@@ -353,7 +361,7 @@ namespace wpp
 			return end - start;
 		}
 
-		std::basic_string<TCHAR> get_selected_text() const {
+		std::tstring get_selected_text() const {
 			int start = 0, end = 0;
 			get_sel(start, end);
 
@@ -530,11 +538,11 @@ namespace wpp
 			int charIndex = line_index(line);
 			if (charIndex < 0) charIndex = get_text_length();
 			
-			std::basic_string<TCHAR> insertText = text;
+			std::tstring insertText = text;
 			if (line < get_line_count()) {
 				insertText += TEXT("\r\n");
 			} else if (!is_empty()) {
-				insertText = std::basic_string<TCHAR>(TEXT("\r\n")) + insertText;
+				insertText = std::tstring(TEXT("\r\n")) + insertText;
 			}
 			
 			insert_text(charIndex, insertText.c_str(), FALSE, TRUE);
@@ -542,12 +550,12 @@ namespace wpp
 
 		int get_char_at(int pos) const {
 			if (pos < 0 || pos >= get_text_length()) return -1;
-			std::basic_string<TCHAR> text = get_text();
+			std::tstring text = get_text();
 			return text[pos];
 		}
 
 		int get_word_count() const {
-			std::basic_string<TCHAR> text = get_text();
+			std::tstring text = get_text();
 			int count = 0;
 			BOOL inWord = FALSE;
 			
@@ -563,7 +571,7 @@ namespace wpp
 		}
 
 		void uppercase_selection() {
-			std::basic_string<TCHAR> selected = get_selected_text();
+			std::tstring selected = get_selected_text();
 			if (!selected.empty()) {
 				std::transform(selected.begin(), selected.end(), selected.begin(), ::_totupper);
 				replace_sel(selected.c_str(), TRUE);
@@ -571,7 +579,7 @@ namespace wpp
 		}
 
 		void lowercase_selection() {
-			std::basic_string<TCHAR> selected = get_selected_text();
+			std::tstring selected = get_selected_text();
 			if (!selected.empty()) {
 				std::transform(selected.begin(), selected.end(), selected.begin(), ::_totlower);
 				replace_sel(selected.c_str(), TRUE);
@@ -579,12 +587,12 @@ namespace wpp
 		}
 
 		void trim_whitespace() {
-			std::basic_string<TCHAR> text = get_text();
+			std::tstring text = get_text();
 			
 			size_t start = text.find_first_not_of(TEXT(" \t\r\n"));
 			size_t end = text.find_last_not_of(TEXT(" \t\r\n"));
 			
-			if (start == std::basic_string<TCHAR>::npos) {
+			if (start == std::tstring::npos) {
 				clear_all();
 			} else {
 				set_text(text.substr(start, end - start + 1).c_str());
@@ -594,7 +602,7 @@ namespace wpp
 		BOOL is_valid_number() const {
 			if (!is_number()) return FALSE;
 			
-			std::basic_string<TCHAR> text = get_text();
+			std::tstring text = get_text();
 			if (text.empty()) return FALSE;
 			
 			for (size_t i = 0; i < text.length(); i++) {
@@ -606,7 +614,7 @@ namespace wpp
 		}
 
 		int get_number_value() const {
-			std::basic_string<TCHAR> text = get_text();
+			std::tstring text = get_text();
 			return text.empty() ? 0 : _ttoi(text.c_str());
 		}
 
@@ -669,7 +677,7 @@ namespace wpp
 
 		void duplicate_current_line() {
 			int line = get_current_line();
-			std::basic_string<TCHAR> lineText = get_line_text(line);
+			std::tstring lineText = get_line_text(line);
 			int lineEnd = line_index(line) + line_length(line_index(line));
 			insert_text(lineEnd, (TEXT("\r\n") + lineText).c_str(), FALSE, TRUE);
 		}
@@ -677,8 +685,8 @@ namespace wpp
 		void move_line_up(int line) {
 			if (line <= 0 || line >= get_line_count()) return;
 			
-			std::basic_string<TCHAR> currentLine = get_line_text(line);
-			std::basic_string<TCHAR> prevLine = get_line_text(line - 1);
+			std::tstring currentLine = get_line_text(line);
+			std::tstring prevLine = get_line_text(line - 1);
 			
 			delete_line(line);
 			delete_line(line - 1);
@@ -691,8 +699,8 @@ namespace wpp
 		void move_line_down(int line) {
 			if (line < 0 || line >= get_line_count() - 1) return;
 			
-			std::basic_string<TCHAR> currentLine = get_line_text(line);
-			std::basic_string<TCHAR> nextLine = get_line_text(line + 1);
+			std::tstring currentLine = get_line_text(line);
+			std::tstring nextLine = get_line_text(line + 1);
 			
 			delete_line(line + 1);
 			delete_line(line);
@@ -711,7 +719,7 @@ namespace wpp
 			int startLine = line_from_char(start);
 			int endLine = line_from_char(end);
 			
-			std::basic_string<TCHAR> result;
+			std::tstring result;
 			for (int i = startLine; i <= endLine; i++) {
 				result += indentText;
 				result += get_line_text(i);
@@ -735,10 +743,10 @@ namespace wpp
 			int endLine = line_from_char(end);
 			
 			int indentLen = lstrlen(indentText);
-			std::basic_string<TCHAR> result;
+			std::tstring result;
 			
 			for (int i = startLine; i <= endLine; i++) {
-				std::basic_string<TCHAR> line = get_line_text(i);
+				std::tstring line = get_line_text(i);
 				if (line.length() >= (size_t)indentLen && 
 				    line.substr(0, indentLen) == indentText) {
 					result += line.substr(indentLen);
