@@ -1,8 +1,6 @@
 #ifndef __ANIMATION_HPP__
 #define __ANIMATION_HPP__
 
-#include <string>
-
 namespace wpp
 {
 	class animation : public control {
@@ -10,6 +8,9 @@ namespace wpp
 		static constexpr UINT LOOP_INFINITE = static_cast<UINT>(-1);
 
 		using control::control;
+
+		animation& on_start(command_callback callback) { register_command_callback(ACN_START, std::move(callback)); return *this; }
+		animation& on_stop(command_callback callback) { register_command_callback(ACN_STOP, std::move(callback)); return *this; }
 
 		bool open(LPCTSTR file_name) {
 			return SendMessage(m_handle, ACM_OPEN, 0, (LPARAM)file_name) != 0;

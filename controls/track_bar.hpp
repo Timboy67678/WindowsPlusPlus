@@ -7,6 +7,8 @@ namespace wpp
 	public:
 		using control::control;
 
+		track_bar& on_thumb_pos_changing(notify_callback callback) { register_notify_callback(TRBN_THUMBPOSCHANGING, std::move(callback)); return *this; }
+
 		int get_line_size() const {
 			return (int)SendMessage(m_handle, TBM_GETLINESIZE, 0, 0L);
 		}

@@ -260,6 +260,17 @@ namespace wpp
 		control(HWND handle) : hwnd(handle) {
 		}
 
+		virtual control& on_click(notify_callback callback) { register_notify_callback(NM_CLICK, std::move(callback)); return *this; }
+		virtual control& on_double_click(notify_callback callback) { register_notify_callback(NM_DBLCLK, std::move(callback)); return *this; }
+		virtual control& on_right_click(notify_callback callback) { register_notify_callback(NM_RCLICK, std::move(callback)); return *this; }
+		virtual control& on_right_double_click(notify_callback callback) { register_notify_callback(NM_RDBLCLK, std::move(callback)); return *this; }
+		virtual control& on_return(notify_callback callback) { register_notify_callback(NM_RETURN, std::move(callback)); return *this; }
+		virtual control& on_set_focus(notify_callback callback) { register_notify_callback(NM_SETFOCUS, std::move(callback)); return *this; }
+		virtual control& on_kill_focus(notify_callback callback) { register_notify_callback(NM_KILLFOCUS, std::move(callback)); return *this; }
+		virtual control& on_hover(notify_callback callback) { register_notify_callback(NM_HOVER, std::move(callback)); return *this; }
+		virtual control& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, std::move(callback)); return *this; }
+		virtual control& on_released_capture(notify_callback callback) { register_notify_callback(NM_RELEASEDCAPTURE, std::move(callback)); return *this; }
+
 		void set_item(HWND parent, int item_id) {
 			m_item_id = item_id;
 			m_parent_handle = parent;
@@ -268,36 +279,52 @@ namespace wpp
 
 		void register_command_callback(UINT command, command_callback callback) {
 			if (callback == nullptr) return;
-			m_notify_callbacks[command] = std::move(callback);
+			m_command_callbacks[command].push_back(std::move(callback));
 		}
 
-		void remove_command_callback(UINT command) {
-			m_notify_callbacks.erase(command);
+		void remove_all_command_callbacks(UINT command) {
+			m_command_callbacks.erase(command);
+		}
+
+		void clear_command_callbacks() {
+			m_command_callbacks.clear();
 		}
 
 		void register_notify_callback(UINT notifyCode, notify_callback callback) {
 			if (callback == nullptr) return;
-			m_NotifyCallbacks[notifyCode] = std::move(callback);
+			m_notify_callbacks[notifyCode].push_back(std::move(callback));
 		}
 
-		void remove_notify_callback(UINT notifyCode) {
-			m_NotifyCallbacks.erase(notifyCode);
+		void remove_all_notify_callbacks(UINT notifyCode) {
+			m_notify_callbacks.erase(notifyCode);
+		}
+
+		void clear_notify_callbacks() {
+			m_notify_callbacks.clear();
 		}
 
 		void on_notify_callback(LPNMHDR nm) {
 			if (nm == nullptr)
 				return;
 
-			auto it = m_NotifyCallbacks.find(nm->code);
-			if (it != m_NotifyCallbacks.end() && it->second)
-				it->second(nm);
+			auto it = m_notify_callbacks.find(nm->code);
+			if (it != m_notify_callbacks.end()) {
+				for (auto& callback : it->second) {
+					if (callback)
+						callback(nm);
+				}
+			}
 		}
 
 		void on_command_callback(WPARAM wParam, LPARAM lParam) {
 			UINT command = HIWORD(wParam);
-			auto it = m_notify_callbacks.find(command);
-			if (it != m_notify_callbacks.end() && it->second != nullptr)
-				it->second(wParam, lParam);
+			auto it = m_command_callbacks.find(command);
+			if (it != m_command_callbacks.end()) {
+				for (auto& callback : it->second) {
+					if (callback)
+						callback(wParam, lParam);
+				}
+			}
 		}
 
 		void enable_children(BOOL enable = TRUE) const {
@@ -447,8 +474,8 @@ namespace wpp
 		}
 
 	protected:
-		std::unordered_map<UINT, command_callback> m_notify_callbacks;
-		std::unordered_map<UINT, notify_callback> m_NotifyCallbacks;
+		std::unordered_map<UINT, std::vector<command_callback>> m_command_callbacks;
+		std::unordered_map<UINT, std::vector<notify_callback>> m_notify_callbacks;
 	};
 }
 

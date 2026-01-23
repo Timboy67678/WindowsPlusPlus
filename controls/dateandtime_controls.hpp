@@ -1,14 +1,16 @@
 #ifndef __DATEANDTIME_CONTROLS_H__
 #define __DATEANDTIME_CONTROLS_H__
 
-#include "common.hpp"
-#include <utility>
-
 namespace wpp
 {
 	class month_calendar : public control {
 	public:
 		using control::control;
+
+		month_calendar& on_selection_change(notify_callback callback) { register_notify_callback(MCN_SELCHANGE, std::move(callback)); return *this; }
+		month_calendar& on_select(notify_callback callback) { register_notify_callback(MCN_SELECT, std::move(callback)); return *this; }
+		month_calendar& on_get_day_state(notify_callback callback) { register_notify_callback(MCN_GETDAYSTATE, std::move(callback)); return *this; }
+		month_calendar& on_view_change(notify_callback callback) { register_notify_callback(MCN_VIEWCHANGE, std::move(callback)); return *this; }
 
 		COLORREF get_color(int nColorType) const {
 			return (COLORREF)SendMessage(m_handle, MCM_GETCOLOR, nColorType, 0L);
@@ -338,6 +340,14 @@ namespace wpp
 	class datetime_picker : public control {
 	public:
 		using control::control;
+
+		datetime_picker& on_datetime_change(notify_callback callback) { register_notify_callback(DTN_DATETIMECHANGE, std::move(callback)); return *this; }
+		datetime_picker& on_dropdown(notify_callback callback) { register_notify_callback(DTN_DROPDOWN, std::move(callback)); return *this; }
+		datetime_picker& on_closeup(notify_callback callback) { register_notify_callback(DTN_CLOSEUP, std::move(callback)); return *this; }
+		datetime_picker& on_user_string(notify_callback callback) { register_notify_callback(DTN_USERSTRING, std::move(callback)); return *this; }
+		datetime_picker& on_format(notify_callback callback) { register_notify_callback(DTN_FORMAT, std::move(callback)); return *this; }
+		datetime_picker& on_format_query(notify_callback callback) { register_notify_callback(DTN_FORMATQUERY, std::move(callback)); return *this; }
+		datetime_picker& on_wm_key_down(notify_callback callback) { register_notify_callback(DTN_WMKEYDOWN, std::move(callback)); return *this; }
 
 		BOOL set_format(LPCTSTR lpszFormat) {
 			return (BOOL)SendMessage(m_handle, DTM_SETFORMAT, 0, (LPARAM)lpszFormat);

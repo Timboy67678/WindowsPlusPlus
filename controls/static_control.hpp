@@ -7,10 +7,10 @@ namespace wpp
 	public:
 		using control::control;
 
-		static_control& on_click(command_callback cb) { register_command_callback(STN_CLICKED, cb); return *this; }
-		static_control& on_dbl_click(command_callback cb) { register_command_callback(STN_DBLCLK, cb); return *this; }
-		static_control& on_disable(command_callback cb) { if (has_notify()) register_command_callback(STN_DISABLE, cb); return *this; }
-		static_control& on_enable(command_callback cb) { if (has_notify()) register_command_callback(STN_ENABLE, cb); return *this; }
+		static_control& on_click(command_callback cb) { register_command_callback(STN_CLICKED, std::move(cb)); return *this; }
+		static_control& on_dbl_click(command_callback cb) { register_command_callback(STN_DBLCLK, std::move(cb)); return *this; }
+		static_control& on_disable(command_callback cb) { if (has_notify()) register_command_callback(STN_DISABLE, std::move(cb)); return *this; }
+		static_control& on_enable(command_callback cb) { if (has_notify()) register_command_callback(STN_ENABLE, std::move(cb)); return *this; }
 
 		HICON get_icon() const {
 			return (HICON)SendMessage(m_handle, STM_GETIMAGE, IMAGE_ICON, 0L);

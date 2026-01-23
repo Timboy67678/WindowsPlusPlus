@@ -7,27 +7,24 @@ namespace wpp
 	public:
 		using control::control;
 
-		header& on_begin_drag(notify_callback callback) { register_notify_callback(HDN_BEGINDRAG, callback); return *this; }
-		header& on_begin_filter_edit(notify_callback callback) { register_notify_callback(HDN_BEGINFILTEREDIT, callback); return *this; }
-		header& on_begin_track(notify_callback callback) { register_notify_callback(HDN_BEGINTRACK, callback); return *this; }
-		header& on_divider_double_click(notify_callback callback) { register_notify_callback(HDN_DIVIDERDBLCLICK, callback); return *this; }
-		header& on_drop_down(notify_callback callback) { register_notify_callback(HDN_DROPDOWN, callback); return *this; }
-		header& on_end_drag(notify_callback callback) { register_notify_callback(HDN_ENDDRAG, callback); return *this; }
-		header& on_end_filter_edit(notify_callback callback) { register_notify_callback(HDN_ENDFILTEREDIT, callback); return *this; }
-		header& on_end_track(notify_callback callback) { register_notify_callback(HDN_ENDTRACK, callback); return *this; }
-		header& on_filter_btn_click(notify_callback callback) { register_notify_callback(HDN_FILTERBTNCLICK, callback); return *this; }
-		header& on_filter_change(notify_callback callback) { register_notify_callback(HDN_FILTERCHANGE, callback); return *this; }
-		header& on_get_disp_info(notify_callback callback) { register_notify_callback(HDN_GETDISPINFO, callback); return *this; }
-		header& on_item_changed(notify_callback callback) { register_notify_callback(HDN_ITEMCHANGED, callback); return *this; }
-		header& on_item_changing(notify_callback callback) { register_notify_callback(HDN_ITEMCHANGING, callback); return *this; }
-		header& on_item_click(notify_callback callback) { register_notify_callback(HDN_ITEMCLICK, callback); return *this; }
-		header& on_item_keydown(notify_callback callback) { register_notify_callback(HDN_ITEMKEYDOWN, callback); return *this; }
-		header& on_item_state_icon_click(notify_callback callback) { register_notify_callback(HDN_ITEMSTATEICONCLICK, callback); return *this; }
-		header& on_overflow_click(notify_callback callback) { register_notify_callback(HDN_OVERFLOWCLICK, callback); return *this; }
-		header& on_track(notify_callback callback) { register_notify_callback(HDN_TRACK, callback); return *this; }
-		header& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, callback); return *this; }
-		header& on_rclick(notify_callback callback) { register_notify_callback(NM_RCLICK, callback); return *this; }
-		header& on_released_capture(notify_callback callback) { register_notify_callback(NM_RELEASEDCAPTURE, callback); return *this; }
+		header& on_begin_drag(notify_callback callback) { register_notify_callback(HDN_BEGINDRAG, std::move(callback)); return *this; }
+		header& on_begin_filter_edit(notify_callback callback) { register_notify_callback(HDN_BEGINFILTEREDIT, std::move(callback)); return *this; }
+		header& on_begin_track(notify_callback callback) { register_notify_callback(HDN_BEGINTRACK, std::move(callback)); return *this; }
+		header& on_divider_double_click(notify_callback callback) { register_notify_callback(HDN_DIVIDERDBLCLICK, std::move(callback)); return *this; }
+		header& on_drop_down(notify_callback callback) { register_notify_callback(HDN_DROPDOWN, std::move(callback)); return *this; }
+		header& on_end_drag(notify_callback callback) { register_notify_callback(HDN_ENDDRAG, std::move(callback)); return *this; }
+		header& on_end_filter_edit(notify_callback callback) { register_notify_callback(HDN_ENDFILTEREDIT, std::move(callback)); return *this; }
+		header& on_end_track(notify_callback callback) { register_notify_callback(HDN_ENDTRACK, std::move(callback)); return *this; }
+		header& on_filter_btn_click(notify_callback callback) { register_notify_callback(HDN_FILTERBTNCLICK, std::move(callback)); return *this; }
+		header& on_filter_change(notify_callback callback) { register_notify_callback(HDN_FILTERCHANGE, std::move(callback)); return *this; }
+		header& on_get_disp_info(notify_callback callback) { register_notify_callback(HDN_GETDISPINFO, std::move(callback)); return *this; }
+		header& on_item_changed(notify_callback callback) { register_notify_callback(HDN_ITEMCHANGED, std::move(callback)); return *this; }
+		header& on_item_changing(notify_callback callback) { register_notify_callback(HDN_ITEMCHANGING, std::move(callback)); return *this; }
+		header& on_item_click(notify_callback callback) { register_notify_callback(HDN_ITEMCLICK, std::move(callback)); return *this; }
+		header& on_item_keydown(notify_callback callback) { register_notify_callback(HDN_ITEMKEYDOWN, std::move(callback)); return *this; }
+		header& on_item_state_icon_click(notify_callback callback) { register_notify_callback(HDN_ITEMSTATEICONCLICK, std::move(callback)); return *this; }
+		header& on_overflow_click(notify_callback callback) { register_notify_callback(HDN_OVERFLOWCLICK, std::move(callback)); return *this; }
+		header& on_track(notify_callback callback) { register_notify_callback(HDN_TRACK, std::move(callback)); return *this; }
 
 		int get_item_count() const {
 			return Header_GetItemCount(m_handle);

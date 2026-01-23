@@ -7,6 +7,8 @@ namespace wpp
 	public:
 		using control::control;
 
+		statusbar& on_simple_mode_change(notify_callback callback) { register_notify_callback(SBN_SIMPLEMODECHANGE, std::move(callback)); return *this; }
+
 		int get_parts(int nParts, int* pParts) const {
 			return (int)SendMessage(m_handle, SB_GETPARTS, nParts, (LPARAM)pParts);
 		}

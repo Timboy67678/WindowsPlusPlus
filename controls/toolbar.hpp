@@ -7,6 +7,32 @@ namespace wpp
 	public:
 		using control::control;
 
+		toolbar& on_begin_drag(notify_callback callback) { register_notify_callback(TBN_BEGINDRAG, std::move(callback)); return *this; }
+		toolbar& on_end_drag(notify_callback callback) { register_notify_callback(TBN_ENDDRAG, std::move(callback)); return *this; }
+		toolbar& on_begin_adjust(notify_callback callback) { register_notify_callback(TBN_BEGINADJUST, std::move(callback)); return *this; }
+		toolbar& on_end_adjust(notify_callback callback) { register_notify_callback(TBN_ENDADJUST, std::move(callback)); return *this; }
+		toolbar& on_reset(notify_callback callback) { register_notify_callback(TBN_RESET, std::move(callback)); return *this; }
+		toolbar& on_query_insert(notify_callback callback) { register_notify_callback(TBN_QUERYINSERT, std::move(callback)); return *this; }
+		toolbar& on_query_delete(notify_callback callback) { register_notify_callback(TBN_QUERYDELETE, std::move(callback)); return *this; }
+		toolbar& on_toolbar_change(notify_callback callback) { register_notify_callback(TBN_TOOLBARCHANGE, std::move(callback)); return *this; }
+		toolbar& on_cust_help(notify_callback callback) { register_notify_callback(TBN_CUSTHELP, std::move(callback)); return *this; }
+		toolbar& on_dropdown(notify_callback callback) { register_notify_callback(TBN_DROPDOWN, std::move(callback)); return *this; }
+		toolbar& on_get_object(notify_callback callback) { register_notify_callback(TBN_GETOBJECT, std::move(callback)); return *this; }
+		toolbar& on_hot_item_change(notify_callback callback) { register_notify_callback(TBN_HOTITEMCHANGE, std::move(callback)); return *this; }
+		toolbar& on_drag_out(notify_callback callback) { register_notify_callback(TBN_DRAGOUT, std::move(callback)); return *this; }
+		toolbar& on_delete_button(notify_callback callback) { register_notify_callback(TBN_DELETINGBUTTON, std::move(callback)); return *this; }
+		toolbar& on_get_display_info(notify_callback callback) { register_notify_callback(TBN_GETDISPINFO, std::move(callback)); return *this; }
+		toolbar& on_get_info_tip(notify_callback callback) { register_notify_callback(TBN_GETINFOTIP, std::move(callback)); return *this; }
+		toolbar& on_get_button_info(notify_callback callback) { register_notify_callback(TBN_GETBUTTONINFO, std::move(callback)); return *this; }
+		toolbar& on_restore(notify_callback callback) { register_notify_callback(TBN_RESTORE, std::move(callback)); return *this; }
+		toolbar& on_save(notify_callback callback) { register_notify_callback(TBN_SAVE, std::move(callback)); return *this; }
+		toolbar& on_init_customize(notify_callback callback) { register_notify_callback(TBN_INITCUSTOMIZE, std::move(callback)); return *this; }
+		toolbar& on_wraphotitem(notify_callback callback) { register_notify_callback(TBN_WRAPHOTITEM, std::move(callback)); return *this; }
+		toolbar& on_dupaccelerator(notify_callback callback) { register_notify_callback(TBN_DUPACCELERATOR, std::move(callback)); return *this; }
+		toolbar& on_wrapaccelerator(notify_callback callback) { register_notify_callback(TBN_WRAPACCELERATOR, std::move(callback)); return *this; }
+		toolbar& on_dragover(notify_callback callback) { register_notify_callback(TBN_DRAGOVER, std::move(callback)); return *this; }
+		toolbar& on_map_accelerator(notify_callback callback) { register_notify_callback(TBN_MAPACCELERATOR, std::move(callback)); return *this; }
+
 		BOOL is_button_enabled(int nID) const {
 			return (BOOL)SendMessage(m_handle, TB_ISBUTTONENABLED, nID, 0L);
 		}

@@ -7,15 +7,6 @@ namespace wpp
 	public:
 		using control::control;
 
-		list_view& on_click(notify_callback callback) { register_notify_callback(NM_CLICK, std::move(callback)); return *this; }
-		list_view& on_double_click(notify_callback callback) { register_notify_callback(NM_DBLCLK, std::move(callback)); return *this; }
-		list_view& on_right_click(notify_callback callback) { register_notify_callback(NM_RCLICK, std::move(callback)); return *this; }
-		list_view& on_right_double_click(notify_callback callback) { register_notify_callback(NM_RDBLCLK, std::move(callback)); return *this; }
-		list_view& on_return(notify_callback callback) { register_notify_callback(NM_RETURN, std::move(callback)); return *this; }
-		list_view& on_set_focus(notify_callback callback) { register_notify_callback(NM_SETFOCUS, std::move(callback)); return *this; }
-		list_view& on_kill_focus(notify_callback callback) { register_notify_callback(NM_KILLFOCUS, std::move(callback)); return *this; }
-		list_view& on_hover(notify_callback callback) { register_notify_callback(NM_HOVER, std::move(callback)); return *this; }
-		list_view& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, std::move(callback)); return *this; }
 		list_view& on_begin_drag(notify_callback callback) { register_notify_callback(LVN_BEGINDRAG, std::move(callback)); return *this; }
 		list_view& on_begin_right_drag(notify_callback callback) { register_notify_callback(LVN_BEGINRDRAG, std::move(callback)); return *this; }
 		list_view& on_begin_label_edit(notify_callback callback) { register_notify_callback(LVN_BEGINLABELEDIT, std::move(callback)); return *this; }

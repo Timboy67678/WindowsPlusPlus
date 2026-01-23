@@ -7,6 +7,24 @@ namespace wpp
 	public:
 		using control::control;
 
+		tree_view& on_begin_drag(notify_callback callback) { register_notify_callback(TVN_BEGINDRAG, std::move(callback)); return *this; }
+		tree_view& on_begin_right_drag(notify_callback callback) { register_notify_callback(TVN_BEGINRDRAG, std::move(callback)); return *this; }
+		tree_view& on_begin_label_edit(notify_callback callback) { register_notify_callback(TVN_BEGINLABELEDIT, std::move(callback)); return *this; }
+		tree_view& on_end_label_edit(notify_callback callback) { register_notify_callback(TVN_ENDLABELEDIT, std::move(callback)); return *this; }
+		tree_view& on_delete_item(notify_callback callback) { register_notify_callback(TVN_DELETEITEM, std::move(callback)); return *this; }
+		tree_view& on_get_display_info(notify_callback callback) { register_notify_callback(TVN_GETDISPINFO, std::move(callback)); return *this; }
+		tree_view& on_set_display_info(notify_callback callback) { register_notify_callback(TVN_SETDISPINFO, std::move(callback)); return *this; }
+		tree_view& on_item_expanding(notify_callback callback) { register_notify_callback(TVN_ITEMEXPANDING, std::move(callback)); return *this; }
+		tree_view& on_item_expanded(notify_callback callback) { register_notify_callback(TVN_ITEMEXPANDED, std::move(callback)); return *this; }
+		tree_view& on_selection_changing(notify_callback callback) { register_notify_callback(TVN_SELCHANGING, std::move(callback)); return *this; }
+		tree_view& on_selection_changed(notify_callback callback) { register_notify_callback(TVN_SELCHANGED, std::move(callback)); return *this; }
+		tree_view& on_key_down(notify_callback callback) { register_notify_callback(TVN_KEYDOWN, std::move(callback)); return *this; }
+		tree_view& on_get_info_tip(notify_callback callback) { register_notify_callback(TVN_GETINFOTIP, std::move(callback)); return *this; }
+		tree_view& on_single_expand(notify_callback callback) { register_notify_callback(TVN_SINGLEEXPAND, std::move(callback)); return *this; }
+		tree_view& on_item_changed(notify_callback callback) { register_notify_callback(TVN_ITEMCHANGED, std::move(callback)); return *this; }
+		tree_view& on_item_changing(notify_callback callback) { register_notify_callback(TVN_ITEMCHANGING, std::move(callback)); return *this; }
+		tree_view& on_async_draw(notify_callback callback) { register_notify_callback(TVN_ASYNCDRAW, std::move(callback)); return *this; }
+
 		UINT get_count() const {
 			return TreeView_GetCount(m_handle);
 		}

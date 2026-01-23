@@ -7,6 +7,8 @@ namespace wpp
 	public:
 		using control::control;
 
+		up_down_control& on_delta_pos(notify_callback callback) { register_notify_callback(UDN_DELTAPOS, std::move(callback)); return *this; }
+
 		UINT get_accel(int nAccel, UDACCEL* pAccel) const {
 			return (UINT)LOWORD(SendMessage(m_handle, UDM_GETACCEL, nAccel, (LPARAM)pAccel));
 		}

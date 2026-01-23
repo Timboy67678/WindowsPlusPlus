@@ -44,13 +44,13 @@ namespace wpp
 		iterator begin() const { return iterator(this, 0); }
 		iterator end() const { return iterator(this, get_count()); }
 
-		combo_box& on_sel_change(command_callback callback) { register_command_callback(CBN_SELCHANGE, callback); return *this; }
-		combo_box& on_sel_end_ok(command_callback callback) { register_command_callback(CBN_SELENDOK, callback); return *this; }
-		combo_box& on_sel_end_cancel(command_callback callback) { register_command_callback(CBN_SELENDCANCEL, callback); return *this; }
-		combo_box& on_dropdown(command_callback callback) { register_command_callback(CBN_DROPDOWN, callback); return *this; }
-		combo_box& on_close_up(command_callback callback) { register_command_callback(CBN_CLOSEUP, callback); return *this; }
-		combo_box& on_edit_change(command_callback callback) { register_command_callback(CBN_EDITCHANGE, callback); return *this; }
-		combo_box& on_edit_update(command_callback callback) { register_command_callback(CBN_EDITUPDATE, callback); return *this; }
+		combo_box& on_sel_change(command_callback callback) { register_command_callback(CBN_SELCHANGE, std::move(callback)); return *this; }
+		combo_box& on_sel_end_ok(command_callback callback) { register_command_callback(CBN_SELENDOK, std::move(callback)); return *this; }
+		combo_box& on_sel_end_cancel(command_callback callback) { register_command_callback(CBN_SELENDCANCEL, std::move(callback)); return *this; }
+		combo_box& on_dropdown(command_callback callback) { register_command_callback(CBN_DROPDOWN, std::move(callback)); return *this; }
+		combo_box& on_close_up(command_callback callback) { register_command_callback(CBN_CLOSEUP, std::move(callback)); return *this; }
+		combo_box& on_edit_change(command_callback callback) { register_command_callback(CBN_EDITCHANGE, std::move(callback)); return *this; }
+		combo_box& on_edit_update(command_callback callback) { register_command_callback(CBN_EDITUPDATE, std::move(callback)); return *this; }
 
 		int get_count() const {
 			return ComboBox_GetCount(m_handle);

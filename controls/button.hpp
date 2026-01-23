@@ -7,9 +7,9 @@ namespace wpp
 	public:
 		using control::control;
 
-		button& on_click(command_callback cb) { register_command_callback(BN_CLICKED, cb); return *this; }
-		button& on_dbl_click(command_callback cb) { register_command_callback(BN_DBLCLK, cb); return *this; }
-		button& on_mouseover(notify_callback cb) {register_notify_callback(BCN_HOTITEMCHANGE, cb); return *this; }
+		button& on_click(command_callback cb) { register_command_callback(BN_CLICKED, std::move(cb)); return *this; }
+		button& on_dbl_click(command_callback cb) { register_command_callback(BN_DBLCLK, std::move(cb)); return *this; }
+		button& on_mouseover(notify_callback cb) {register_notify_callback(BCN_HOTITEMCHANGE, std::move(cb)); return *this; }
 
 		int get_checked() const {
 			return Button_GetCheck(m_handle);

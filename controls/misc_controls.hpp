@@ -7,6 +7,8 @@ namespace wpp
 	public:
 		using control::control;
 
+		ipv4_address& on_field_changed(notify_callback callback) { register_notify_callback(IPN_FIELDCHANGED, std::move(callback)); return *this; }
+
 		BOOL is_blank() const {
 			return (BOOL)SendMessage(m_handle, IPM_ISBLANK, 0, 0L);
 		}

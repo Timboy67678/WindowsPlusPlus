@@ -9,6 +9,12 @@ namespace wpp
 	public:
 		using control::control;
 
+		tab_control& on_selection_change(notify_callback callback) { register_notify_callback(TCN_SELCHANGE, std::move(callback)); return *this; }
+		tab_control& on_selection_changing(notify_callback callback) { register_notify_callback(TCN_SELCHANGING, std::move(callback)); return *this; }
+		tab_control& on_key_down(notify_callback callback) { register_notify_callback(TCN_KEYDOWN, std::move(callback)); return *this; }
+		tab_control& on_get_object(notify_callback callback) { register_notify_callback(TCN_GETOBJECT, std::move(callback)); return *this; }
+		tab_control& on_focus_change(notify_callback callback) { register_notify_callback(TCN_FOCUSCHANGE, std::move(callback)); return *this; }
+
 		image_list get_image_list() const {
 			return image_list{ (HIMAGELIST)SendMessage(m_handle, TCM_GETIMAGELIST, 0, 0L) };
 		}
