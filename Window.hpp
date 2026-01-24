@@ -340,6 +340,7 @@ namespace wpp
 	private:
 		void init_message_events();
 		void cleanup();
+		BOOL handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
 
 	protected:
 		window_class m_window_class; ///< Window class.

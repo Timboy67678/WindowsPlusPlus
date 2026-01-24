@@ -56,6 +56,43 @@ namespace wpp
 		::DestroyMenu(m_menu);
 	}
 
+	BOOL dialog::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
+		HWND hScrollBar = (HWND)lParam;
+
+		auto scrollbar = get_control_by_handle<scroll_bar>(hScrollBar);
+		if (scrollbar) {
+			int action = LOWORD(wParam);
+			switch (action) {
+			case SB_LINEUP:
+				scrollbar->scroll_up(1, FALSE);
+				break;
+			case SB_LINEDOWN:
+				scrollbar->scroll_down(1, FALSE);
+				break;
+			case SB_PAGEUP:
+				scrollbar->page_up(FALSE);
+				break;
+			case SB_PAGEDOWN:
+				scrollbar->page_down(FALSE);
+				break;
+			case SB_THUMBTRACK:
+			case SB_THUMBPOSITION:
+				scrollbar->set_scroll_pos(HIWORD(wParam), TRUE);
+				break;
+			case SB_TOP:
+				scrollbar->scroll_to_top(FALSE);
+				break;
+			case SB_BOTTOM:
+				scrollbar->scroll_to_bottom(FALSE);
+				break;
+			}
+
+			scrollbar->on_scroll_event(orientation, wParam, lParam);
+			return TRUE;
+		}
+		return FALSE;
+	}
+
 	void dialog::show_dialog() {
 		::ShowWindow(m_handle, SW_SHOWNORMAL);
 	}
@@ -165,94 +202,14 @@ namespace wpp
 
 	INT_PTR dialog::on_h_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		if (lParam != 0) {
-			HWND hScrollBar = (HWND)lParam;
-
-			for (const auto& control : m_controls) {
-				if (control && control->get_handle() == hScrollBar) {
-					auto scrollbar = std::dynamic_pointer_cast<scroll_bar>(control);
-					if (scrollbar) {
-						int action = LOWORD(wParam);
-						int newPos = scrollbar->get_scroll_pos();
-
-						switch (action) {
-						case SB_LINEUP:
-							newPos = scrollbar->scroll_up(1, FALSE);
-							break;
-						case SB_LINEDOWN:
-							newPos = scrollbar->scroll_down(1, FALSE);
-							break;
-						case SB_PAGEUP:
-							newPos = scrollbar->page_up(FALSE);
-							break;
-						case SB_PAGEDOWN:
-							newPos = scrollbar->page_down(FALSE);
-							break;
-						case SB_THUMBTRACK:
-						case SB_THUMBPOSITION:
-							newPos = HIWORD(wParam);
-							scrollbar->set_scroll_pos(newPos, TRUE);
-							break;
-						case SB_TOP:
-							newPos = scrollbar->scroll_to_top(FALSE);
-							break;
-						case SB_BOTTOM:
-							newPos = scrollbar->scroll_to_bottom(FALSE);
-							break;
-						}
-
-						scrollbar->on_scroll_event(scroll_orientation::horizontal, wParam, lParam);
-						return TRUE;
-					}
-					break;
-				}
-			}
+			return handle_scroll_message(scroll_orientation::horizontal, wParam, lParam);
 		}
 		return FALSE;
 	}
 
 	INT_PTR dialog::on_v_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		if (lParam != 0) {
-			HWND hScrollBar = (HWND)lParam;
-
-			for (const auto& control : m_controls) {
-				if (control && control->get_handle() == hScrollBar) {
-					auto scrollbar = std::dynamic_pointer_cast<scroll_bar>(control);
-					if (scrollbar) {
-						int action = LOWORD(wParam);
-						int newPos = scrollbar->get_scroll_pos();
-
-						switch (action) {
-						case SB_LINEUP:
-							newPos = scrollbar->scroll_up(1, FALSE);
-							break;
-						case SB_LINEDOWN:
-							newPos = scrollbar->scroll_down(1, FALSE);
-							break;
-						case SB_PAGEUP:
-							newPos = scrollbar->page_up(FALSE);
-							break;
-						case SB_PAGEDOWN:
-							newPos = scrollbar->page_down(FALSE);
-							break;
-						case SB_THUMBTRACK:
-						case SB_THUMBPOSITION:
-							newPos = HIWORD(wParam);
-							scrollbar->set_scroll_pos(newPos, TRUE);
-							break;
-						case SB_TOP:
-							newPos = scrollbar->scroll_to_top(FALSE);
-							break;
-						case SB_BOTTOM:
-							newPos = scrollbar->scroll_to_bottom(FALSE);
-							break;
-						}
-
-						scrollbar->on_scroll_event(scroll_orientation::vertical, wParam, lParam);
-						return TRUE;
-					}
-					break;
-				}
-			}
+			return handle_scroll_message(scroll_orientation::vertical, wParam, lParam);
 		}
 		return FALSE;
 	}

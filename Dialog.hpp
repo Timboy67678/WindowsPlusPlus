@@ -224,6 +224,7 @@ namespace wpp
 	private:
 		void init_message_events();
 		void cleanup();
+		BOOL handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
 
 	protected:
 		std::map<UINT_PTR, menu_callback> m_menu_command_events;
