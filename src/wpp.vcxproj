@@ -143,7 +143,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dialog.cpp" />
-    <ClCompile Include="message_loop.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>

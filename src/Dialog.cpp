@@ -124,7 +124,7 @@ namespace wpp
 		return ::DialogBoxParam(m_main_instance, MAKEINTRESOURCE(m_item_id), parent, thunk->GetThunk(), (LPARAM)param);
 	}
 
-	HWND dialog::create_modeless(HWND parent, LPVOID param) {
+	void dialog::create_modeless(HWND parent, LPVOID param) {
 		m_parent_handle = parent;
 		m_is_modeless = true;
 		auto thunk = new Win32Thunk<DLGPROC, dialog>{ &dialog::dialog_proc, this };
@@ -136,7 +136,6 @@ namespace wpp
 		if (m_handle) {
 			::ShowWindow(m_handle, SW_SHOWNORMAL);
 		}
-		return m_handle;
 	}
 
 #pragma region Overrides

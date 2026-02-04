@@ -70,7 +70,7 @@ namespace wpp
 		* @param param Additional parameter (default is NULL).
 		* @return The handle to the created modeless dialog.
 		*/
-		virtual HWND create_modeless(HWND parent = NULL, LPVOID param = NULL);
+		virtual void create_modeless(HWND parent = NULL, LPVOID param = NULL);
 
 		/**
 		* @brief The dialog procedure.
@@ -119,7 +119,7 @@ namespace wpp
 		* @param timer_elapse The timer elapse time.
 		* @param callback The callback function.
 		*/
-		template < typename DC >
+		template<typename DC>
 		void add_timer(INT timer_elapse, DC callback) {
 			const UINT_PTR timer_id = ++m_internal_timerid + DIALOG_TIMER_OFFSET_START;
 			if (::SetTimer(m_handle, timer_id, timer_elapse, NULL) != 0)
