@@ -24,6 +24,9 @@
     <ClCompile Include="window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="message_loop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\winplusplus.h">
@@ -35,7 +38,7 @@
     <ClInclude Include="..\window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Thunk.hpp">
+    <ClInclude Include="..\thunk.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common.hpp">
@@ -109,6 +112,9 @@
     </ClInclude>
     <ClInclude Include="..\controls\updown_control.hpp">
       <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\message_loop.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

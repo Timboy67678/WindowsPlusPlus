@@ -1,5 +1,5 @@
 #include "../dialog.hpp"
-#include "../Thunk.hpp"
+#include "../thunk.hpp"
 
 namespace wpp
 {
@@ -56,8 +56,11 @@ namespace wpp
 		::DestroyMenu(m_menu);
 	}
 
-	BOOL dialog::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
-		HWND hScrollBar = (HWND)lParam;
+	bool dialog::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
+		if(lParam == NULL)
+			return false;
+
+		HWND hScrollBar = reinterpret_cast<HWND>(lParam);
 
 		auto scrollbar = get_control_by_handle<scroll_bar>(hScrollBar);
 		if (scrollbar) {
@@ -88,9 +91,9 @@ namespace wpp
 			}
 
 			scrollbar->on_scroll_event(orientation, wParam, lParam);
-			return TRUE;
+			return true;
 		}
-		return FALSE;
+		return false;
 	}
 
 	void dialog::show_dialog() {
@@ -103,13 +106,37 @@ namespace wpp
 
 	void dialog::end_dialog() {
 		cleanup();
-		::EndDialog(m_handle, 0);
+		if (m_is_modeless) {
+			::DestroyWindow(m_handle);
+		} else {
+			::EndDialog(m_handle, 0);
+		}
 	}
 
 	INT_PTR dialog::run_dlg(HWND parent, LPVOID param) {
 		m_parent_handle = parent;
-		Win32Thunk<DLGPROC, dialog> thunk{ &dialog::dialog_proc, this };
-		return ::DialogBoxParam(m_main_instance, MAKEINTRESOURCE(m_item_id), parent, thunk.GetThunk(), (LPARAM)param);
+		m_is_modeless = false;
+		auto thunk = new Win32Thunk<DLGPROC, dialog>{ &dialog::dialog_proc, this };
+		m_thunk_storage = std::unique_ptr<void, void(*)(void*)>(
+			thunk,
+			+[](void* p) { delete static_cast<Win32Thunk<DLGPROC, dialog>*>(p); }
+		);
+		return ::DialogBoxParam(m_main_instance, MAKEINTRESOURCE(m_item_id), parent, thunk->GetThunk(), (LPARAM)param);
+	}
+
+	HWND dialog::create_modeless(HWND parent, LPVOID param) {
+		m_parent_handle = parent;
+		m_is_modeless = true;
+		auto thunk = new Win32Thunk<DLGPROC, dialog>{ &dialog::dialog_proc, this };
+		m_thunk_storage = std::unique_ptr<void, void(*)(void*)>(
+			thunk,
+			+[](void* p) { delete static_cast<Win32Thunk<DLGPROC, dialog>*>(p); }
+		);
+		m_handle = ::CreateDialogParam(m_main_instance, MAKEINTRESOURCE(m_item_id), parent, thunk->GetThunk(), (LPARAM)param);
+		if (m_handle) {
+			::ShowWindow(m_handle, SW_SHOWNORMAL);
+		}
+		return m_handle;
 	}
 
 #pragma region Overrides

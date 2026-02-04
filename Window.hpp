@@ -2,6 +2,7 @@
 #define __WINDOW_H__
 
 #include "winplusplus.h"
+#include "message_loop.hpp"
 
 constexpr auto WINDOW_TIMER_OFFSET_START = 0x2374;
 
@@ -30,7 +31,7 @@ namespace wpp
 		 * @param style Class style.
 		 * @param extra Extra bytes.
 		 */
-		window_class(LPCTSTR name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
+		window_class(const std::tstring& name, HINSTANCE instance = NULL, HICON icon = NULL, HCURSOR cursor = NULL,
 					 HBRUSH background = (HBRUSH)(COLOR_WINDOW), LPCTSTR menu = NULL, UINT style = 0, int extra = 0) {
 			ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
 			m_window_class.cbSize = sizeof(WNDCLASSEX);
@@ -42,8 +43,13 @@ namespace wpp
 			m_window_class.hCursor = cursor;
 			m_window_class.hbrBackground = background;
 			m_window_class.lpszMenuName = menu;
-			m_window_class.lpszClassName = name;
+			m_window_class.lpszClassName = name.c_str();
 			m_window_class.hIconSm = icon;
+		}
+
+		window_class(WNDCLASS window_class) {
+			ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
+			std::memcpy(&m_window_class, &window_class, sizeof(WNDCLASS));
 		}
 
 	protected:
@@ -132,7 +138,7 @@ namespace wpp
 			* @param initial_state Initial state of the button.
 			* @return Pointer to the created radio button.
 			*/
-			std::shared_ptr<radio_button> create_button(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = FALSE);
+			std::shared_ptr<radio_button> create_button(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state = FALSE);
 
 			/**
 			* @brief Gets the index of the selected radio button.
@@ -159,7 +165,7 @@ namespace wpp
 		 * @param param Additional parameters.
 		 * @param style_ex Extended window style.
 		 */
-		window(window_class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
+		window(window_class wnd_class, const std::tstring& window_name, int x_pos, int y_pos, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
 			   int menu_id = -1, HMENU menu = NULL, HFONT font = NULL, DWORD style_ex = 0);
 
 		/**
@@ -188,7 +194,17 @@ namespace wpp
 		virtual message_handler on_ctl_color_static;
 
 		/**
-		 * @brief Runs the window message loop.
+		 * @brief Creates the window without running a message loop.
+		 * @param parent_window Parent window handle.
+		 * @param param Additional parameters.
+		 * @return True if window was created successfully, false otherwise.
+		 */
+		virtual bool create_window(HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
+
+		/**
+		 * @brief Runs the window with its own message loop.
+		 * @param parent_window Parent window handle.
+		 * @param param Additional parameters.
 		 * @return True if window was created and ran, false otherwise.
 		 */
 		virtual bool run_window(HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
@@ -203,41 +219,39 @@ namespace wpp
 		 */
 		virtual LRESULT window_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-		/**
-		 * @brief Displays a message box.
-		 * @param message Message text.
-		 * @param title Title text.
-		 * @param type Message box type.
-		 * @return Result of the message box.
-		 */
-		virtual int message_box(LPCTSTR message, LPCTSTR title, UINT type);
+		int message_box(const std::tstring& message, const std::tstring& title, UINT type) {
+			return ::MessageBox(m_handle, message.c_str(), title.c_str(), type);
+		}
 
-		/**
-		 * @brief Displays an information message box.
-		 * @param title Title text.
-		 * @param fmt Format string.
-		 * @param ... Additional arguments.
-		 * @return Result of the message box.
-		 */
-		virtual int message_box_info(LPCTSTR title, LPCTSTR fmt, ...);
+		template<typename... Args>
+		int message_box_info(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
+#ifdef _UNICODE
+			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
+#else
+			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
+#endif
+			return message_box(message, title, MB_OK | MB_ICONINFORMATION);
+		}
 
-		/**
-		 * @brief Displays an error message box.
-		 * @param title Title text.
-		 * @param fmt Format string.
-		 * @param ... Additional arguments.
-		 * @return Result of the message box.
-		 */
-		virtual int message_box_error(LPCTSTR title, LPCTSTR fmt, ...);
+		template<typename... Args>
+		int message_box_error(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
+#ifdef _UNICODE
+			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
+#else
+			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
+#endif
+			return message_box(message, title, MB_OK | MB_ICONERROR);
+		}
 
-		/**
-		 * @brief Displays a warning message box.
-		 * @param title Title text.
-		 * @param fmt Format string.
-		 * @param ... Additional arguments.
-		 * @return Result of the message box.
-		 */
-		virtual int message_box_warn(LPCTSTR title, LPCTSTR fmt, ...);
+		template<typename... Args>
+		int message_box_warn(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
+#ifdef _UNICODE
+			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
+#else
+			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
+#endif
+			return message_box(message, title, MB_OK | MB_ICONWARNING);
+		}
 
 		/**
 		 * @brief Shows the window.
@@ -267,20 +281,20 @@ namespace wpp
 		std::shared_ptr<window::radio_button_group> create_radio_button_group();
 
 		// Create window controls
-		std::shared_ptr<button> create_button(LPCTSTR text, int x, int y, int width, int height);
-		std::shared_ptr<check_box> create_check_box(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state = false);
-		std::shared_ptr<group_box> create_group_box(LPCTSTR text, int x, int y, int width, int height);
-		std::shared_ptr<static_control> create_static_control(LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<button> create_button(const std::tstring& text, int x, int y, int width, int height);
+		std::shared_ptr<check_box> create_check_box(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state = false);
+		std::shared_ptr<group_box> create_group_box(const std::tstring& text, int x, int y, int width, int height);
+		std::shared_ptr<static_control> create_static_control(const std::tstring& text, int x, int y, int width, int height);
 		std::shared_ptr<combo_box> create_combo_box(int x, int y, int width, int height);
-		std::shared_ptr<edit_text> create_edit_text(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
+		std::shared_ptr<edit_text> create_edit_text(int x, int y, int width, int height, const std::tstring& initial_text = _T(""));
 		std::shared_ptr<list_box> create_list_box(int x, int y, int width, int height);
 		std::shared_ptr<list_view> create_list_view(int x, int y, int width, int height);
 		std::shared_ptr<tree_view> create_tree_view(int x, int y, int width, int height);
 		std::shared_ptr<tab_control> create_tab_control(int x, int y, int width, int height);
 		std::shared_ptr<progress_bar> create_progress_bar(int x, int y, int width, int height);
 		std::shared_ptr<up_down_control> create_spin_control(int x, int y, int width, int height);
-		std::shared_ptr<rich_edit_text> create_rich_edit(int x, int y, int width, int height, LPCTSTR initial_text = _T(""));
-		std::shared_ptr<sys_link> create_link_control(LPCTSTR text, int x, int y, int width, int height);
+		std::shared_ptr<rich_edit_text> create_rich_edit(int x, int y, int width, int height, const std::tstring& initial_text = _T(""));
+		std::shared_ptr<sys_link> create_link_control(const std::tstring& text, int x, int y, int width, int height);
 		std::shared_ptr<up_down_control> create_updown_control(int x, int y, int width, int height);
 
 		/**
@@ -319,13 +333,17 @@ namespace wpp
 			auto it = std::find_if(m_controls.begin(), m_controls.end(), [control_id](const std::shared_ptr<control>& control) {
 				return control && control->get_id() == control_id;
 			});
-
 			if (it != m_controls.end() && *it) {
 				return std::dynamic_pointer_cast<CtrlType>(*it);
 			}
 			return nullptr;
 		}
 
+		/**
+		* @brief Gets a control by its handle.
+		* @param handle The handle of the control.
+		* @return The control object.
+		*/
 		template<typename CtrlType = control>
 		inline std::shared_ptr<CtrlType> get_control_by_handle(HWND handle) {
 			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const std::shared_ptr<control>& control) {
@@ -343,6 +361,7 @@ namespace wpp
 		BOOL handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
 
 	protected:
+		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for window procedure.
 		window_class m_window_class; ///< Window class.
 		int m_x_pos, m_y_pos, m_width, m_height; ///< Window position and size.
 		std::tstring m_window_name; ///< Window name.

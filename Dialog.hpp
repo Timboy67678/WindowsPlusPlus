@@ -2,6 +2,7 @@
 #define __DIALOG_H__
 
 #include "winplusplus.h"
+#include "message_loop.hpp"
 
 constexpr auto DIALOG_TIMER_OFFSET_START = 0x1374;
 
@@ -63,6 +64,14 @@ namespace wpp
 		*/
 		virtual INT_PTR run_dlg(HWND parent = NULL, LPVOID param = NULL);
 
+		/** 
+		* @brief Creates a modeless dialog.
+		* @param parent The parent window handle (default is NULL).
+		* @param param Additional parameter (default is NULL).
+		* @return The handle to the created modeless dialog.
+		*/
+		virtual HWND create_modeless(HWND parent = NULL, LPVOID param = NULL);
+
 		/**
 		* @brief The dialog procedure.
 		* @param hWnd The window handle.
@@ -87,6 +96,13 @@ namespace wpp
 		* @brief Ends the dialog.
 		*/
 		void end_dialog();
+
+		/** 
+		* @brief Checks if the dialog is modeless.
+		* @return True if the dialog is modeless, false otherwise.
+		*/
+		bool is_modeless() const { return m_is_modeless; }
+
 
 		/**
 		* @brief Registers a menu command
@@ -119,10 +135,8 @@ namespace wpp
 		template<typename CtrlType = control>
 		bool register_control(UINT control_id, std::shared_ptr<CtrlType>& ctrl) {
 			ctrl = std::make_shared<CtrlType>(control_id, m_handle);
-
 			if (ctrl != nullptr)
 				m_controls.emplace_back(ctrl);
-
 			return ctrl != nullptr;
 		}
 
@@ -139,9 +153,14 @@ namespace wpp
 			return nullptr;
 		}
 
+		/**
+		* @brief Gets a control by its handle.
+		* @param handle The handle of the control.
+		* @return The control object.
+		*/
 		template<typename CtrlType = control>
 		inline std::shared_ptr<CtrlType> get_control_by_handle(HWND handle) {
-			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const std::shared_ptr<control>& control) {
+			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const auto& control) {
 				return control && control->get_handle() == handle;
 			});
 			if (it != m_controls.end() && *it) {
@@ -150,95 +169,62 @@ namespace wpp
 			return nullptr;
 		}
 
-		/**
-		* @brief Displays a message box.
-		* @param message The message to display.
-		* @param title The title of the message box.
-		* @param type The type of the message box.
-		* @return The result of the message box.
-		*/
-		virtual int message_box(LPCTSTR message, LPCTSTR title, UINT type) {
-			return ::MessageBox(m_handle, message, title, type);
+		int message_box(const std::tstring& message, const std::tstring& title, UINT type) {
+			return ::MessageBox(m_handle, message.c_str(), title.c_str(), type);
 		}
 
-		/**
-		* @brief Displays an information message box.
-		* @param title The title of the message box.
-		* @param fmt The format string.
-		* @param ... The format arguments.
-		* @return The result of the message box.
-		*/
-		virtual int message_box_info(LPCTSTR title, LPCTSTR fmt, ...) {
-			TCHAR buffer[1024 * 6] = { 0 };
-			va_list va;
-			va_start(va, fmt);
+		template<typename... Args>
+		int message_box_info(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
 #ifdef _UNICODE
-			_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
+			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
 #else
-			_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
+			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
 #endif
-			va_end(va);
-			return message_box(buffer, title, MB_OK | MB_ICONINFORMATION);
+			return message_box(message, title, MB_OK | MB_ICONINFORMATION);
 		}
 
-		/**
-		* @brief Displays an error message box.
-		* @param title The title of the message box.
-		* @param fmt The format string.
-		* @param ... The format arguments.
-		* @return The result of the message box.
-		*/
-		virtual int message_box_error(LPCTSTR title, LPCTSTR fmt, ...) {
-			TCHAR buffer[1024 * 6] = { 0 };
-			va_list va;
-			va_start(va, fmt);
+		template<typename... Args>
+		int message_box_error(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
 #ifdef _UNICODE
-			_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
+			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
 #else
-			_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
+			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
 #endif
-			va_end(va);
-			return message_box(buffer, title, MB_OK | MB_ICONERROR);
+			return message_box(message, title, MB_OK | MB_ICONERROR);
 		}
 
-		/**
-		* @brief Displays a warning message box.
-		* @param title The title of the message box.
-		* @param fmt The format string.
-		* @param ... The format arguments.
-		* @return The result of the message box.
-		*/
-		virtual int message_box_warn(LPCTSTR title, LPCTSTR fmt, ...) {
-			TCHAR buffer[1024 * 6] = { 0 };
-			va_list va;
-			va_start(va, fmt);
+		template<typename... Args>
+		int message_box_warn(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
 #ifdef _UNICODE
-			_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
+			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
 #else
-			_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
+			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
 #endif
-			va_end(va);
-			return message_box(buffer, title, MB_OK | MB_ICONWARNING);
+			return message_box(message, title, MB_OK | MB_ICONWARNING);
 		}
 
 	private:
 		void init_message_events();
 		void cleanup();
-		BOOL handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
+		bool handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
+
+		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for dialog procedure.
 
 	protected:
-		std::map<UINT_PTR, menu_callback> m_menu_command_events;
-		std::map<UINT_PTR, timer_callback> m_timer_events;
-		std::map<INT, dialog_message_callback> m_message_events;
-		std::vector<std::shared_ptr<control>> m_controls;
+		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
+		std::map<UINT_PTR, timer_callback> m_timer_events; ///< Timer events.
+		std::map<INT, dialog_message_callback> m_message_events; ///< Message events.
+		std::vector<std::shared_ptr<control>> m_controls; ///< Controls container.
 
-		UINT_PTR m_internal_timerid;
+		bool m_is_modeless = false; ///< Modeless flag.
 
-		HINSTANCE m_main_instance;
+		UINT_PTR m_internal_timerid; ///< Internal timer ID.
 
-		int m_menu_id;
+		HINSTANCE m_main_instance; ///< Main instance handle.
 
-		HMENU m_menu;
+		int m_menu_id; ///< Menu ID.
+
+		HMENU m_menu; ///< Menu handle.
 	};
 }
 

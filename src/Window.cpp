@@ -1,9 +1,9 @@
 #include "..\window.hpp"
-#include "..\Thunk.hpp"
+#include "..\thunk.hpp"
 
 namespace wpp
 {
-	window::window(window_class wnd_class, LPCTSTR window_name, int x_pos, int y_pos, int width, int height, DWORD style,
+	window::window(window_class wnd_class, const std::tstring& window_name, int x_pos, int y_pos, int width, int height, DWORD style,
 				   int menu_id, HMENU menu, HFONT font, DWORD style_ex)
 		: hwnd(NULL), m_window_class(wnd_class), m_window_name(window_name), m_x_pos(x_pos), m_y_pos(y_pos),
 		m_width(width), m_height(height), m_style(style), m_menu_id(menu_id), m_menu_handle(menu), m_font(font), m_style_ex(style_ex) {
@@ -100,14 +100,18 @@ namespace wpp
 		return FALSE;
 	}
 
-	bool window::run_window(HWND parent_window, LPVOID param) {
+	bool window::create_window(HWND parent_window, LPVOID param) {
 		m_parent_handle = parent_window;
 
 		if (m_window_class.atom() != NULL)
 			m_window_class.Unregister();
 
-		Win32Thunk<WNDPROC, window> thunk{ &window::window_proc, this };
-		m_window_class.get().lpfnWndProc = thunk.GetThunk();
+		auto thunk = new Win32Thunk<WNDPROC, window>{ &window::window_proc, this };
+		m_thunk_storage = std::unique_ptr<void, void(*)(void*)>(
+			thunk,
+			+[](void* p) { delete reinterpret_cast<Win32Thunk<WNDPROC, window>*>(p); }
+		);
+		m_window_class.get().lpfnWndProc = thunk->GetThunk();
 		m_window_class.Register();
 
 		m_handle = ::CreateWindowEx(m_style_ex, m_window_class.class_name(), m_window_name.c_str(), m_style,
@@ -115,8 +119,6 @@ namespace wpp
 
 		if (!m_handle)
 			return false;
-
-		show_window();
 
 		if (m_font == NULL)
 			m_font = ::CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -127,9 +129,20 @@ namespace wpp
 		for (auto& control : m_controls)
 			control->set_font(m_font);
 
+		show_window();
 		::UpdateWindow(m_handle);
 
 		m_window_running = true;
+
+		return true;
+	}
+
+	bool window::run_window(HWND parent_window, LPVOID param) {
+		if (!create_window(parent_window, param))
+			return false;
+
+		show_window();
+		::UpdateWindow(m_handle);
 
 		MSG msg;
 		while (m_window_running && ::GetMessage(&msg, NULL, NULL, NULL)) {
@@ -160,14 +173,14 @@ namespace wpp
 #pragma region Window Control Creators
 #pragma warning(push)
 #pragma warning(disable: 4312)
-	std::shared_ptr<radio_button> window::radio_button_group::create_button(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state) {
+	std::shared_ptr<radio_button> window::radio_button_group::create_button(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state) {
 		auto control_id = m_parent->m_control_id++;
 
 		DWORD style = WS_CHILD | WS_VISIBLE | WS_OVERLAPPED;
 		if (m_radio_buttons.empty())
 			style |= WS_GROUP;
 
-		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTORADIOBUTTON | style,
+		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_AUTORADIOBUTTON | style,
 												   x, y, width, height, m_parent->m_handle, reinterpret_cast<HMENU>(control_id), m_parent->m_window_class.instance(), NULL);
 		if (!radiobutton_handle)
 			return nullptr;
@@ -197,10 +210,10 @@ namespace wpp
 		return std::make_shared<radio_button_group>(this);
 	}
 
-	std::shared_ptr<button> window::create_button(LPCTSTR text, int x, int y, int width, int height) {
+	std::shared_ptr<button> window::create_button(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
-		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
+		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
 											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!button_handle)
 			return nullptr;
@@ -215,10 +228,10 @@ namespace wpp
 		return button_ctrl;
 	}
 
-	std::shared_ptr<check_box> window::create_check_box(LPCTSTR text, int x, int y, int width, int height, BOOL initial_state) {
+	std::shared_ptr<check_box> window::create_check_box(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state) {
 		auto control_id = m_control_id++;
 
-		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
+		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!checkbox_handle)
 			return nullptr;
@@ -234,10 +247,10 @@ namespace wpp
 		return checkbox;
 	}
 
-	std::shared_ptr<group_box> window::create_group_box(LPCTSTR text, int x, int y, int width, int height) {
+	std::shared_ptr<group_box> window::create_group_box(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
-		HWND groupbox_handle = ::CreateWindowEx(0, WC_BUTTON, text, BS_GROUPBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
+		HWND groupbox_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_GROUPBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!groupbox_handle)
 			return nullptr;
@@ -252,10 +265,10 @@ namespace wpp
 		return groupbox;
 	}
 
-	std::shared_ptr<static_control> window::create_static_control(LPCTSTR text, int x, int y, int width, int height) {
+	std::shared_ptr<static_control> window::create_static_control(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
-		HWND static_handle = ::CreateWindowEx(0, WC_STATIC, text, SS_LEFT | WS_CHILD | WS_VISIBLE,
+		HWND static_handle = ::CreateWindowEx(0, WC_STATIC, text.c_str(), SS_LEFT | WS_CHILD | WS_VISIBLE,
 											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!static_handle)
 			return nullptr;
@@ -288,10 +301,10 @@ namespace wpp
 		return combobox;
 	}
 
-	std::shared_ptr<edit_text> window::create_edit_text(int x, int y, int width, int height, LPCTSTR initial_text) {
+	std::shared_ptr<edit_text> window::create_edit_text(int x, int y, int width, int height, const std::tstring& initial_text) {
 		auto control_id = m_control_id++;
 
-		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text, ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE,
+		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text.c_str(), ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!edittext_handle)
 			return nullptr;
@@ -414,7 +427,7 @@ namespace wpp
 		return spincontrol;
 	}
 
-	std::shared_ptr<rich_edit_text> window::create_rich_edit(int x, int y, int width, int height, LPCTSTR initial_text) {
+	std::shared_ptr<rich_edit_text> window::create_rich_edit(int x, int y, int width, int height, const std::tstring& initial_text) {
 		auto control_id = m_control_id++;
 
 		if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) {
@@ -423,7 +436,7 @@ namespace wpp
 			}
 		}
 
-		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text, ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE,
+		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text.c_str(), ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!richedit_handle) {
 			return nullptr;
@@ -439,10 +452,10 @@ namespace wpp
 		return richedit;
 	}
 
-	std::shared_ptr<sys_link> window::create_link_control(LPCTSTR text, int x, int y, int width, int height) {
+	std::shared_ptr<sys_link> window::create_link_control(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
-		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text, WS_CHILD | WS_VISIBLE,
+		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text.c_str(), WS_CHILD | WS_VISIBLE,
 												   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!linkcontrol_handle)
 			return nullptr;
@@ -606,50 +619,4 @@ namespace wpp
 		m_window_running = false;
 		cleanup();
 	}
-
-#pragma region Message Box Abstracts
-	int window::message_box(LPCTSTR message, LPCTSTR title, UINT type) {
-		return ::MessageBox(m_handle, message, title, type);
-	}
-
-	int window::message_box_info(LPCTSTR title, LPCTSTR fmt, ...) {
-		TCHAR buffer[1024 * 6] = { 0 };
-		va_list va;
-		va_start(va, fmt);
-#ifdef _UNICODE
-		_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
-#else
-		_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
-#endif
-		va_end(va);
-		return message_box(buffer, title, MB_OK | MB_ICONINFORMATION);
-	}
-
-	int window::message_box_error(LPCTSTR title, LPCTSTR fmt, ...) {
-		TCHAR buffer[1024 * 6] = { 0 };
-		va_list va;
-		va_start(va, fmt);
-#ifdef _UNICODE
-		_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
-#else
-		_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
-#endif
-		va_end(va);
-		return message_box(buffer, title, MB_OK | MB_ICONERROR);
-	}
-
-	int window::message_box_warn(LPCTSTR title, LPCTSTR fmt, ...) {
-		TCHAR buffer[1024 * 6] = { 0 };
-		va_list va;
-		va_start(va, fmt);
-#ifdef _UNICODE
-		_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
-#else
-		_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, va);
-#endif
-		va_end(va);
-		return message_box(buffer, title, MB_OK | MB_ICONWARNING);
-	}
-#pragma endregion
-
 }

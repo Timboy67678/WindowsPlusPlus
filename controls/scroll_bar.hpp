@@ -16,9 +16,13 @@ namespace wpp
 		using scroll_callback = std::function<void(scroll_orientation, WPARAM, LPARAM)>;
 
 		scroll_bar& on_scroll(scroll_callback callback) {
-			if(callback)
+			if (callback)
 				m_scroll_callbacks.push_back(std::move(callback));
 			return *this;
+		}
+
+		void remove_all_scroll_callbacks() {
+			m_scroll_callbacks.clear();
 		}
 
 		int get_scroll_pos() const {
@@ -349,7 +353,7 @@ namespace wpp
 			set_scroll_pos(get_min_pos(), TRUE);
 		}
 
-	private:
+	protected:
 		void on_scroll_event(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
 			for (const auto& callback : m_scroll_callbacks) {
 				if (callback)
@@ -357,6 +361,7 @@ namespace wpp
 			}
 		}
 
+	private:
 		std::vector<scroll_callback> m_scroll_callbacks;
 	};
 }

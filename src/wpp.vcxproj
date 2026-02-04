@@ -143,6 +143,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="message_loop.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -171,7 +172,8 @@
     <ClInclude Include="..\controls\tree_view.hpp" />
     <ClInclude Include="..\controls\updown_control.hpp" />
     <ClInclude Include="..\dialog.hpp" />
-    <ClInclude Include="..\Thunk.hpp" />
+    <ClInclude Include="..\message_loop.hpp" />
+    <ClInclude Include="..\thunk.hpp" />
     <ClInclude Include="..\window.hpp" />
     <ClInclude Include="..\winplusplus.h" />
   </ItemGroup>
