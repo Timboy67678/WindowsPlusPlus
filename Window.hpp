@@ -1,7 +1,7 @@
 #ifndef __WINDOW_H__
 #define __WINDOW_H__
 
-#include "winplusplus.h"
+#include "winplusplus.hpp"
 #include "message_loop.hpp"
 
 constexpr auto WINDOW_TIMER_OFFSET_START = 0x2374;
@@ -138,7 +138,7 @@ namespace wpp
 			* @param initial_state Initial state of the button.
 			* @return Pointer to the created radio button.
 			*/
-			std::shared_ptr<radio_button> create_button(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state = FALSE);
+			control_ptr<radio_button> create_button(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state = FALSE);
 
 			/**
 			* @brief Gets the index of the selected radio button.
@@ -147,7 +147,7 @@ namespace wpp
 			int selected_index();
 
 		private:
-			std::vector<std::shared_ptr<radio_button>> m_radio_buttons; ///< Vector of radio buttons.
+			std::vector<control_ptr<radio_button>> m_radio_buttons; ///< Vector of radio buttons.
 			window* m_parent; ///< Pointer to the parent window.
 		};
 
@@ -278,24 +278,24 @@ namespace wpp
 		* @brief Creates a radio button group.
 		* @return Pointer to the created radio button group.
 		*/
-		std::shared_ptr<window::radio_button_group> create_radio_button_group();
+		control_ptr<window::radio_button_group> create_radio_button_group();
 
 		// Create window controls
-		std::shared_ptr<button> create_button(const std::tstring& text, int x, int y, int width, int height);
-		std::shared_ptr<check_box> create_check_box(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state = false);
-		std::shared_ptr<group_box> create_group_box(const std::tstring& text, int x, int y, int width, int height);
-		std::shared_ptr<static_control> create_static_control(const std::tstring& text, int x, int y, int width, int height);
-		std::shared_ptr<combo_box> create_combo_box(int x, int y, int width, int height);
-		std::shared_ptr<edit_text> create_edit_text(int x, int y, int width, int height, const std::tstring& initial_text = _T(""));
-		std::shared_ptr<list_box> create_list_box(int x, int y, int width, int height);
-		std::shared_ptr<list_view> create_list_view(int x, int y, int width, int height);
-		std::shared_ptr<tree_view> create_tree_view(int x, int y, int width, int height);
-		std::shared_ptr<tab_control> create_tab_control(int x, int y, int width, int height);
-		std::shared_ptr<progress_bar> create_progress_bar(int x, int y, int width, int height);
-		std::shared_ptr<up_down_control> create_spin_control(int x, int y, int width, int height);
-		std::shared_ptr<rich_edit_text> create_rich_edit(int x, int y, int width, int height, const std::tstring& initial_text = _T(""));
-		std::shared_ptr<sys_link> create_link_control(const std::tstring& text, int x, int y, int width, int height);
-		std::shared_ptr<up_down_control> create_updown_control(int x, int y, int width, int height);
+		control_ptr<button> create_button(const std::tstring& text, int x, int y, int width, int height);
+		control_ptr<check_box> create_check_box(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state = false);
+		control_ptr<group_box> create_group_box(const std::tstring& text, int x, int y, int width, int height);
+		control_ptr<static_control> create_static_control(const std::tstring& text, int x, int y, int width, int height);
+		control_ptr<combo_box> create_combo_box(int x, int y, int width, int height);
+		control_ptr<edit_text> create_edit_text(int x, int y, int width, int height, const std::tstring& initial_text = _T(""));
+		control_ptr<list_box> create_list_box(int x, int y, int width, int height);
+		control_ptr<list_view> create_list_view(int x, int y, int width, int height);
+		control_ptr<tree_view> create_tree_view(int x, int y, int width, int height);
+		control_ptr<tab_control> create_tab_control(int x, int y, int width, int height);
+		control_ptr<progress_bar> create_progress_bar(int x, int y, int width, int height);
+		control_ptr<up_down_control> create_spin_control(int x, int y, int width, int height);
+		control_ptr<rich_edit_text> create_rich_edit(int x, int y, int width, int height, const std::tstring& initial_text = _T(""));
+		control_ptr<sys_link> create_link_control(const std::tstring& text, int x, int y, int width, int height);
+		control_ptr<up_down_control> create_updown_control(int x, int y, int width, int height);
 
 		/**
 		 * @brief Registers a menu control callback.
@@ -329,8 +329,8 @@ namespace wpp
 		* @return Pointer to the control.
 		*/
 		template<typename CtrlType = control>
-		inline std::shared_ptr<CtrlType> get_control(UINT control_id) {
-			auto it = std::find_if(m_controls.begin(), m_controls.end(), [control_id](const std::shared_ptr<control>& control) {
+		inline control_ptr<CtrlType> get_control(UINT control_id) {
+			auto it = std::find_if(m_controls.begin(), m_controls.end(), [control_id](const control_ptr<control>& control) {
 				return control && control->get_id() == control_id;
 			});
 			if (it != m_controls.end() && *it) {
@@ -345,8 +345,8 @@ namespace wpp
 		* @return The control object.
 		*/
 		template<typename CtrlType = control>
-		inline std::shared_ptr<CtrlType> get_control_by_handle(HWND handle) {
-			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const std::shared_ptr<control>& control) {
+		inline control_ptr<CtrlType> get_control_by_handle(HWND handle) {
+			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const control_ptr<control>& control) {
 				return control && control->get_handle() == handle;
 			});
 			if (it != m_controls.end() && *it) {
@@ -375,7 +375,7 @@ namespace wpp
 		std::map<INT, window_message_callback> m_message_events; ///< Message events.
 		std::map<UINT_PTR, timer_callback> m_timer_events; ///< Timer events.
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
-		std::vector<std::shared_ptr<control>> m_controls; ///< Controls container.
+		std::vector<control_ptr<>> m_controls; ///< Controls container.
 	};
 }
 

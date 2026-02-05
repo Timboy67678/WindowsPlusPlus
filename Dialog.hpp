@@ -1,7 +1,7 @@
 #ifndef __DIALOG_H__
 #define __DIALOG_H__
 
-#include "winplusplus.h"
+#include "winplusplus.hpp"
 #include "message_loop.hpp"
 
 constexpr auto DIALOG_TIMER_OFFSET_START = 0x1374;
@@ -68,7 +68,6 @@ namespace wpp
 		* @brief Creates a modeless dialog.
 		* @param parent The parent window handle (default is NULL).
 		* @param param Additional parameter (default is NULL).
-		* @return The handle to the created modeless dialog.
 		*/
 		virtual void create_modeless(HWND parent = NULL, LPVOID param = NULL);
 
@@ -79,6 +78,7 @@ namespace wpp
 		* @param wParam Additional message information.
 		* @param lParam Additional message information.
 		* @return The result of the message processing.
+		* @note if you override this method, make sure to call the base implementation for unhandled messages to ensure proper dialog behavior.
 		*/
 		virtual INT_PTR dialog_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
@@ -133,7 +133,7 @@ namespace wpp
 		* @return TRUE if successful, FALSE otherwise.
 		*/
 		template<typename CtrlType = control>
-		bool register_control(UINT control_id, std::shared_ptr<CtrlType>& ctrl) {
+		bool register_control(UINT control_id, control_ptr<CtrlType>& ctrl) {
 			ctrl = std::make_shared<CtrlType>(control_id, m_handle);
 			if (ctrl != nullptr)
 				m_controls.emplace_back(ctrl);
@@ -146,7 +146,7 @@ namespace wpp
 		* @return The control object.
 		*/
 		template<typename CtrlType = control>
-		std::shared_ptr<CtrlType> get_control(UINT control_id) {
+		control_ptr<CtrlType> get_control(UINT control_id) {
 			for (auto& control : m_controls)
 				if (control && control->get_id() == control_id)
 					return std::dynamic_pointer_cast<CtrlType>(control);
@@ -159,7 +159,7 @@ namespace wpp
 		* @return The control object.
 		*/
 		template<typename CtrlType = control>
-		inline std::shared_ptr<CtrlType> get_control_by_handle(HWND handle) {
+		inline control_ptr<CtrlType> get_control_by_handle(HWND handle) {
 			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const auto& control) {
 				return control && control->get_handle() == handle;
 			});
@@ -214,7 +214,7 @@ namespace wpp
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
 		std::map<UINT_PTR, timer_callback> m_timer_events; ///< Timer events.
 		std::map<INT, dialog_message_callback> m_message_events; ///< Message events.
-		std::vector<std::shared_ptr<control>> m_controls; ///< Controls container.
+		std::vector<control_ptr<>> m_controls; ///< Controls container.
 
 		bool m_is_modeless = false; ///< Modeless flag.
 

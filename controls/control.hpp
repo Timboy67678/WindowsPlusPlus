@@ -1,7 +1,7 @@
 #ifndef __INTERFACES_H__
 #define __INTERFACES_H__
 
-#include "..\common.hpp"
+#include "..\winplusplus.hpp"
 
 namespace wpp
 {
@@ -30,6 +30,10 @@ namespace wpp
 		control& on_hover(notify_callback callback) { register_notify_callback(NM_HOVER, std::move(callback)); return *this; }
 		control& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, std::move(callback)); return *this; }
 		control& on_released_capture(notify_callback callback) { register_notify_callback(NM_RELEASEDCAPTURE, std::move(callback)); return *this; }
+
+		bool is_valid() const { return m_handle && ::IsWindow(m_handle); }
+
+		explicit operator bool() const { return is_valid(); }
 
 		void set_item(HWND parent, int item_id) {
 			m_item_id = item_id;
@@ -236,6 +240,9 @@ namespace wpp
 		std::unordered_map<UINT, std::vector<command_callback>> m_command_callbacks;
 		std::unordered_map<UINT, std::vector<notify_callback>> m_notify_callbacks;
 	};
+
+	template<typename T = control>
+	using control_ptr = std::shared_ptr<T>;
 }
 
 #endif //__INTERFACES_H__

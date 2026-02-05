@@ -173,7 +173,7 @@ namespace wpp
 #pragma region Window Control Creators
 #pragma warning(push)
 #pragma warning(disable: 4312)
-	std::shared_ptr<radio_button> window::radio_button_group::create_button(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state) {
+	control_ptr<radio_button> window::radio_button_group::create_button(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state) {
 		auto control_id = m_parent->m_control_id++;
 
 		DWORD style = WS_CHILD | WS_VISIBLE | WS_OVERLAPPED;
@@ -206,11 +206,11 @@ namespace wpp
 		return -1;
 	}
 
-	std::shared_ptr<window::radio_button_group> window::create_radio_button_group() {
+	control_ptr<window::radio_button_group> window::create_radio_button_group() {
 		return std::make_shared<radio_button_group>(this);
 	}
 
-	std::shared_ptr<button> window::create_button(const std::tstring& text, int x, int y, int width, int height) {
+	control_ptr<button> window::create_button(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND button_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
@@ -228,7 +228,7 @@ namespace wpp
 		return button_ctrl;
 	}
 
-	std::shared_ptr<check_box> window::create_check_box(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state) {
+	control_ptr<check_box> window::create_check_box(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state) {
 		auto control_id = m_control_id++;
 
 		HWND checkbox_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
@@ -247,7 +247,7 @@ namespace wpp
 		return checkbox;
 	}
 
-	std::shared_ptr<group_box> window::create_group_box(const std::tstring& text, int x, int y, int width, int height) {
+	control_ptr<group_box> window::create_group_box(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND groupbox_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_GROUPBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED,
@@ -265,7 +265,7 @@ namespace wpp
 		return groupbox;
 	}
 
-	std::shared_ptr<static_control> window::create_static_control(const std::tstring& text, int x, int y, int width, int height) {
+	control_ptr<static_control> window::create_static_control(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND static_handle = ::CreateWindowEx(0, WC_STATIC, text.c_str(), SS_LEFT | WS_CHILD | WS_VISIBLE,
@@ -283,7 +283,7 @@ namespace wpp
 		return static_ctrl;
 	}
 
-	std::shared_ptr<combo_box> window::create_combo_box(int x, int y, int width, int height) {
+	control_ptr<combo_box> window::create_combo_box(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND combobox_handle = ::CreateWindowEx(0, WC_COMBOBOX, _T(""), CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
@@ -301,7 +301,7 @@ namespace wpp
 		return combobox;
 	}
 
-	std::shared_ptr<edit_text> window::create_edit_text(int x, int y, int width, int height, const std::tstring& initial_text) {
+	control_ptr<edit_text> window::create_edit_text(int x, int y, int width, int height, const std::tstring& initial_text) {
 		auto control_id = m_control_id++;
 
 		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text.c_str(), ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE,
@@ -319,7 +319,7 @@ namespace wpp
 		return edittext;
 	}
 
-	std::shared_ptr<list_box> window::create_list_box(int x, int y, int width, int height) {
+	control_ptr<list_box> window::create_list_box(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND listbox_handle = ::CreateWindowEx(0, WC_LISTBOX, _T(""), LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE,
@@ -337,7 +337,7 @@ namespace wpp
 		return listbox;
 	}
 
-	std::shared_ptr<list_view> window::create_list_view(int x, int y, int width, int height) {
+	control_ptr<list_view> window::create_list_view(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE,
@@ -355,7 +355,7 @@ namespace wpp
 		return listview;
 	}
 
-	std::shared_ptr<tree_view> window::create_tree_view(int x, int y, int width, int height) {
+	control_ptr<tree_view> window::create_tree_view(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
@@ -373,7 +373,7 @@ namespace wpp
 		return treeview;
 	}
 
-	std::shared_ptr<tab_control> window::create_tab_control(int x, int y, int width, int height) {
+	control_ptr<tab_control> window::create_tab_control(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
@@ -391,7 +391,7 @@ namespace wpp
 		return tabcontrol;
 	}
 
-	std::shared_ptr<progress_bar> window::create_progress_bar(int x, int y, int width, int height) {
+	control_ptr<progress_bar> window::create_progress_bar(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND progressbar_handle = ::CreateWindowEx(0, PROGRESS_CLASS, _T(""), PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE,
@@ -409,7 +409,7 @@ namespace wpp
 		return progressbar;
 	}
 
-	std::shared_ptr<up_down_control> window::create_spin_control(int x, int y, int width, int height) {
+	control_ptr<up_down_control> window::create_spin_control(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND spincontrol_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE,
@@ -427,7 +427,7 @@ namespace wpp
 		return spincontrol;
 	}
 
-	std::shared_ptr<rich_edit_text> window::create_rich_edit(int x, int y, int width, int height, const std::tstring& initial_text) {
+	control_ptr<rich_edit_text> window::create_rich_edit(int x, int y, int width, int height, const std::tstring& initial_text) {
 		auto control_id = m_control_id++;
 
 		if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) {
@@ -452,7 +452,7 @@ namespace wpp
 		return richedit;
 	}
 
-	std::shared_ptr<sys_link> window::create_link_control(const std::tstring& text, int x, int y, int width, int height) {
+	control_ptr<sys_link> window::create_link_control(const std::tstring& text, int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND linkcontrol_handle = ::CreateWindowEx(0, WC_LINK, text.c_str(), WS_CHILD | WS_VISIBLE,
@@ -470,7 +470,7 @@ namespace wpp
 		return linkcontrol;
 	}
 
-	std::shared_ptr<up_down_control> window::create_updown_control(int x, int y, int width, int height) {
+	control_ptr<up_down_control> window::create_updown_control(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
 		HWND updown_handle = ::CreateWindowEx(0, UPDOWN_CLASS, _T(""), UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE,

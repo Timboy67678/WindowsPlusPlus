@@ -20,7 +20,7 @@
 
 #include "resource.h"
 
-#include "..\..\winplusplus.h"
+#include "..\..\winplusplus.hpp"
 #include "..\..\dialog.hpp"
 #include "..\..\window.hpp"
 
