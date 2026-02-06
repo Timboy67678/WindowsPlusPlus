@@ -3,7 +3,7 @@
 constexpr auto DEFAULT_WINDOW_WIDTH = 800;
 constexpr auto DEFAULT_WINDOW_HEIGHT = 600;
 
-constexpr auto COLUMN_ONE_OFFSET = 50;
+constexpr auto COLUMN_ONE_OFFSET = 10;
 
 MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
     : window(window_class{ _T("MainWindowWPP"), instance },

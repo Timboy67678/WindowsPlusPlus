@@ -158,6 +158,14 @@ namespace wpp
 			return ::EnableWindow(m_handle, enabled);
 		}
 
+		virtual void set_topmost(BOOL topmost = TRUE) const {
+			::SetWindowPos(m_handle, topmost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		}
+
+		virtual bool is_topmost() const {
+			return (::GetWindowLong(m_handle, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+		}	
+
 		virtual HWND focus() {
 			return ::SetFocus(m_handle);
 		}

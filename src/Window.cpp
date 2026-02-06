@@ -120,9 +120,13 @@ namespace wpp
 		if (!m_handle)
 			return false;
 
-		if (m_font == NULL)
-			m_font = ::CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
-								  CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("MS Shell Dlg"));
+		// If no font was provided, create a default one (Segoe UI, 12pt)
+		if (m_font == NULL) {
+			m_font = ::CreateFont(
+				-12, 0, 0, 0,
+				FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Segoe UI"));
+		}
 
 		set_font(m_font);
 
@@ -272,7 +276,7 @@ namespace wpp
 											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!static_handle)
 			return nullptr;
-		
+
 		auto static_ctrl = std::make_shared<static_control>(control_id, m_handle);
 		if (!static_ctrl) {
 			::DestroyWindow(static_handle);
