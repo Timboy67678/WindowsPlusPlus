@@ -308,7 +308,7 @@ namespace wpp
 	control_ptr<edit_text> window::create_edit_text(int x, int y, int width, int height, const std::tstring& initial_text) {
 		auto control_id = m_control_id++;
 
-		HWND edittext_handle = ::CreateWindowEx(0, WC_EDIT, initial_text.c_str(), ES_LEFT | WS_CHILD | WS_BORDER | WS_VISIBLE,
+		HWND edittext_handle = ::CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, initial_text.c_str(), ES_LEFT | WS_CHILD | WS_VISIBLE,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!edittext_handle)
 			return nullptr;
@@ -344,7 +344,7 @@ namespace wpp
 	control_ptr<list_view> window::create_list_view(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
-		HWND listview_handle = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_BORDER | WS_VISIBLE,
+		HWND listview_handle = ::CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T(""), LVS_REPORT | WS_CHILD | WS_VISIBLE,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!listview_handle)
 			return nullptr;
@@ -362,7 +362,7 @@ namespace wpp
 	control_ptr<tree_view> window::create_tree_view(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
-		HWND treeview_handle = ::CreateWindowEx(0, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
+		HWND treeview_handle = ::CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, _T(""), TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_VISIBLE,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!treeview_handle)
 			return nullptr;
@@ -380,7 +380,7 @@ namespace wpp
 	control_ptr<tab_control> window::create_tab_control(int x, int y, int width, int height) {
 		auto control_id = m_control_id++;
 
-		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | TCS_BUTTONS | WS_CHILD | WS_BORDER | WS_VISIBLE,
+		HWND tabcontrol_handle = ::CreateWindowEx(0, WC_TABCONTROL, _T(""), TCS_MULTILINE | WS_CHILD | WS_VISIBLE,
 												  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!tabcontrol_handle)
 			return nullptr;
@@ -440,7 +440,7 @@ namespace wpp
 			}
 		}
 
-		HWND richedit_handle = ::CreateWindowEx(0, RICHEDIT_CLASS, initial_text.c_str(), ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_BORDER | WS_VISIBLE,
+		HWND richedit_handle = ::CreateWindowEx(WS_EX_CLIENTEDGE, RICHEDIT_CLASS, initial_text.c_str(), ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE,
 												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!richedit_handle) {
 			return nullptr;
@@ -488,6 +488,40 @@ namespace wpp
 		}
 		m_controls.emplace_back(updown);
 		return updown;
+	}
+
+	control_ptr<scroll_bar> window::create_scroll_bar(scroll_orientation orientation, int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
+		DWORD style = (orientation == scroll_orientation::horizontal) ? SBS_HORZ : SBS_VERT;
+		HWND scrollbar_handle = ::CreateWindowEx(0, WC_SCROLLBAR, _T(""), style | WS_CHILD | WS_VISIBLE,
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		if (!scrollbar_handle)
+			return nullptr;
+		auto scrollbar = std::make_shared<scroll_bar>(control_id, m_handle);
+		if (!scrollbar) {
+			::DestroyWindow(scrollbar_handle);
+			return nullptr;
+		}
+		m_controls.emplace_back(scrollbar);
+		return scrollbar;
+	}
+
+	control_ptr<track_bar> window::create_track_bar(int x, int y, int width, int height) {
+		auto control_id = m_control_id++;
+
+		HWND trackbar_handle = ::CreateWindowEx(0, TRACKBAR_CLASS, _T(""), WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
+												x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		if (!trackbar_handle)
+			return nullptr;
+
+		auto trackbar = std::make_shared<track_bar>(control_id, m_handle);
+		if (!trackbar) {
+			::DestroyWindow(trackbar_handle);
+			return nullptr;
+		}
+
+		m_controls.emplace_back(trackbar);
+		return trackbar;
 	}
 
 #pragma warning(pop)

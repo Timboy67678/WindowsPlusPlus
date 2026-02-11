@@ -141,6 +141,10 @@ namespace wpp
 			return rc;
 		}
 
+		virtual BOOL map_dialog_rect(LPRECT rc) {
+			return ::MapDialogRect(m_handle, rc);
+		}
+
 		virtual BOOL set_text(const std::tstring& text) {
 			if (!m_handle) return FALSE;
 			return ::SetWindowText(m_handle, text.c_str());
@@ -182,30 +186,38 @@ namespace wpp
 			::SendMessage(m_handle, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(redraw, 0));
 		}
 
+		virtual DWORD get_window_long(int index) const {
+			return static_cast<DWORD>(::GetWindowLong(m_handle, index));
+		}
+
+		virtual DWORD set_window_long(int index, DWORD dwNewLong) {
+			return static_cast<DWORD>(::SetWindowLong(m_handle, index, static_cast<LONG>(dwNewLong)));
+		}
+
 		virtual DWORD get_style() const {
-			return (DWORD)::GetWindowLong(m_handle, GWL_STYLE);
+			return get_window_long(GWL_STYLE);
 		}
 
 		virtual DWORD add_style(DWORD dwStyle) {
-			DWORD new_style = ::GetWindowLong(m_handle, GWL_STYLE) | dwStyle;
-			return ::SetWindowLong(m_handle, GWL_STYLE, new_style);
+			DWORD new_style = get_window_long(GWL_STYLE) | dwStyle;
+			return set_window_long(GWL_STYLE, new_style);
 		}
 
 		virtual DWORD set_style(DWORD dwStyle) {
-			return ::SetWindowLong(m_handle, GWL_STYLE, dwStyle);
+			return set_window_long(GWL_STYLE, dwStyle);
 		}
 
 		virtual DWORD remove_style(DWORD dwStyle) {
-			DWORD new_style = ::GetWindowLong(m_handle, GWL_STYLE) & ~dwStyle;
-			return ::SetWindowLong(m_handle, GWL_STYLE, new_style);
+			DWORD new_style = get_window_long(GWL_STYLE) & ~dwStyle;
+			return set_window_long(GWL_STYLE, new_style);
 		}
 
 		//Stolen From ATL
 		virtual BOOL modify_style(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0) {
-			DWORD dwStyle = ::GetWindowLong(m_handle, GWL_STYLE);
+			DWORD dwStyle = get_window_long(GWL_STYLE);
 			DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
 			if (dwStyle == dwNewStyle) return FALSE;
-			::SetWindowLong(m_handle, GWL_STYLE, dwNewStyle);
+			set_window_long(GWL_STYLE, dwNewStyle);
 			if (nFlags != 0)
 				::SetWindowPos(m_handle, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags);
 			return TRUE;
@@ -249,7 +261,7 @@ namespace wpp
 			} else {
 				// Don't center against invisible or minimized windows
 				if (hWndCenter != NULL) {
-					DWORD dwStyleCenter = ::GetWindowLong(hWndCenter, GWL_STYLE);
+					DWORD dwStyleCenter = get_window_long(GWL_STYLE);
 					if (!(dwStyleCenter & WS_VISIBLE) || (dwStyleCenter & WS_MINIMIZE)) {
 						hWndCenter = NULL;
 					}
@@ -268,9 +280,7 @@ namespace wpp
 
 				rcArea = minfo.rcWork;
 				rcCenter = hWndCenter ? ([&]() {
-					RECT rc;
-					::GetWindowRect(hWndCenter, &rc);
-					return rc;
+					return get_rect();
 				})() : rcArea;
 			}
 

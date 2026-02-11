@@ -64,10 +64,8 @@ namespace wpp
 		}
 
 		/// @brief Runs the message loop in blocking mode.
-		///
 		/// Processes messages for all registered windows until WM_QUIT is received.
 		/// This is the standard Windows message loop implementation.
-		///
 		/// @return The wParam of the WM_QUIT message, or -1 if already running.
 		int run() {
 			if (m_message_loop_running.exchange(true))
@@ -85,15 +83,13 @@ namespace wpp
 		}
 
 		/// @brief Runs the message loop in non-blocking peek mode.
-		///
 		/// Processes available messages and calls an idle callback when no messages
 		/// are pending. This allows for background processing without blocking.
-		///
-		/// @param idle_callback Optional callback invoked when no messages are available.
-		///                       Return false to exit the loop, true to continue.
-		///                       If nullptr, the loop yields to other threads.
+		/// @param idle_callback Optional callback function that is called when no messages are available. 
+		/// Should return true to continue running, or false to exit.
+		/// @param user_data Optional user data passed to the idle callback.
 		/// @return The wParam of WM_QUIT or 0 on normal exit, or -1 if already running.
-		int run_peek(std::function<bool()> idle_callback = nullptr) {
+		int run_peek(std::function<bool(void*)> idle_callback = nullptr, void* user_data = nullptr) {
 			if (m_message_loop_running.exchange(true))
 				return -1; // Already running
 
@@ -111,7 +107,7 @@ namespace wpp
 					}
 				} else {
 					// No message available - call idle callback or yield
-					if (idle_callback && !idle_callback()) {
+					if (idle_callback && !idle_callback(user_data)) {
 						m_message_loop_running.store(false);
 						return 0;
 					} else {
@@ -124,7 +120,6 @@ namespace wpp
 		}
 
 		/// @brief Stops the message loop.
-		///
 		/// Sets the running flag to false, causing the message loop to exit
 		/// on the next iteration.
 		void stop() {
@@ -150,9 +145,7 @@ namespace wpp
 
 	private:
 		/// @brief Checks if a message belongs to any registered dialog window.
-		///
 		/// Also performs cleanup of invalid window handles.
-		///
 		/// @param msg The message to check.
 		/// @return true if the message was processed by a dialog, false otherwise.
 		bool is_dialog_message(MSG& msg) {
@@ -173,6 +166,7 @@ namespace wpp
 				if (::IsDialogMessage(window.get_handle(), &msg))
 					return true;
 			}
+
 			return false;
 		}
 

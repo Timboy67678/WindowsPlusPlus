@@ -280,7 +280,7 @@ namespace wpp
 		*/
 		control_ptr<window::radio_button_group> create_radio_button_group();
 
-		// Create window controls
+		// Create window controls - TODO: Add stytle options for each control type
 		control_ptr<button> create_button(const std::tstring& text, int x, int y, int width, int height);
 		control_ptr<check_box> create_check_box(const std::tstring& text, int x, int y, int width, int height, BOOL initial_state = false);
 		control_ptr<group_box> create_group_box(const std::tstring& text, int x, int y, int width, int height);
@@ -295,6 +295,8 @@ namespace wpp
 		control_ptr<up_down_control> create_spin_control(int x, int y, int width, int height);
 		control_ptr<rich_edit_text> create_rich_edit(int x, int y, int width, int height, const std::tstring& initial_text = _T(""));
 		control_ptr<sys_link> create_link_control(const std::tstring& text, int x, int y, int width, int height);
+		control_ptr<scroll_bar> create_scroll_bar(scroll_orientation orientation, int x, int y, int width, int height);
+		control_ptr<track_bar> create_track_bar(int x, int y, int width, int height);
 		control_ptr<up_down_control> create_updown_control(int x, int y, int width, int height);
 
 		/**
