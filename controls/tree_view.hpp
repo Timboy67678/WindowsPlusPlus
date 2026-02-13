@@ -426,10 +426,10 @@ namespace wpp
 			return hItem != NULL && hItem != TVI_ROOT;
 		}
 
-		std::tstring get_item_text_str(HTREEITEM hItem) const {
+		tstring get_item_text_str(HTREEITEM hItem) const {
 			TCHAR buffer[256] = { 0 };
 			get_item_text(hItem, buffer, 256);
-			return std::tstring(buffer);
+			return tstring(buffer);
 		}
 
 		template<typename T>
@@ -559,14 +559,14 @@ namespace wpp
 			
 			if (!hStart) return NULL;
 
-			std::tstring searchText = lpszText;
+			tstring searchText = lpszText;
 			if (!bCaseSensitive) {
 				std::transform(searchText.begin(), searchText.end(), searchText.begin(), ::_totupper);
 			}
 			
 			HTREEITEM hCurrent = hStart;
 			while (hCurrent) {
-				std::tstring itemText = get_item_text_str(hCurrent);
+				tstring itemText = get_item_text_str(hCurrent);
 				if (!bCaseSensitive) {
 					std::transform(itemText.begin(), itemText.end(), itemText.begin(), ::_totupper);
 				}
@@ -574,7 +574,7 @@ namespace wpp
 				if (bExact) {
 					if (itemText == searchText) return hCurrent;
 				} else {
-					if (itemText.find(searchText) != std::tstring::npos) return hCurrent;
+					if (itemText.find(searchText) != tstring::npos) return hCurrent;
 				}
 				
 				HTREEITEM hChild = get_child_item(hCurrent);
@@ -867,9 +867,9 @@ namespace wpp
 			return !is_empty();
 		}
 
-		std::tstring get_selected_text() const {
+		tstring get_selected_text() const {
 			HTREEITEM hItem = get_selected_item();
-			return hItem ? get_item_text_str(hItem) : std::tstring();
+			return hItem ? get_item_text_str(hItem) : tstring();
 		}
 
 		DWORD_PTR get_selected_data() const {

@@ -1,0 +1,192 @@
+#include "..\layout\dock_panel.hpp"
+
+namespace wpp::layout
+{
+    dock_panel::dock_panel()
+        : panel(panel_type::dock)
+        , m_last_child_fill(true)
+    {
+    }
+
+    void dock_panel::add(control_ptr<> control) {
+        // Default to fill position
+        add(control, dock_position::fill);
+    }
+
+    void dock_panel::add(control_ptr<> control, dock_position position) {
+        if (control) {
+            m_children.push_back(control);
+            m_dock_positions[control] = position;
+        }
+    }
+
+    void dock_panel::set_dock_position(control_ptr<> control, dock_position position) {
+        if (control) {
+            m_dock_positions[control] = position;
+        }
+    }
+
+    dock_position dock_panel::get_dock_position(control_ptr<> control) const {
+        auto it = m_dock_positions.find(control);
+        if (it != m_dock_positions.end()) {
+            return it->second;
+        }
+        return dock_position::fill;
+    }
+
+    void dock_panel::measure(int available_width, int available_height) {
+        // Apply DPI scaling
+        int padding_h = static_cast<int>((m_padding.left + m_padding.right) * m_dpi_scale);
+        int padding_v = static_cast<int>((m_padding.top + m_padding.bottom) * m_dpi_scale);
+        int margin_h = static_cast<int>((m_margin.left + m_margin.right) * m_dpi_scale);
+        int margin_v = static_cast<int>((m_margin.top + m_margin.bottom) * m_dpi_scale);
+
+        // Adjust available space for padding and margin
+        int content_width = available_width - padding_h - margin_h;
+        int content_height = available_height - padding_v - margin_v;
+
+        m_child_measures.clear();
+        m_child_measures.reserve(m_children.size());
+
+        int remaining_width = content_width;
+        int remaining_height = content_height;
+
+        for (size_t i = 0; i < m_children.size(); ++i) {
+            auto& child = m_children[i];
+            if (!child || !child->is_valid()) continue;
+
+            // Determine dock position
+            dock_position pos = get_dock_position(child);
+
+            // If last child and m_last_child_fill is true, override to fill
+            if (m_last_child_fill && i == m_children.size() - 1) {
+                pos = dock_position::fill;
+            }
+
+            // Get current window size as desired size
+            RECT rc = child->get_rect();
+            int child_width = rc.right - rc.left;
+            int child_height = rc.bottom - rc.top;
+
+            child_measure measure;
+            measure.control = child;
+            measure.position = pos;
+            measure.desired_size = { child_width, child_height };
+
+            m_child_measures.push_back(measure);
+
+            // Reduce remaining space based on dock position
+            switch (pos) {
+            case dock_position::left:
+            case dock_position::right:
+                remaining_width -= child_width;
+                break;
+            case dock_position::top:
+            case dock_position::bottom:
+                remaining_height -= child_height;
+                break;
+            case dock_position::fill:
+                // Fill takes remaining space
+                break;
+            }
+        }
+
+        // Desired size is the full available space (including margin and padding)
+        m_desired_size.width = content_width + padding_h + margin_h;
+        m_desired_size.height = content_height + padding_v + margin_v;
+    }
+
+    void dock_panel::arrange(int x, int y, int width, int height) {
+        m_actual_size = { width, height };
+
+        // Apply DPI scaling
+        int margin_left = static_cast<int>(m_margin.left * m_dpi_scale);
+        int margin_top = static_cast<int>(m_margin.top * m_dpi_scale);
+        int margin_right = static_cast<int>(m_margin.right * m_dpi_scale);
+        int margin_bottom = static_cast<int>(m_margin.bottom * m_dpi_scale);
+        int padding_left = static_cast<int>(m_padding.left * m_dpi_scale);
+        int padding_top = static_cast<int>(m_padding.top * m_dpi_scale);
+        int padding_right = static_cast<int>(m_padding.right * m_dpi_scale);
+        int padding_bottom = static_cast<int>(m_padding.bottom * m_dpi_scale);
+
+        // Apply margin offset to starting position
+        int margin_x = x + margin_left;
+        int margin_y = y + margin_top;
+
+        // Content area after margin and padding
+        int content_x = margin_x + padding_left;
+        int content_y = margin_y + padding_top;
+        int content_width = width - margin_left - margin_right - padding_left - padding_right;
+        int content_height = height - margin_top - margin_bottom - padding_top - padding_bottom;
+
+        // Track remaining space as we dock controls
+        int remaining_x = content_x;
+        int remaining_y = content_y;
+        int remaining_width = content_width;
+        int remaining_height = content_height;
+
+        for (auto& measure : m_child_measures) {
+            if (!measure.control || !measure.control->is_valid()) continue;
+
+            int child_x = 0, child_y = 0, child_width = 0, child_height = 0;
+
+            switch (measure.position) {
+            case dock_position::left:
+                child_x = remaining_x;
+                child_y = remaining_y;
+                child_width = measure.desired_size.width;
+                child_height = remaining_height;
+
+                // Update remaining space
+                remaining_x += child_width;
+                remaining_width -= child_width;
+                break;
+
+            case dock_position::top:
+                child_x = remaining_x;
+                child_y = remaining_y;
+                child_width = remaining_width;
+                child_height = measure.desired_size.height;
+
+                // Update remaining space
+                remaining_y += child_height;
+                remaining_height -= child_height;
+                break;
+
+            case dock_position::right:
+                child_width = measure.desired_size.width;
+                child_height = remaining_height;
+                child_x = remaining_x + remaining_width - child_width;
+                child_y = remaining_y;
+
+                // Update remaining space
+                remaining_width -= child_width;
+                break;
+
+            case dock_position::bottom:
+                child_width = remaining_width;
+                child_height = measure.desired_size.height;
+                child_x = remaining_x;
+                child_y = remaining_y + remaining_height - child_height;
+
+                // Update remaining space
+                remaining_height -= child_height;
+                break;
+
+            case dock_position::fill:
+                child_x = remaining_x;
+                child_y = remaining_y;
+                child_width = remaining_width;
+                child_height = remaining_height;
+                break;
+            }
+
+            // Ensure non-negative dimensions
+            child_width = (std::max)(0, child_width);
+            child_height = (std::max)(0, child_height);
+
+            // Position the control
+            measure.control->move(child_x, child_y, child_width, child_height);
+        }
+    }
+}

@@ -63,14 +63,6 @@ namespace wpp
 		m_control_id = WM_USER + 1; // reset counter
 	}
 
-	void window::update_layout() {
-		if(m_layout_panel) {
-			RECT rc = get_rect();
-			m_layout_panel->measure(rc.right, rc.bottom);
-			m_layout_panel->arrange(0, 0, rc.right, rc.bottom);
-		}
-	}
-
 	BOOL window::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
 		HWND hScrollBar = (HWND)lParam;
 
@@ -109,16 +101,11 @@ namespace wpp
 		return FALSE;
 	}
 
-	bool window::create_window(std::shared_ptr<layout::panel> layout, HWND parent_window, LPVOID param) {
+	bool window::create_window(HWND parent_window, LPVOID param) {
 		m_parent_handle = parent_window;
 
 		if (m_window_class.atom() != NULL)
 			m_window_class.Unregister();
-
-		m_layout_panel = layout;
-		if (m_layout_panel && m_handle) {
-			m_layout_panel->set_parent_window(m_handle);
-		}
 
 		auto thunk = new Win32Thunk<WNDPROC, window>{ &window::window_proc, this };
 		m_thunk_storage = std::unique_ptr<void, void(*)(void*)>(
@@ -147,7 +134,12 @@ namespace wpp
 		for (auto& control : m_controls)
 			control->set_font(m_font);
 
-		update_layout();
+		if (m_layout_panel) {
+			m_layout_panel->set_parent_window(m_handle);
+			RECT rc = get_rect();
+			m_layout_panel->measure(rc.right, rc.bottom);
+			m_layout_panel->arrange(0, 0, rc.right, rc.bottom);
+		}
 
 		show_window();
 		::UpdateWindow(m_handle);
@@ -157,8 +149,8 @@ namespace wpp
 		return true;
 	}
 
-	bool window::run_window(std::shared_ptr<layout::panel> layout, HWND parent_window, LPVOID param) {
-		if (!create_window(layout, parent_window, param))
+	bool window::run_window(HWND parent_window, LPVOID param) {
+		if (!create_window(parent_window, param))
 			return false;
 
 		show_window();
@@ -193,14 +185,15 @@ namespace wpp
 #pragma region Window Control Creators
 #pragma warning(push)
 #pragma warning(disable: 4312)
-	control_ptr<radio_button> window::radio_button_group::create_button(const tstring& text, int width, int height, BOOL initial_state) {
+	control_ptr<radio_button> window::radio_button_group::create_button(const tstring& text, int x, int y, int width, int height, BOOL initial_state) {
 		auto control_id = m_parent->m_control_id++;
 
 		DWORD style = WS_CHILD | WS_VISIBLE | WS_OVERLAPPED;
 		if (m_radio_buttons.empty())
 			style |= WS_GROUP;
 
-		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_AUTORADIOBUTTON | style, 0, 0, width, height, m_parent->m_handle, reinterpret_cast<HMENU>(control_id), m_parent->m_window_class.instance(), NULL);
+		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_AUTORADIOBUTTON | style,
+												   x, y, width, height, m_parent->m_handle, reinterpret_cast<HMENU>(control_id), m_parent->m_window_class.instance(), NULL);
 		if (!radiobutton_handle)
 			return nullptr;
 
@@ -212,7 +205,6 @@ namespace wpp
 
 		radiobutton->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_radio_buttons.push_back(radiobutton);
-		m_parent->m_layout_panel->add(radiobutton);
 		m_parent->m_controls.emplace_back(radiobutton);
 
 		return radiobutton;
@@ -230,10 +222,11 @@ namespace wpp
 		return std::make_shared<radio_button_group>(this);
 	}
 
-	control_ptr<button> window::create_button(const tstring& text, int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<button> window::create_button(const tstring& text, int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND button_handle = ::CreateWindowEx(style_ex, WC_BUTTON, text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND button_handle = ::CreateWindowEx(style_ex, WC_BUTTON, text.c_str(), style,
+											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!button_handle)
 			return nullptr;
 
@@ -244,14 +237,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(button_ctrl);
-		m_layout_panel->add(button_ctrl);
 		return button_ctrl;
 	}
 
-	control_ptr<check_box> window::create_check_box(const tstring& text, int width, int height, BOOL initial_state, DWORD style, DWORD style_ex) {
+	control_ptr<check_box> window::create_check_box(const tstring& text, int x, int y, int width, int height, BOOL initial_state, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND checkbox_handle = ::CreateWindowEx(style_ex, WC_BUTTON, text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND checkbox_handle = ::CreateWindowEx(style_ex, WC_BUTTON, text.c_str(), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!checkbox_handle)
 			return nullptr;
 
@@ -263,14 +256,14 @@ namespace wpp
 
 		checkbox->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_controls.emplace_back(checkbox);
-		m_layout_panel->add(checkbox);
 		return checkbox;
 	}
 
-	control_ptr<group_box> window::create_group_box(const tstring& text, int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<group_box> window::create_group_box(const tstring& text, int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND groupbox_handle = ::CreateWindowEx(style_ex, WC_BUTTON, text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND groupbox_handle = ::CreateWindowEx(style_ex, WC_BUTTON, text.c_str(), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!groupbox_handle)
 			return nullptr;
 
@@ -281,14 +274,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(groupbox);
-		m_layout_panel->add(groupbox);
 		return groupbox;
 	}
 
-	control_ptr<static_control> window::create_static_control(const tstring& text, int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<static_control> window::create_static_control(const tstring& text, int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND static_handle = ::CreateWindowEx(style_ex, WC_STATIC, text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND static_handle = ::CreateWindowEx(style_ex, WC_STATIC, text.c_str(), style,
+										  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!static_handle)
 			return nullptr;
 
@@ -299,14 +292,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(static_ctrl);
-		m_layout_panel->add(static_ctrl);
 		return static_ctrl;
 	}
 
-	control_ptr<combo_box> window::create_combo_box(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<combo_box> window::create_combo_box(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND combobox_handle = ::CreateWindowEx(style_ex, WC_COMBOBOX, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND combobox_handle = ::CreateWindowEx(style_ex, WC_COMBOBOX, _T(""), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!combobox_handle)
 			return nullptr;
 
@@ -317,14 +310,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(combobox);
-		m_layout_panel->add(combobox);
 		return combobox;
 	}
 
-	control_ptr<edit_text> window::create_edit_text(const tstring& initial_text, int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<edit_text> window::create_edit_text(int x, int y, int width, int height, const tstring& initial_text, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND edittext_handle = ::CreateWindowEx(style_ex, WC_EDIT, initial_text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND edittext_handle = ::CreateWindowEx(style_ex, WC_EDIT, initial_text.c_str(), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!edittext_handle)
 			return nullptr;
 
@@ -335,14 +328,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(edittext);
-		m_layout_panel->add(edittext);
 		return edittext;
 	}
 
-	control_ptr<list_box> window::create_list_box(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<list_box> window::create_list_box(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND listbox_handle = ::CreateWindowEx(style_ex, WC_LISTBOX, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND listbox_handle = ::CreateWindowEx(style_ex, WC_LISTBOX, _T(""), style,
+										   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!listbox_handle)
 			return nullptr;
 
@@ -353,14 +346,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(listbox);
-		m_layout_panel->add(listbox);
 		return listbox;
 	}
 
-	control_ptr<list_view> window::create_list_view(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<list_view> window::create_list_view(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND listview_handle = ::CreateWindowEx(style_ex, WC_LISTVIEW, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND listview_handle = ::CreateWindowEx(style_ex, WC_LISTVIEW, _T(""), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!listview_handle)
 			return nullptr;
 
@@ -371,14 +364,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(listview);
-		m_layout_panel->add(listview);
 		return listview;
 	}
 
-	control_ptr<tree_view> window::create_tree_view(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<tree_view> window::create_tree_view(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND treeview_handle = ::CreateWindowEx(style_ex, WC_TREEVIEW, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND treeview_handle = ::CreateWindowEx(style_ex, WC_TREEVIEW, _T(""), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!treeview_handle)
 			return nullptr;
 
@@ -389,14 +382,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(treeview);
-		m_layout_panel->add(treeview);
 		return treeview;
 	}
 
-	control_ptr<tab_control> window::create_tab_control(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<tab_control> window::create_tab_control(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND tabcontrol_handle = ::CreateWindowEx(style_ex, WC_TABCONTROL, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND tabcontrol_handle = ::CreateWindowEx(style_ex, WC_TABCONTROL, _T(""), style,
+											  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!tabcontrol_handle)
 			return nullptr;
 
@@ -407,14 +400,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(tabcontrol);
-		m_layout_panel->add(tabcontrol);
 		return tabcontrol;
 	}
 
-	control_ptr<progress_bar> window::create_progress_bar(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<progress_bar> window::create_progress_bar(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND progressbar_handle = ::CreateWindowEx(style_ex, PROGRESS_CLASS, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND progressbar_handle = ::CreateWindowEx(style_ex, PROGRESS_CLASS, _T(""), style,
+											   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!progressbar_handle)
 			return nullptr;
 
@@ -425,14 +418,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(progressbar);
-		m_layout_panel->add(progressbar);
 		return progressbar;
 	}
 
-	control_ptr<up_down_control> window::create_spin_control(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<up_down_control> window::create_spin_control(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND spincontrol_handle = ::CreateWindowEx(style_ex, UPDOWN_CLASS, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND spincontrol_handle = ::CreateWindowEx(style_ex, UPDOWN_CLASS, _T(""), style,
+											   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!spincontrol_handle)
 			return nullptr;
 
@@ -443,11 +436,10 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(spincontrol);
-		m_layout_panel->add(spincontrol);
 		return spincontrol;
 	}
 
-	control_ptr<rich_edit_text> window::create_rich_edit(const tstring& initial_text, int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<rich_edit_text> window::create_rich_edit(int x, int y, int width, int height, const tstring& initial_text, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
 		if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) {
@@ -456,7 +448,8 @@ namespace wpp
 			}
 		}
 
-		HWND richedit_handle = ::CreateWindowEx(style_ex, RICHEDIT_CLASS, initial_text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND richedit_handle = ::CreateWindowEx(style_ex, RICHEDIT_CLASS, initial_text.c_str(), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!richedit_handle) {
 			return nullptr;
 		}
@@ -468,14 +461,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(richedit);
-		m_layout_panel->add(richedit);
 		return richedit;
 	}
 
-	control_ptr<sys_link> window::create_link_control(const tstring& text, int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<sys_link> window::create_link_control(const tstring& text, int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND linkcontrol_handle = ::CreateWindowEx(style_ex, WC_LINK, text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND linkcontrol_handle = ::CreateWindowEx(style_ex, WC_LINK, text.c_str(), style,
+											   x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!linkcontrol_handle)
 			return nullptr;
 
@@ -486,14 +479,14 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(linkcontrol);
-		m_layout_panel->add(linkcontrol);
 		return linkcontrol;
 	}
 
-	control_ptr<up_down_control> window::create_updown_control(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<up_down_control> window::create_updown_control(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND updown_handle = ::CreateWindowEx(style_ex, UPDOWN_CLASS, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND updown_handle = ::CreateWindowEx(style_ex, UPDOWN_CLASS, _T(""), style,
+										  x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!updown_handle)
 			return nullptr;
 		auto updown = std::make_shared<up_down_control>(control_id, m_handle);
@@ -502,14 +495,14 @@ namespace wpp
 			return nullptr;
 		}
 		m_controls.emplace_back(updown);
-		m_layout_panel->add(updown);
 		return updown;
 	}
 
-	control_ptr<scroll_bar> window::create_scroll_bar(scroll_orientation orientation, int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<scroll_bar> window::create_scroll_bar(scroll_orientation orientation, int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 		DWORD orientation_style = (orientation == scroll_orientation::horizontal) ? SBS_HORZ : SBS_VERT;
-		HWND scrollbar_handle = ::CreateWindowEx(style_ex, WC_SCROLLBAR, _T(""), orientation_style | style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND scrollbar_handle = ::CreateWindowEx(style_ex, WC_SCROLLBAR, _T(""), orientation_style | style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!scrollbar_handle)
 			return nullptr;
 		auto scrollbar = std::make_shared<scroll_bar>(control_id, m_handle);
@@ -518,14 +511,14 @@ namespace wpp
 			return nullptr;
 		}
 		m_controls.emplace_back(scrollbar);
-		m_layout_panel->add(scrollbar);
 		return scrollbar;
 	}
 
-	control_ptr<track_bar> window::create_track_bar(int width, int height, DWORD style, DWORD style_ex) {
+	control_ptr<track_bar> window::create_track_bar(int x, int y, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 
-		HWND trackbar_handle = ::CreateWindowEx(style_ex, TRACKBAR_CLASS, _T(""), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
+		HWND trackbar_handle = ::CreateWindowEx(style_ex, TRACKBAR_CLASS, _T(""), style,
+											x, y, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!trackbar_handle)
 			return nullptr;
 
@@ -536,7 +529,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(trackbar);
-		m_layout_panel->add(trackbar);
 		return trackbar;
 	}
 
@@ -587,13 +579,12 @@ namespace wpp
 	}
 
 	LRESULT window::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		// Get new client area dimensions
-		RECT clientRect = get_client_rect();
-		int newWidth = clientRect.right - clientRect.left;
-		int newHeight = clientRect.bottom - clientRect.top;
-		m_layout_panel->measure(newWidth, newHeight);
-		m_layout_panel->arrange(0, 0, newWidth, newHeight);
-
+		if (m_layout_panel != nullptr) {
+			int new_width = LOWORD(lParam);
+			int new_height = HIWORD(lParam);
+			m_layout_panel->measure(new_width, new_height);
+			m_layout_panel->arrange(0, 0, new_width, new_height);
+		}
 		return FALSE;
 	}
 
@@ -689,8 +680,3 @@ namespace wpp
 		cleanup();
 	}
 }
-
-
-
-
-

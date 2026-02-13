@@ -478,7 +478,7 @@ namespace wpp
 			return sz;
 		}
 
-		bool set_format_string(const std::tstring& format) {
+		bool set_format_string(const tstring& format) {
 			return set_format(format.c_str()) != FALSE;
 		}
 
@@ -494,7 +494,7 @@ namespace wpp
 			set_format(TEXT("t"));
 		}
 
-		void set_custom_format(const std::tstring& fmt) {
+		void set_custom_format(const tstring& fmt) {
 			set_format(fmt.c_str());
 		}
 

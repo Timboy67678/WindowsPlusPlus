@@ -10,7 +10,11 @@ INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 
     auto mainwindow = std::make_unique<MainWindow>(TEXT("Test Window"), 0, 0, hInstance);
     auto dialog = std::make_unique<MainDialog>(hInstance);
-    mainwindow->create_window();
+
+    auto window_layout = std::make_shared<layout::stack_panel>();
+    window_layout->set_margin(10);
+    window_layout->set_spacing(10);
+    mainwindow->create_window(window_layout);
     dialog->create_modeless();
 
     message_loop loop;

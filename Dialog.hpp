@@ -169,38 +169,23 @@ namespace wpp
 			return nullptr;
 		}
 
-		int message_box(const std::tstring& message, const std::tstring& title, UINT type) {
+		int message_box(const tstring& message, const tstring& title, UINT type) {
 			return ::MessageBox(m_handle, message.c_str(), title.c_str(), type);
 		}
 
 		template<typename... Args>
-		int message_box_info(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
-#ifdef _UNICODE
-			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
-#else
-			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
-#endif
-			return message_box(message, title, MB_OK | MB_ICONINFORMATION);
+		int message_box_info(const tstring& title, tstring_view format_str, Args&&... args) {
+			return message_box(format_tstring(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONINFORMATION);
 		}
 
 		template<typename... Args>
-		int message_box_error(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
-#ifdef _UNICODE
-			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
-#else
-			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
-#endif
-			return message_box(message, title, MB_OK | MB_ICONERROR);
+		int message_box_warn(const tstring& title, tstring_view format_str, Args&&... args) {
+			return message_box(format_string(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONWARNING);
 		}
 
 		template<typename... Args>
-		int message_box_warn(const std::tstring& title, std::tstring_view format_str, Args&&... args) {
-#ifdef _UNICODE
-			auto message = std::vformat(format_str, std::make_wformat_args(std::forward<Args>(args)...));
-#else
-			auto message = std::vformat(format_str, std::make_format_args(std::forward<Args>(args)...));
-#endif
-			return message_box(message, title, MB_OK | MB_ICONWARNING);
+		int message_box_error(const tstring& title, tstring_view format_str, Args&&... args) {
+			return message_box(format_string(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONERROR);
 		}
 
 	private:

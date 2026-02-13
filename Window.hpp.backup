@@ -3,7 +3,6 @@
 
 #include "winplusplus.hpp"
 #include "message_loop.hpp"
-#include "layout.hpp"
 
 constexpr auto WINDOW_TIMER_OFFSET_START = 0x2374;
 
@@ -140,7 +139,7 @@ namespace wpp
 			* @param initial_state Initial state of the button.
 			* @return Pointer to the created radio button.
 			*/
-			control_ptr<radio_button> create_button(const tstring& text, int width = 80, int height = 25, BOOL initial_state = FALSE);
+			control_ptr<radio_button> create_button(const tstring& text, int x, int y, int width, int height, BOOL initial_state = FALSE);
 
 			/**
 			* @brief Gets the index of the selected radio button.
@@ -202,7 +201,7 @@ namespace wpp
 		 * @param param Additional parameters.
 		 * @return True if window was created successfully, false otherwise.
 		 */
-		virtual bool create_window(std::shared_ptr<layout::panel> layout, HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
+		virtual bool create_window(HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
 
 		/**
 		 * @brief Runs the window with its own message loop.
@@ -210,7 +209,7 @@ namespace wpp
 		 * @param param Additional parameters.
 		 * @return True if window was created and ran, false otherwise.
 		 */
-		virtual bool run_window(std::shared_ptr<layout::panel> layout, HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
+		virtual bool run_window(HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
 
 		/**
 		 * @brief Window procedure.
@@ -268,24 +267,24 @@ namespace wpp
 		*/
 		control_ptr<window::radio_button_group> create_radio_button_group();
 
-		// Create window controls (position handled by layout system)
-		control_ptr<button> create_button(const tstring& text, int width = 80, int height = 25, DWORD style = BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, DWORD style_ex = 0);
-		control_ptr<check_box> create_check_box(const tstring& text, int width = 100, int height = 25, BOOL initial_state = false, DWORD style = BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, DWORD style_ex = 0);
-		control_ptr<group_box> create_group_box(const tstring& text, int width = 200, int height = 100, DWORD style = BS_GROUPBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, DWORD style_ex = 0);
-		control_ptr<static_control> create_static_control(const tstring& text, int width = 200, int height = 20, DWORD style = SS_LEFT | WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
-		control_ptr<combo_box> create_combo_box(int width = 200, int height = 200, DWORD style = CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL, DWORD style_ex = 0);
-		control_ptr<edit_text> create_edit_text(const tstring& initial_text = _T(""), int width = 200, int height = 25, DWORD style = ES_LEFT | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
-		control_ptr<list_box> create_list_box(int width = 200, int height = 150, DWORD style = LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
-		control_ptr<list_view> create_list_view(int width = 300, int height = 200, DWORD style = LVS_REPORT | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
-		control_ptr<tree_view> create_tree_view(int width = 250, int height = 200, DWORD style = TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
-		control_ptr<tab_control> create_tab_control(int width = 300, int height = 200, DWORD style = TCS_MULTILINE | WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
-		control_ptr<progress_bar> create_progress_bar(int width = 200, int height = 20, DWORD style = PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
-		control_ptr<up_down_control> create_spin_control(int width = 50, int height = 25, DWORD style = UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
-		control_ptr<rich_edit_text> create_rich_edit(const tstring& initial_text = _T(""), int width = 300, int height = 200, DWORD style = ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
-		control_ptr<sys_link> create_link_control(const tstring& text, int width = 200, int height = 20, DWORD style = WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
-		control_ptr<scroll_bar> create_scroll_bar(scroll_orientation orientation, int width = 200, int height = 20, DWORD style = WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
-		control_ptr<track_bar> create_track_bar(int width = 200, int height = 30, DWORD style = WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS, DWORD style_ex = 0);
-		control_ptr<up_down_control> create_updown_control(int width = 50, int height = 25, DWORD style = UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
+		// Create window controls with customizable styles
+		control_ptr<button> create_button(const tstring& text, int x, int y, int width, int height, DWORD style = BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, DWORD style_ex = 0);
+		control_ptr<check_box> create_check_box(const tstring& text, int x, int y, int width, int height, BOOL initial_state = false, DWORD style = BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, DWORD style_ex = 0);
+		control_ptr<group_box> create_group_box(const tstring& text, int x, int y, int width, int height, DWORD style = BS_GROUPBOX | WS_CHILD | WS_VISIBLE | WS_OVERLAPPED, DWORD style_ex = 0);
+		control_ptr<static_control> create_static_control(const tstring& text, int x, int y, int width, int height, DWORD style = SS_LEFT | WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<combo_box> create_combo_box(int x, int y, int width, int height, DWORD style = CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL, DWORD style_ex = 0);
+		control_ptr<edit_text> create_edit_text(int x, int y, int width, int height, const tstring& initial_text = _T(""), DWORD style = ES_LEFT | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
+		control_ptr<list_box> create_list_box(int x, int y, int width, int height, DWORD style = LBS_STANDARD | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<list_view> create_list_view(int x, int y, int width, int height, DWORD style = LVS_REPORT | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
+		control_ptr<tree_view> create_tree_view(int x, int y, int width, int height, DWORD style = TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
+		control_ptr<tab_control> create_tab_control(int x, int y, int width, int height, DWORD style = TCS_MULTILINE | WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<progress_bar> create_progress_bar(int x, int y, int width, int height, DWORD style = PBS_SMOOTH | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<up_down_control> create_spin_control(int x, int y, int width, int height, DWORD style = UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<rich_edit_text> create_rich_edit(int x, int y, int width, int height, const tstring& initial_text = _T(""), DWORD style = ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
+		control_ptr<sys_link> create_link_control(const tstring& text, int x, int y, int width, int height, DWORD style = WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<scroll_bar> create_scroll_bar(scroll_orientation orientation, int x, int y, int width, int height, DWORD style = WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<track_bar> create_track_bar(int x, int y, int width, int height, DWORD style = WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS, DWORD style_ex = 0);
+		control_ptr<up_down_control> create_updown_control(int x, int y, int width, int height, DWORD style = UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS | WS_CHILD | WS_BORDER | WS_VISIBLE, DWORD style_ex = 0);
 
 		/**
 		 * @brief Registers a menu control callback.
@@ -298,12 +297,6 @@ namespace wpp
 			else
 				m_menu_command_events.erase(menu_id);
 		}
-
-		/**
-		 * @brief Gets the layout panel.
-		 * @return Shared pointer to the layout panel.
-		 */
-		const auto& get_layout() const { return m_layout_panel; }
 
 		/**
 		 * @brief Adds a timer event.
@@ -351,10 +344,33 @@ namespace wpp
 			return nullptr;
 		}
 
+		/**
+		* @brief Sets the layout panel for automatic control arrangement.
+		* @param layout Shared pointer to the layout panel.
+		*/
+		void set_layout(std::shared_ptr<layout::panel> layout) {
+			m_layout_panel = std::move(layout);
+			if (m_layout_panel && m_handle) {
+				m_layout_panel->set_parent_window(m_handle);
+				
+				// Do initial layout
+				RECT rc = get_rect();
+				m_layout_panel->measure(rc.right, rc.bottom);
+				m_layout_panel->arrange(0, 0, rc.right, rc.bottom);
+			}
+		}
+
+		/**
+		 * @brief Gets the current layout panel.
+		 * @return Shared pointer to the layout panel (may be nullptr).
+		 */
+		std::shared_ptr<layout::panel> get_layout() const {
+			return m_layout_panel;
+		}
+
 	private:
 		void init_message_events();
 		void cleanup();
-		void update_layout();
 		BOOL handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
 
 	protected:
@@ -378,8 +394,3 @@ namespace wpp
 }
 
 #endif // WPP_WINDOW_HPP
-
-
-
-
-

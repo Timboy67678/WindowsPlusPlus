@@ -208,18 +208,18 @@ namespace wpp
 			return get_count() - 1;
 		}
 
-		std::tstring get_item_text(int index) const {
+		tstring get_item_text(int index) const {
 			int len = ListBox_GetTextLen(m_handle, index);
-			if (len <= 0) return std::tstring();
+			if (len <= 0) return tstring();
 
 			std::vector<TCHAR> buffer(len + 1);
 			ListBox_GetText(m_handle, index, buffer.data());
 			return std::basic_string<TCHAR>(buffer.data());
 		}
 
-		std::tstring get_selected_text() const {
+		tstring get_selected_text() const {
 			int sel = get_selected();
-			return sel >= 0 ? get_item_text(sel) : std::tstring();
+			return sel >= 0 ? get_item_text(sel) : tstring();
 		}
 
 		DWORD_PTR get_selected_data() const {
@@ -438,8 +438,8 @@ namespace wpp
 				return FALSE;
 			}
 
-			std::tstring text1 = get_item_text(index1);
-			std::tstring text2 = get_item_text(index2);
+			tstring text1 = get_item_text(index1);
+			tstring text2 = get_item_text(index2);
 			DWORD_PTR data1 = get_item_data(index1);
 			DWORD_PTR data2 = get_item_data(index2);
 

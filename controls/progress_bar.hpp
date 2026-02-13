@@ -201,11 +201,11 @@ namespace wpp
 		}
 
 		BOOL set_smooth_style() {
-			return add_style(PBS_SMOOTH);
+			return (BOOL)add_style(PBS_SMOOTH);
 		}
 
 		BOOL set_vertical_style() {
-			return add_style(PBS_VERTICAL);
+			return (BOOL)add_style(PBS_VERTICAL);
 		}
 
 		BOOL is_marquee_active() const {

@@ -298,7 +298,7 @@ namespace wpp
 		int find_item(LPCTSTR lpszText, BOOL bExact = TRUE) const {
 			int nCount = get_item_count();
 			for (int i = 0; i < nCount; i++) {
-				std::tstring itemText = get_item_text(i);
+				tstring itemText = get_item_text(i);
 				if (bExact) {
 					if (_tccmp(itemText.c_str(), lpszText) == 0)
 						return i;

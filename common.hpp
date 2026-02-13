@@ -1,5 +1,5 @@
-#ifndef __COMMON_HPP__
-#define __COMMON_HPP__
+#ifndef WPP_COMMON_HPP
+#define WPP_COMMON_HPP
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -32,31 +32,84 @@
 #include <thread>
 #include <optional>
 #include <functional>
+#include <unordered_map>
 #include <map>
 #include <format>
 #include <algorithm>
-
-namespace std
-{
-#ifdef _UNICODE
-	using tstring = wstring;
-	using tstring_view = wstring_view;
-
-	template <typename Type> std::tstring to_tstring(Type t) {
-		return std::to_wstring(t);
-	}
-#else
-	using tstring = string;
-	using tstring_view = string_view;
-
-	template <typename Type> std::tstring to_tstring(Type t) {
-		return std::to_string(t);
-	}
-#endif
-}
+#include <mutex>
 
 namespace wpp
 {
+#ifdef _UNICODE
+	using tstring = std::wstring;
+	using tstring_view = std::wstring_view;
+
+	template <typename Type> tstring to_tstring(Type t) {
+		return std::to_wstring(t);
+	}
+#else
+	using tstring = std::string;
+	using tstring_view = std::string_view;
+
+	template <typename Type> tstring to_tstring(Type t) {
+		return std::to_string(t);
+	}
+#endif
+
+	// Convert between char and wchar_t strings
+	inline std::wstring convert_to_wstring(const std::string& str) {
+		if (str.empty()) return std::wstring();
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), NULL, 0);
+		std::wstring result(size_needed, 0);
+		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), &result[0], size_needed);
+		return result;
+	}
+
+	inline std::string convert_to_string(const std::wstring& wstr) {
+		if (wstr.empty()) return std::string();
+		int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
+		std::string result(size_needed, 0);
+		WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), &result[0], size_needed, NULL, NULL);
+		return result;
+	}
+
+	// Convert to tstring from opposite type
+#ifdef _UNICODE
+	inline tstring to_tstring(const std::string& str) { return convert_to_wstring(str); }
+	inline tstring to_tstring(const std::wstring& str) { return str; }
+#else
+	inline tstring to_tstring(const std::string& str) { return str; }
+	inline tstring to_tstring(const std::wstring& wstr) { return convert_to_string(wstr); }
+#endif
+
+	inline namespace literals
+	{
+		inline tstring operator""_ts(const char* str, size_t len) {
+#ifdef _UNICODE
+			return convert_to_wstring(std::string(str, len));
+#else
+			return std::string(str, len);
+#endif
+		}
+
+		inline tstring operator""_ts(const wchar_t* str, size_t len) {
+#ifdef _UNICODE
+			return std::wstring(str, len);
+#else
+			return convert_to_string(std::wstring(str, len));
+#endif
+		}
+	}
+
+	template<typename... Args>
+	tstring format_tstring(tstring_view fmt, Args&&... args) {
+#ifdef _UNICODE
+		return std::vformat(fmt, std::make_wformat_args(std::forward<Args>(args)...));
+#else
+		return std::vformat(fmt, std::make_format_args(std::forward<Args>(args)...));
+#endif
+	}
+
 	class hwnd {
 	public:
 		typedef LRESULT(CALLBACK hwnd::* COMMAND_ID_MESSAGE_CALLBACK)(HWND, WPARAM, LPARAM);
@@ -68,6 +121,8 @@ namespace wpp
 		hwnd(HWND handle)
 			: m_handle(handle), m_item_id(-1), m_parent_handle(NULL) {
 		}
+
+		virtual ~hwnd() noexcept = default;
 
 		bool operator==(const hwnd& other) const {
 			return m_handle == other.m_handle;
@@ -84,6 +139,10 @@ namespace wpp
 		bool operator!=(HWND handle) const {
 			return m_handle != handle;
 		}
+
+		bool is_valid() const { return m_handle != NULL && ::IsWindow(m_handle); }
+
+		explicit operator bool() const { return is_valid(); }
 
 		virtual HWND get_handle() const { return m_handle; }
 		virtual void set_handle(HWND handle) { m_handle = handle; }
@@ -107,6 +166,16 @@ namespace wpp
 			return ::DestroyWindow(m_handle);
 		}
 
+		template<typename T = LRESULT>
+		T send_message(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0) const {
+			LRESULT result = ::SendMessage(m_handle, Msg, wParam, lParam);
+			if constexpr (std::is_pointer_v<T>) {
+				return reinterpret_cast<T>(result);
+			} else {
+				return static_cast<T>(result);
+			}
+		}
+
 		virtual void enable_drag_drop(BOOL state) {
 			::ChangeWindowMessageFilterEx(m_handle, WM_DROPFILES, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
 			::ChangeWindowMessageFilterEx(m_handle, WM_COPYDATA, state ? MSGFLT_ADD : MSGFLT_REMOVE, NULL);
@@ -114,14 +183,14 @@ namespace wpp
 			::DragAcceptFiles(m_handle, state);
 		}
 
-		virtual std::tstring get_text() const {
-			if (!m_handle) return std::tstring();
+		virtual tstring get_text() const {
+			if (!m_handle) return tstring();
 			int length = ::GetWindowTextLength(m_handle);
-			if (length == 0) return std::tstring();
+			if (length == 0) return tstring();
 
 			std::vector<TCHAR> buffer(length + 1);
 			::GetWindowText(m_handle, buffer.data(), length + 1);
-			return std::tstring(buffer.data());
+			return tstring(buffer.data());
 		}
 
 		virtual int get_text_length() const {
@@ -141,11 +210,11 @@ namespace wpp
 			return rc;
 		}
 
-		virtual BOOL map_dialog_rect(LPRECT rc) {
+		virtual BOOL map_dialog_rect(LPRECT rc) const {
 			return ::MapDialogRect(m_handle, rc);
 		}
 
-		virtual BOOL set_text(const std::tstring& text) {
+		virtual BOOL set_text(const tstring& text) {
 			if (!m_handle) return FALSE;
 			return ::SetWindowText(m_handle, text.c_str());
 		}
@@ -154,7 +223,7 @@ namespace wpp
 			return ::ShowWindow(m_handle, state);
 		}
 
-		virtual BOOL is_enabled() {
+		virtual BOOL is_enabled() const {
 			return ::IsWindowEnabled(m_handle);
 		}
 
@@ -167,8 +236,8 @@ namespace wpp
 		}
 
 		virtual bool is_topmost() const {
-			return (::GetWindowLong(m_handle, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
-		}	
+			return (get_ex_style() & WS_EX_TOPMOST) != 0;
+		}
 
 		virtual HWND focus() {
 			return ::SetFocus(m_handle);
@@ -179,42 +248,61 @@ namespace wpp
 		}
 
 		virtual HFONT get_font() const {
-			return (HFONT)::SendMessage(m_handle, WM_GETFONT, 0, 0);
+			return send_message<HFONT>(WM_GETFONT, 0, 0);
 		}
 
 		virtual void set_font(HFONT hFont, BOOL redraw = TRUE) {
-			::SendMessage(m_handle, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(redraw, 0));
+			send_message(WM_SETFONT, (WPARAM)hFont, MAKELPARAM(redraw, 0));
 		}
 
-		virtual DWORD get_window_long(int index) const {
-			return static_cast<DWORD>(::GetWindowLong(m_handle, index));
+		virtual LONG_PTR get_window_long(int index) const {
+			return ::GetWindowLongPtr(m_handle, index);
 		}
 
-		virtual DWORD set_window_long(int index, DWORD dwNewLong) {
-			return static_cast<DWORD>(::SetWindowLong(m_handle, index, static_cast<LONG>(dwNewLong)));
+		virtual LONG_PTR set_window_long(int index, LONG_PTR dwNewLong) {
+			return ::SetWindowLongPtr(m_handle, index, dwNewLong);
 		}
 
 		virtual DWORD get_style() const {
-			return get_window_long(GWL_STYLE);
+			return static_cast<DWORD>(get_window_long(GWL_STYLE));
 		}
 
 		virtual DWORD add_style(DWORD dwStyle) {
-			DWORD new_style = get_window_long(GWL_STYLE) | dwStyle;
-			return set_window_long(GWL_STYLE, new_style);
+			DWORD new_style = get_style() | dwStyle;
+			set_window_long(GWL_STYLE, new_style);
+			return new_style;
 		}
 
 		virtual DWORD set_style(DWORD dwStyle) {
-			return set_window_long(GWL_STYLE, dwStyle);
+			set_window_long(GWL_STYLE, dwStyle);
+			return dwStyle;
 		}
 
 		virtual DWORD remove_style(DWORD dwStyle) {
-			DWORD new_style = get_window_long(GWL_STYLE) & ~dwStyle;
-			return set_window_long(GWL_STYLE, new_style);
+			DWORD new_style = get_style() & ~dwStyle;
+			set_window_long(GWL_STYLE, new_style);
+			return new_style;
+		}
+
+		virtual DWORD get_ex_style() const {
+			return static_cast<DWORD>(get_window_long(GWL_EXSTYLE));
+		}
+
+		virtual DWORD add_ex_style(DWORD dwExStyle) {
+			DWORD style = get_ex_style() | dwExStyle;
+			set_window_long(GWL_EXSTYLE, style);
+			return style;
+		}
+
+		virtual DWORD remove_ex_style(DWORD dwExStyle) {
+			DWORD style = get_ex_style() & ~dwExStyle;
+			set_window_long(GWL_EXSTYLE, style);
+			return style;
 		}
 
 		//Stolen From ATL
 		virtual BOOL modify_style(DWORD dwRemove, DWORD dwAdd, UINT nFlags = 0) {
-			DWORD dwStyle = get_window_long(GWL_STYLE);
+			DWORD dwStyle = get_style();
 			DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
 			if (dwStyle == dwNewStyle) return FALSE;
 			set_window_long(GWL_STYLE, dwNewStyle);
@@ -261,7 +349,7 @@ namespace wpp
 			} else {
 				// Don't center against invisible or minimized windows
 				if (hWndCenter != NULL) {
-					DWORD dwStyleCenter = get_window_long(GWL_STYLE);
+					auto dwStyleCenter = ::GetWindowLongPtr(hWndCenter, GWL_STYLE);
 					if (!(dwStyleCenter & WS_VISIBLE) || (dwStyleCenter & WS_MINIMIZE)) {
 						hWndCenter = NULL;
 					}
@@ -279,9 +367,11 @@ namespace wpp
 				}
 
 				rcArea = minfo.rcWork;
-				rcCenter = hWndCenter ? ([&]() {
-					return get_rect();
-				})() : rcArea;
+				rcCenter = rcArea;
+
+				if (hWndCenter != HWND_DESKTOP) {
+					::GetWindowRect(hWndCenter, &rcCenter);
+				}
 			}
 
 			// Calculate centered position
@@ -304,26 +394,12 @@ namespace wpp
 			return ::MoveWindow(m_handle, x, y, width, height, repaint);
 		}
 
-		virtual BOOL set_position(int x, int y, UINT flags = SWP_NOSIZE | SWP_NOZORDER) {
-			return ::SetWindowPos(m_handle, NULL, x, y, 0, 0, flags);
+		virtual BOOL set_pos(int x, int y) {
+			return ::SetWindowPos(m_handle, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 		}
 
-		virtual BOOL set_size(int width, int height, UINT flags = SWP_NOMOVE | SWP_NOZORDER) {
-			return ::SetWindowPos(m_handle, NULL, 0, 0, width, height, flags);
-		}
-
-		virtual DWORD get_ex_style() const {
-			return (DWORD)::GetWindowLong(m_handle, GWL_EXSTYLE);
-		}
-
-		virtual DWORD add_ex_style(DWORD dwExStyle) {
-			DWORD style = ::GetWindowLong(m_handle, GWL_EXSTYLE) | dwExStyle;
-			return ::SetWindowLong(m_handle, GWL_EXSTYLE, style);
-		}
-
-		virtual DWORD remove_ex_style(DWORD dwExStyle) {
-			DWORD style = ::GetWindowLong(m_handle, GWL_EXSTYLE) & ~dwExStyle;
-			return ::SetWindowLong(m_handle, GWL_EXSTYLE, style);
+		virtual BOOL set_size(int width, int height) {
+			return ::SetWindowPos(m_handle, NULL, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
 		}
 
 	protected:
@@ -339,11 +415,16 @@ namespace wpp
 			skeleton_base() : m_ref_count(0) {}
 
 			STDMETHODIMP QueryInterface(REFIID riid, void** ppv) {
+				if (ppv == nullptr)
+					return E_POINTER;
+
 				if (riid == IID_IUnknown) {
 					*ppv = dynamic_cast<IUnknown*>(this);
+					static_cast<IUnknown*>(*ppv)->AddRef();
 					return S_OK;
 				} else if (riid == __uuidof(base_com)) {
 					*ppv = dynamic_cast<base_com*>(this);
+					static_cast<IUnknown*>(*ppv)->AddRef();
 					return S_OK;
 				} else {
 					*ppv = NULL;
@@ -352,14 +433,14 @@ namespace wpp
 			}
 
 			STDMETHODIMP_(ULONG) AddRef() {
-				InterlockedIncrement((LONG*)&m_ref_count);
-				return m_ref_count;
+				return InterlockedIncrement(&m_ref_count);
 			}
 
 			STDMETHODIMP_(ULONG) Release() {
-				if (InterlockedDecrement((LONG*)&m_ref_count) == 0)
+				LONG count = InterlockedDecrement(&m_ref_count);
+				if (count == 0)
 					delete this;
-				return m_ref_count;
+				return count;
 			}
 
 		protected:
@@ -371,13 +452,13 @@ namespace wpp
 			public ATL::CComCoClass<file_dlg_event_handler>,
 			public IFileDialogEvents {
 		public:
-			using file_ok_callback = std::function<STDMETHODIMP(IFileDialog*)>;
-			using folder_changing_callback = std::function<STDMETHODIMP(IFileDialog*, IShellItem*)>;
-			using folder_changed_callback = std::function<STDMETHODIMP(IFileDialog*)>;
-			using selection_changed_callback = std::function<STDMETHODIMP(IFileDialog*)>;
-			using share_violation_callback = std::function<STDMETHODIMP(IFileDialog*, IShellItem*, FDE_SHAREVIOLATION_RESPONSE*)>;
-			using type_change_callback = std::function<STDMETHODIMP(IFileDialog*)>;
-			using overwrite_callback = std::function<STDMETHODIMP(IFileDialog*, IShellItem*, FDE_OVERWRITE_RESPONSE*)>;
+			using file_ok_callback = std::function<HRESULT(IFileDialog*)>;
+			using folder_changing_callback = std::function<HRESULT(IFileDialog*, IShellItem*)>;
+			using folder_changed_callback = std::function<HRESULT(IFileDialog*)>;
+			using selection_changed_callback = std::function<HRESULT(IFileDialog*)>;
+			using share_violation_callback = std::function<HRESULT(IFileDialog*, IShellItem*, FDE_SHAREVIOLATION_RESPONSE*)>;
+			using type_change_callback = std::function<HRESULT(IFileDialog*)>;
+			using overwrite_callback = std::function<HRESULT(IFileDialog*, IShellItem*, FDE_OVERWRITE_RESPONSE*)>;
 
 			file_dlg_event_handler() {}
 			~file_dlg_event_handler() {};
@@ -413,8 +494,8 @@ namespace wpp
 		};
 	}
 
-	using file_dialog_handler = ATL::CComObjectNoLock<wpp::com::file_dlg_event_handler>;
-	using file_dialog_handler_stack = ATL::CComObjectStackEx<wpp::com::file_dlg_event_handler>;
+	using file_dialog_handler = ATL::CComObjectNoLock<com::file_dlg_event_handler>;
+	using file_dialog_handler_stack = ATL::CComObjectStackEx<com::file_dlg_event_handler>;
 }
 
-#endif //__COMMON_HPP__
+#endif //WPP_COMMON_HPP

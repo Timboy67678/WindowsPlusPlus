@@ -744,10 +744,10 @@ namespace wpp
 		BOOL is_empty() const { return get_item_count() == 0; }
 		BOOL is_valid_index(int nItem) const { return nItem >= 0 && nItem < get_item_count(); }
 
-		std::tstring get_item_text_str(int nItem, int nSubItem = 0) const {
+		tstring get_item_text_str(int nItem, int nSubItem = 0) const {
 			TCHAR buffer[512] = { 0 };
 			get_item_text(nItem, nSubItem, buffer, 512);
-			return std::tstring(buffer);
+			return tstring(buffer);
 		}
 
 		template<typename T>

@@ -73,7 +73,7 @@ namespace wpp
 			return (get_modifiers() & HK_MOD_EXT) != 0;
 		}
 
-		std::tstring to_string() const {
+		tstring to_string() const {
 			WORD vk = get_virtual_key();
 			WORD mods = get_modifiers();
 
@@ -81,7 +81,7 @@ namespace wpp
 				return _T("None");
 			}
 
-			std::tstring result;
+			tstring result;
 
 			if (mods & HK_MOD_CONTROL) {
 				result += _T("Ctrl+");
@@ -111,16 +111,16 @@ namespace wpp
 				if (GetKeyNameText(scanCode << 16, keyName, 50) > 0) {
 					result += keyName;
 				} else {
-					result += _T("VK_") + std::to_tstring(vk);
+					result += _T("VK_") + to_tstring(vk);
 				}
 			} else {
-				result += _T("VK_") + std::to_tstring(vk);
+				result += _T("VK_") + to_tstring(vk);
 			}
 
 			return result;
 		}
 
-		operator std::tstring() const {
+		operator tstring() const {
 			return to_string();
 		}
 	};

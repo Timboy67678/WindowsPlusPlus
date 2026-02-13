@@ -31,10 +31,6 @@ namespace wpp
 		control& on_custom_draw(notify_callback callback) { register_notify_callback(NM_CUSTOMDRAW, std::move(callback)); return *this; }
 		control& on_released_capture(notify_callback callback) { register_notify_callback(NM_RELEASEDCAPTURE, std::move(callback)); return *this; }
 
-		bool is_valid() const { return m_handle && ::IsWindow(m_handle); }
-
-		explicit operator bool() const { return is_valid(); }
-
 		void set_item(HWND parent, int item_id) {
 			m_item_id = item_id;
 			m_parent_handle = parent;

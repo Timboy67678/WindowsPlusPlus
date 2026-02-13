@@ -45,6 +45,7 @@ namespace wpp
 		/// @param window The hwnd handle of the window to register.
 		/// @return true if the window was successfully registered, false if already registered.
 		bool register_window(const hwnd& window) {
+			std::lock_guard lock(m_window_mutex);
 			if (std::find(m_message_windows.begin(), m_message_windows.end(), window) != m_message_windows.end())
 				return false;
 			m_message_windows.push_back(window);
@@ -55,6 +56,7 @@ namespace wpp
 		/// @param window The hwnd handle of the window to unregister.
 		/// @return true if the window was successfully unregistered, false if not found.
 		bool unregister_window(const hwnd& window) {
+			std::lock_guard lock(m_window_mutex);
 			auto it = std::find(m_message_windows.begin(), m_message_windows.end(), window);
 			if (it != m_message_windows.end()) {
 				m_message_windows.erase(it);
@@ -134,12 +136,14 @@ namespace wpp
 
 		/// @brief Clears all registered windows.
 		void clear_windows() {
+			std::lock_guard lock(m_window_mutex);
 			m_message_windows.clear();
 		}
 
 		/// @brief Gets the number of registered windows.
 		/// @return The count of currently registered windows.
 		size_t window_count() const {
+			std::lock_guard lock(m_window_mutex);
 			return m_message_windows.size();
 		}
 
@@ -150,6 +154,7 @@ namespace wpp
 		/// @return true if the message was processed by a dialog, false otherwise.
 		bool is_dialog_message(MSG& msg) {
 			// Clean up invalid handles
+			std::lock_guard lock(m_window_mutex);
 			m_message_windows.erase(
 				std::remove_if(m_message_windows.begin(), m_message_windows.end(),
 							   [](const hwnd& handle) { return !::IsWindow(handle.get_handle()); }),
@@ -170,6 +175,7 @@ namespace wpp
 			return false;
 		}
 
+		mutable std::mutex m_window_mutex;
 		std::atomic_bool m_message_loop_running = false; ///< Thread-safe flag indicating if loop is running
 		std::vector<hwnd> m_message_windows;             ///< Collection of registered dialog windows
 	};
