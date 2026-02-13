@@ -18,16 +18,17 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 }
 ```
 
-### ✅ New Way (Layout Panels)
+### ✅ New Way (Layout Panels) - Much Simpler!
 ```cpp
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto stack = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
     stack->set_padding(10, 10, 10, 10);
     stack->set_spacing(5);
     
-    m_Button1 = create_button(_T("Click Me!"), 0, 0, 150, 25);
-    m_Button2 = create_button(_T("OK"), 0, 0, 150, 25);
-    m_Button3 = create_button(_T("Cancel"), 0, 0, 150, 25);
+    // No coordinates needed - layout handles everything!
+    m_Button1 = create_button(_T("Click Me!"));
+    m_Button2 = create_button(_T("OK"));
+    m_Button3 = create_button(_T("Cancel"));
     
     stack->add(m_Button1);
     stack->add(m_Button2);
@@ -37,6 +38,9 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     
     return window::on_create(hWnd, wParam, lParam);
 }
+```
+
+**Benefits**: 60% less code, no coordinate math, automatic resizing!
 ```
 
 ## Available Layout Panels
@@ -57,9 +61,9 @@ stack->add(button3);
 **Horizontal example**:
 ```cpp
 auto toolbar = std::make_shared<layout::stack_panel>(layout::orientation::horizontal);
-toolbar->add(new_button);
-toolbar->add(open_button);
-toolbar->add(save_button);
+toolbar->add(create_button(_T("New")));
+toolbar->add(create_button(_T("Open")));
+toolbar->add(create_button(_T("Save")));
 ```
 
 ### 2. DockPanel - Edge Docking
@@ -69,10 +73,10 @@ Docks controls to edges (top, bottom, left, right) with one control filling rema
 
 ```cpp
 auto dock = std::make_shared<layout::dock_panel>();
-dock->add(toolbar, layout::dock_position::top);
-dock->add(statusbar, layout::dock_position::bottom);
-dock->add(sidebar, layout::dock_position::left);
-dock->add(main_content, layout::dock_position::fill);  // Takes remaining space
+dock->add(create_static_text(_T("Toolbar")), layout::dock_position::top);
+dock->add(create_static_text(_T("Status")), layout::dock_position::bottom);
+dock->add(create_list_box(150), layout::dock_position::left);  // 150px wide
+dock->add(create_edit_text(_T("Main Content")), layout::dock_position::fill);
 ```
 
 ### 3. Grid - Table Layout
@@ -82,8 +86,6 @@ Arranges controls in rows and columns with flexible sizing.
 
 ```cpp
 auto grid = std::make_shared<layout::grid>();
-
-// Define columns: 100px, auto-size, fills remaining space
 grid->add_column({layout::grid::column_definition::size_type::absolute, 100});
 grid->add_column({layout::grid::column_definition::size_type::auto_size});
 grid->add_column({layout::grid::column_definition::size_type::star, 1.0});
@@ -92,9 +94,9 @@ grid->add_column({layout::grid::column_definition::size_type::star, 1.0});
 grid->add_row({layout::grid::row_definition::size_type::auto_size});
 grid->add_row({layout::grid::row_definition::size_type::star, 1.0});
 
-// Add controls to cells
-grid->add(label, 0, 0);              // Row 0, Column 0
-grid->add(textbox, 0, 1, 1, 2);      // Row 0, Columns 1-2 (spans 2 columns)
+// Add controls to cells - no coordinates!
+grid->add(create_static_text(_T("Label")), 0, 0);     // Row 0, Column 0
+grid->add(create_edit_text(_T(""), 200), 0, 1, 1, 2); // Row 0, Columns 1-2 (spans 2)
 ```
 
 ### 4. WrapPanel - Flowing Layout
@@ -104,9 +106,9 @@ Controls flow left-to-right, wrapping to next line when space runs out.
 
 ```cpp
 auto wrap = std::make_shared<layout::wrap_panel>(layout::orientation::horizontal);
-wrap->add(tag1);
-wrap->add(tag2);
-wrap->add(tag3);
+wrap->add(create_button(_T("Tag 1")));
+wrap->add(create_button(_T("Tag 2")));
+wrap->add(create_button(_T("Tag 3")));
 // Tags automatically wrap to next line when window is too narrow
 ```
 
@@ -120,19 +122,19 @@ auto main_dock = std::make_shared<layout::dock_panel>();
 
 // Toolbar: horizontal stack of buttons
 auto toolbar = std::make_shared<layout::stack_panel>(layout::orientation::horizontal);
-toolbar->add(new_btn);
-toolbar->add(open_btn);
-toolbar->add(save_btn);
+toolbar->add(create_button(_T("New")));
+toolbar->add(create_button(_T("Open")));
+toolbar->add(create_button(_T("Save")));
 
 // Sidebar: vertical stack
 auto sidebar = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
-sidebar->add(tree_view);
-sidebar->add(properties_panel);
+sidebar->add(create_tree_view(200));      // 200px wide
+sidebar->add(create_list_view(200, 150)); // 200px wide, 150px tall
 
 // Compose
 main_dock->add(toolbar, layout::dock_position::top);
 main_dock->add(sidebar, layout::dock_position::left);
-main_dock->add(main_content, layout::dock_position::fill);
+main_dock->add(create_edit_text(_T("Main Content")), layout::dock_position::fill);
 
 set_layout(main_dock);
 ```
@@ -146,13 +148,13 @@ grid->add_column({layout::grid::column_definition::size_type::auto_size});  // L
 grid->add_column({layout::grid::column_definition::size_type::star, 1.0});   // Inputs
 
 grid->add(create_static_text(_T("Name:")), 0, 0);
-grid->add(create_edit_text(_T("")), 0, 1);
+grid->add(create_edit_text(_T(""), 200), 0, 1);
 
 grid->add(create_static_text(_T("Email:")), 1, 0);
-grid->add(create_edit_text(_T("")), 1, 1);
+grid->add(create_edit_text(_T(""), 200), 1, 1);
 
 grid->add(create_static_text(_T("Phone:")), 2, 0);
-grid->add(create_edit_text(_T("")), 2, 1);
+grid->add(create_edit_text(_T(""), 200), 2, 1);
 ```
 
 ### Dialog with OK/Cancel Buttons
@@ -166,8 +168,8 @@ main_stack->add(create_static_text(_T("Are you sure?")));
 // Button row
 auto button_row = std::make_shared<layout::stack_panel>(layout::orientation::horizontal);
 button_row->set_spacing(5);
-button_row->add(create_button(_T("OK"), 0, 0, 75, 25));
-button_row->add(create_button(_T("Cancel"), 0, 0, 75, 25));
+button_row->add(create_button(_T("OK")));
+button_row->add(create_button(_T("Cancel")));
 
 main_stack->add(button_row);
 set_layout(main_stack);
@@ -249,31 +251,39 @@ update_layout();      // Force immediate recalculation
 
 ## Migration from Manual Positioning
 
-### Step 1: Keep x, y coordinates but set them to 0
-```cpp
-// Before:
-auto btn = create_button(_T("Click"), 10, 30, 150, 25);
+### No Migration Needed!
 
-// After:
-auto btn = create_button(_T("Click"), 0, 0, 150, 25);  // x, y not used in layout
+Since backward compatibility is not a goal, this is a **complete redesign** of control creation:
+
+**Old API** (being replaced):
+```cpp
+create_button(text, x, y, width, height, style, style_ex)
 ```
 
-### Step 2: Create a layout panel
+**New API** (layout-first):
 ```cpp
-auto stack = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
-stack->set_padding(10, 10, 10, 10);  // Add padding like your old margins
+create_button(text, width = -1, height = -1, style, style_ex)
 ```
 
-### Step 3: Add controls to panel
+### Key Changes:
+
+1. ❌ **Removed**: x, y position parameters
+2. ✅ **Changed**: Width/height are optional (default -1 = auto-size)
+3. ✅ **Required**: Must use `set_layout()` to display controls
+4. ✅ **Simplified**: No coordinate calculations needed ever!
+
+### Example Conversion:
+
+**Before**:
 ```cpp
-stack->add(btn1);
-stack->add(btn2);
-stack->add(btn3);
+auto btn = create_button(_T("Click"), 10, 30, 150, 25);  
+// Manually calculated position (10, 30)
 ```
 
-### Step 4: Set the layout
+**After**:
 ```cpp
-set_layout(stack);
+auto btn = create_button(_T("Click"));  // No position needed!
+stack->add(btn);  // Layout handles positioning
 ```
 
 ## Tips and Best Practices
@@ -285,18 +295,19 @@ set_layout(stack);
 - Nest panels for complex layouts
 - Set padding/spacing for visual breathing room
 - Use star sizing in Grid for responsive columns
+- Let controls auto-size when possible (width/height = -1)
 
 ### ❌ DON'T:
-- Mix manual positioning with layout panels
+- Try to use manual positioning (not supported!)
 - Create deeply nested layouts (3-4 levels max)
 - Forget to call `set_layout()` after building the panel tree
-- Manually position controls that are in a layout panel
+- Specify fixed sizes unless necessary
 
 ## Troubleshooting
 
 **Controls not appearing?**
 - Make sure you called `set_layout()`
-- Check that controls have non-zero width/height
+- Check that controls were added to the layout panel
 - Verify the panel has space to display controls
 
 **Layout not updating on resize?**
@@ -305,12 +316,12 @@ set_layout(stack);
 
 **Controls overlapping?**
 - Check spacing and padding values
-- Verify you're not mixing manual positioning with layout
+- Verify panel types are appropriate for your use case
 
 **Performance issues?**
 - Limit nesting depth
 - Use fewer panels for simple layouts
-- Consider manual positioning for very large control counts (100+)
+- Consider simpler panel types (StackPanel vs Grid)
 
 ## Next Steps
 

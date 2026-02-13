@@ -1,6 +1,6 @@
 # Layout Manager: Real-World Examples
 
-This document provides complete, working examples of how the layout manager could be used in real-world Windows++ applications.
+This document provides complete, working examples of how the layout manager is used in real-world Windows++ applications with the **simplified, layout-first API** (no coordinate positioning).
 
 ## Example 1: Simple Settings Dialog
 
@@ -35,34 +35,34 @@ INT_PTR SettingsDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) 
     form_grid->add_row({layout::grid::row_definition::size_type::auto_size});
     form_grid->add_row({layout::grid::row_definition::size_type::auto_size});
     
-    // Add form fields
-    auto label_username = create_static_text(_T("Username:"), 0, 0, 80, 20);
-    m_username = create_edit_text(0, 0, 200, 20, _T(""));
+    // Add form fields - NO coordinates needed!
+    auto label_username = create_static_text(_T("Username:"));
+    m_username = create_edit_text(_T(""), 200);  // 200px wide
     form_grid->add(label_username, 0, 0);
     form_grid->add(m_username, 0, 1);
     
-    auto label_email = create_static_text(_T("Email:"), 0, 0, 80, 20);
-    m_email = create_edit_text(0, 0, 200, 20, _T(""));
+    auto label_email = create_static_text(_T("Email:"));
+    m_email = create_edit_text(_T(""), 200);
     form_grid->add(label_email, 1, 0);
     form_grid->add(m_email, 1, 1);
     
     main_stack->add(form_grid);
     
     // Add checkbox
-    m_notifications = create_check_box(_T("Enable notifications"), 0, 0, 200, 20);
+    m_notifications = create_check_box(_T("Enable notifications"));
     main_stack->add(m_notifications);
     
     // Create button row (right-aligned)
     auto button_row = std::make_shared<layout::stack_panel>(layout::orientation::horizontal);
     button_row->set_spacing(5);
     
-    m_ok = create_button(_T("OK"), 0, 0, 75, 25);
+    m_ok = create_button(_T("OK"));
     m_ok->on_click([this](WPARAM, LPARAM) {
         // Save settings
         end_dialog(IDOK);
     });
     
-    m_cancel = create_button(_T("Cancel"), 0, 0, 75, 25);
+    m_cancel = create_button(_T("Cancel"));
     m_cancel->on_click([this](WPARAM, LPARAM) {
         end_dialog(IDCANCEL);
     });
@@ -118,26 +118,26 @@ LRESULT TextEditorWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     toolbar->set_spacing(5);
     
     // File operations
-    m_new_btn = create_button(_T("New"), 0, 0, 60, 25);
+    m_new_btn = create_button(_T("New"));
     m_new_btn->on_click([this](WPARAM, LPARAM) {
         m_editor->set_text(_T(""));
     });
     
-    m_open_btn = create_button(_T("Open"), 0, 0, 60, 25);
-    m_save_btn = create_button(_T("Save"), 0, 0, 60, 25);
+    m_open_btn = create_button(_T("Open"));
+    m_save_btn = create_button(_T("Save"));
     
     toolbar->add(m_new_btn);
     toolbar->add(m_open_btn);
     toolbar->add(m_save_btn);
     
     // Add separator (static text)
-    auto separator = create_static_text(_T("|"), 0, 0, 10, 25);
+    auto separator = create_static_text(_T("|"));
     toolbar->add(separator);
     
     // Edit operations
-    m_cut_btn = create_button(_T("Cut"), 0, 0, 60, 25);
-    m_copy_btn = create_button(_T("Copy"), 0, 0, 60, 25);
-    m_paste_btn = create_button(_T("Paste"), 0, 0, 60, 25);
+    m_cut_btn = create_button(_T("Cut"));
+    m_copy_btn = create_button(_T("Copy"));
+    m_paste_btn = create_button(_T("Paste"));
     
     toolbar->add(m_cut_btn);
     toolbar->add(m_copy_btn);
@@ -146,11 +146,11 @@ LRESULT TextEditorWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add(toolbar, layout::dock_position::top);
     
     // === Status bar at bottom ===
-    m_status = create_static_text(_T("Ready"), 0, 0, 100, 20);
+    m_status = create_static_text(_T("Ready"));
     main_dock->add(m_status, layout::dock_position::bottom);
     
     // === Main editor fills remaining space ===
-    m_editor = create_edit_text(0, 0, 100, 100, _T(""),
+    m_editor = create_edit_text(_T(""), 100,
         WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL | 
         ES_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL);
     
@@ -193,9 +193,9 @@ LRESULT FileExplorerWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     address_bar->set_padding(5, 5, 5, 5);
     address_bar->set_spacing(5);
     
-    m_path_label = create_static_text(_T("Path:"), 0, 0, 40, 20);
-    m_path_bar = create_edit_text(0, 0, 600, 20, _T("C:\\"));
-    m_go_btn = create_button(_T("Go"), 0, 0, 50, 20);
+    m_path_label = create_static_text(_T("Path:"));
+    m_path_bar = create_edit_text(_T("C:\\"), 600);
+    m_go_btn = create_button(_T("Go"));
     
     address_bar->add(m_path_label);
     address_bar->add(m_path_bar);
@@ -204,15 +204,15 @@ LRESULT FileExplorerWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add(address_bar, layout::dock_position::top);
     
     // === Status bar at bottom ===
-    m_status = create_static_text(_T("Ready"), 0, 0, 100, 20);
+    m_status = create_static_text(_T("Ready"));
     main_dock->add(m_status, layout::dock_position::bottom);
     
     // === Sidebar with folder tree ===
-    m_folder_tree = create_tree_view(0, 0, 200, 400);
+    m_folder_tree = create_tree_view(200);
     main_dock->add(m_folder_tree, layout::dock_position::left);
     
     // === File list fills remaining space ===
-    m_file_list = create_list_view(0, 0, 600, 400);
+    m_file_list = create_list_view(600, 400);
     m_file_list->add_column(_T("Name"), 200);
     m_file_list->add_column(_T("Type"), 100);
     m_file_list->add_column(_T("Size"), 100);
@@ -252,7 +252,7 @@ INT_PTR LoginDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_stack->set_spacing(15);
     
     // === Logo at top (centered) ===
-    m_logo = create_static_text(_T("MyApp v1.0"), 0, 0, 200, 40);
+    m_logo = create_static_text(_T("MyApp v1.0"));
     main_stack->add(m_logo, layout::alignment::center);
     
     // === Login form ===
@@ -262,13 +262,13 @@ INT_PTR LoginDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     form_grid->add_row({layout::grid::row_definition::size_type::auto_size});
     form_grid->add_row({layout::grid::row_definition::size_type::auto_size});
     
-    auto label_user = create_static_text(_T("Username:"), 0, 0, 80, 20);
-    m_username = create_edit_text(0, 0, 200, 20, _T(""));
+    auto label_user = create_static_text(_T("Username:"));
+    m_username = create_edit_text(_T(""), 200);
     form_grid->add(label_user, 0, 0);
     form_grid->add(m_username, 0, 1);
     
-    auto label_pass = create_static_text(_T("Password:"), 0, 0, 80, 20);
-    m_password = create_edit_text(0, 0, 200, 20, _T(""),
+    auto label_pass = create_static_text(_T("Password:"));
+    m_password = create_edit_text(_T(""), 200,
         WS_CHILD | WS_VISIBLE | ES_PASSWORD);
     form_grid->add(label_pass, 1, 0);
     form_grid->add(m_password, 1, 1);
@@ -279,13 +279,13 @@ INT_PTR LoginDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto button_row = std::make_shared<layout::stack_panel>(layout::orientation::horizontal);
     button_row->set_spacing(10);
     
-    m_login = create_button(_T("Login"), 0, 0, 80, 25);
+    m_login = create_button(_T("Login"));
     m_login->on_click([this](WPARAM, LPARAM) {
         // Validate credentials
         end_dialog(IDOK);
     });
     
-    m_cancel = create_button(_T("Cancel"), 0, 0, 80, 25);
+    m_cancel = create_button(_T("Cancel"));
     m_cancel->on_click([this](WPARAM, LPARAM) {
         end_dialog(IDCANCEL);
     });
@@ -326,7 +326,7 @@ LRESULT DashboardWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto main_dock = std::make_shared<layout::dock_panel>();
     
     // === Title bar ===
-    auto title = create_static_text(_T("Dashboard"), 0, 0, 100, 30);
+    auto title = create_static_text(_T("Dashboard"));
     main_dock->add(title, layout::dock_position::top);
     
     // === Main content grid (2x2) ===
@@ -345,8 +345,8 @@ LRESULT DashboardWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto recent_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
     recent_panel->set_spacing(5);
     
-    auto recent_label = create_static_text(_T("Recent Files"), 0, 0, 100, 20);
-    m_recent_files = create_list_view(0, 0, 400, 250);
+    auto recent_label = create_static_text(_T("Recent Files"));
+    m_recent_files = create_list_view(400, 250);
     m_recent_files->add_column(_T("Name"), 200);
     m_recent_files->add_column(_T("Modified"), 100);
     
@@ -359,8 +359,8 @@ LRESULT DashboardWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto tasks_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
     tasks_panel->set_spacing(5);
     
-    auto tasks_label = create_static_text(_T("Tasks"), 0, 0, 100, 20);
-    m_tasks = create_list_view(0, 0, 400, 250);
+    auto tasks_label = create_static_text(_T("Tasks"));
+    m_tasks = create_list_view(400, 250);
     m_tasks->add_column(_T("Task"), 200);
     m_tasks->add_column(_T("Status"), 100);
     
@@ -373,8 +373,8 @@ LRESULT DashboardWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto notes_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
     notes_panel->set_spacing(5);
     
-    auto notes_label = create_static_text(_T("Notes"), 0, 0, 100, 20);
-    m_notes = create_edit_text(0, 0, 400, 250, _T(""),
+    auto notes_label = create_static_text(_T("Notes"));
+    m_notes = create_edit_text(_T(""), 400,
         WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL);
     
     notes_panel->add(notes_label);
@@ -386,8 +386,8 @@ LRESULT DashboardWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto stats_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
     stats_panel->set_spacing(5);
     
-    auto stats_label = create_static_text(_T("Statistics"), 0, 0, 100, 20);
-    m_stats = create_static_text(_T("Files: 42\nTasks: 7\nNotes: 15"), 0, 0, 400, 250);
+    auto stats_label = create_static_text(_T("Statistics"));
+    m_stats = create_static_text(_T("Files: 42\nTasks: 7\nNotes: 15"));
     
     stats_panel->add(stats_label);
     stats_panel->add(m_stats);
@@ -442,7 +442,7 @@ LRESULT ResponsiveToolbarWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lPar
     main_dock->add(toolbar_wrap, layout::dock_position::top);
     
     // === Main content ===
-    auto content = create_edit_text(0, 0, 100, 100, _T("Main Content"),
+    auto content = create_edit_text(_T("Main Content"), 100,
         WS_CHILD | WS_VISIBLE | ES_MULTILINE);
     main_dock->add(content, layout::dock_position::fill);
     
@@ -486,14 +486,14 @@ INT_PTR WizardDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     nav_buttons->set_padding(10, 10, 10, 10);
     nav_buttons->set_spacing(5);
     
-    m_back = create_button(_T("< Back"), 0, 0, 80, 25);
+    m_back = create_button(_T("< Back"));
     m_back->on_click([this](WPARAM, LPARAM) {
         if (m_current_page > 0) {
             show_page(--m_current_page);
         }
     });
     
-    m_next = create_button(_T("Next >"), 0, 0, 80, 25);
+    m_next = create_button(_T("Next >"));
     m_next->on_click([this](WPARAM, LPARAM) {
         if (m_current_page < 2) {
             show_page(++m_current_page);
@@ -502,7 +502,7 @@ INT_PTR WizardDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         }
     });
     
-    m_cancel = create_button(_T("Cancel"), 0, 0, 80, 25);
+    m_cancel = create_button(_T("Cancel"));
     m_cancel->on_click([this](WPARAM, LPARAM) {
         end_dialog(IDCANCEL);
     });
@@ -518,8 +518,8 @@ INT_PTR WizardDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     content_stack->set_padding(20, 20, 20, 20);
     content_stack->set_spacing(10);
     
-    m_page_title = create_static_text(_T(""), 0, 0, 400, 30);
-    m_page_content = create_static_text(_T(""), 0, 0, 400, 200);
+    m_page_title = create_static_text(_T(""));
+    m_page_content = create_static_text(_T(""));
     
     content_stack->add(m_page_title);
     content_stack->add(m_page_content);

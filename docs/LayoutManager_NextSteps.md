@@ -2,7 +2,7 @@
 
 ## Summary
 
-A comprehensive design plan has been created for implementing a XAML-inspired layout manager system in Windows++. This document outlines the next steps and decision points.
+A comprehensive design plan has been created for implementing a XAML-inspired layout manager system in Windows++. This is a **complete redesign** of control creation focusing on **usability first** - backward compatibility with manual positioning is NOT a goal.
 
 ## What Has Been Delivered
 
@@ -15,11 +15,12 @@ A comprehensive design plan has been created for implementing a XAML-inspired la
 
 ### Key Design Points
 
-- **Backward compatible** - no breaking changes
+- **Usability first** - clean, intuitive API
 - **XAML-inspired panels** - StackPanel, Grid, DockPanel, WrapPanel
 - **Measure/Arrange pattern** - proven two-pass layout system
 - **DPI-aware** - automatic scaling
 - **Composable** - support for nested layouts
+- **Simplified API** - no x, y coordinates in control creation!
 
 ## Implementation Readiness
 
@@ -79,19 +80,9 @@ More complex panels:
 
 **Question**: Should `dialog` class also support layouts, or just `window` class?
 
-**Current Design**: Primarily targets `window` class
+**Current Design**: Works with both `window` and `dialog` classes
 
-**Pros of adding dialog support**:
-- Consistent API across window types
-- Useful for custom dialogs
-- Resource-based dialogs less common in modern apps
-
-**Cons**:
-- More complex (dialogs use resource templates)
-- Resource-based layouts already exist
-- Additional implementation time
-
-**Recommendation**: Start with `window` class, add `dialog` support in future if needed
+**Recommendation**: Implement for both - the API is the same, simplifies usage
 
 ---
 

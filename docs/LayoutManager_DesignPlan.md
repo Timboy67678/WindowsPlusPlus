@@ -31,7 +31,7 @@ bool register_control(UINT control_id, control_ptr<CtrlType>& ctrl);
 
 ## Design Goals
 
-1. **Backward Compatibility**: Keep existing manual positioning API unchanged
+1. **Usability First**: Simple, intuitive API that's easy to learn and use
 2. **XAML-Inspired**: Use familiar layout concepts (StackPanel, Grid, DockPanel, etc.)
 3. **Declarative**: Enable fluent, readable layout descriptions
 4. **Lightweight**: Maintain Win32 performance with minimal overhead
@@ -39,6 +39,8 @@ bool register_control(UINT control_id, control_ptr<CtrlType>& ctrl);
 6. **DPI-Aware**: Support high-DPI displays automatically
 7. **Composable**: Allow nesting panels for complex layouts
 8. **Resizable**: Automatically adjust layouts when windows resize
+
+**Note**: This is a complete redesign of control creation. Backward compatibility with manual positioning is NOT a goal - the focus is on creating the best possible layout system.
 
 ## Proposed Architecture
 
@@ -210,14 +212,14 @@ private:
 
 ### 2. Integration with Window Class
 
-#### 2.1 Enhanced Window API
+#### 2.1 Simplified Window API
 ```cpp
-// In Window.hpp - Add layout support
+// In Window.hpp - Layout-first approach
 class window : public hwnd {
 public:
     // Existing constructors...
     
-    // New layout methods
+    // Layout methods (primary API)
     void set_layout(std::shared_ptr<layout::panel> layout_panel);
     std::shared_ptr<layout::panel> get_layout() const;
     
@@ -225,9 +227,19 @@ public:
     void invalidate_layout();
     void update_layout();
     
-    // Existing methods remain unchanged...
-    control_ptr<button> create_button(const std::tstring& text, int x, int y, 
-                                     int width, int height, DWORD style, DWORD style_ex);
+    // Simplified control creation - NO x, y coordinates needed!
+    control_ptr<button> create_button(const std::tstring& text, 
+                                     int width = -1, int height = -1,
+                                     DWORD style = BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE,
+                                     DWORD style_ex = 0);
+    
+    control_ptr<edit_text> create_edit_text(const std::tstring& text = _T(""),
+                                           int width = -1, int height = -1,
+                                           DWORD style = WS_CHILD | WS_VISIBLE | ES_LEFT,
+                                           DWORD style_ex = 0);
+    
+    // ... similar simplified signatures for all control types
+    // Width/height -1 means "auto-size based on content and layout"
     
 protected:
     // Handle WM_SIZE to trigger layout updates
@@ -235,19 +247,30 @@ protected:
     
 private:
     std::shared_ptr<layout::panel> m_layout_panel;
-    bool m_use_layout = false;
 };
 ```
 
-#### 2.2 Control Creation with Layout Support
+**Key Changes from Manual Positioning**:
+- ❌ **Removed**: x, y position parameters (layout handles positioning)
+- ✅ **Added**: Width/height default to -1 (auto-size)
+- ✅ **Simplified**: Layout is the primary way to organize controls
+- ✅ **Required**: `set_layout()` must be called to display controls
+
+#### 2.2 Control Creation - Layout-First Approach
 ```cpp
-// New helper methods for layout-managed controls
+// Controls are created without position - layout handles it!
 template<typename ControlType, typename... Args>
 std::shared_ptr<ControlType> create_control(Args&&... args) {
-    // Create control but don't position it yet
     auto control = std::make_shared<ControlType>(std::forward<Args>(args)...);
     m_controls.emplace_back(control);
     return control;
+}
+
+// Example: Creating controls for layout
+auto btn = create_button(_T("Click Me"));           // Auto-sized button
+auto edit = create_edit_text(_T(""), 200);          // 200px wide, auto height
+auto list = create_list_view(400, 300);             // Fixed size
+```
 }
 ```
 
@@ -261,16 +284,16 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     stack->set_padding(10, 10, 10, 10);
     stack->set_spacing(5);
     
-    // Create controls and add to stack
-    auto btn1 = create_button(_T("Button 1"), 0, 0, 150, 30);
-    auto btn2 = create_button(_T("Button 2"), 0, 0, 150, 30);
-    auto btn3 = create_button(_T("Button 3"), 0, 0, 150, 30);
+    // Create controls - NO coordinates needed!
+    auto btn1 = create_button(_T("Button 1"));
+    auto btn2 = create_button(_T("Button 2"));
+    auto btn3 = create_button(_T("Button 3"));
     
     stack->add(btn1);
     stack->add(btn2);
     stack->add(btn3);
     
-    // Set the layout
+    // Set the layout - controls are positioned automatically!
     set_layout(stack);
     
     return window::on_create(hWnd, wParam, lParam);
@@ -291,10 +314,10 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     grid->add_row({layout::grid::row_definition::size_type::auto_size});
     grid->add_row({layout::grid::row_definition::size_type::star, 1.0});
     
-    // Add controls to grid cells
-    auto label = create_static_text(_T("Name:"), 0, 0, 50, 20);
-    auto edit = create_edit_text(0, 0, 200, 20, _T(""));
-    auto list = create_list_view(0, 0, 400, 300);
+    // Add controls to grid cells - NO coordinates!
+    auto label = create_static_text(_T("Name:"));
+    auto edit = create_edit_text(_T(""), 200);
+    auto list = create_list_view(400, 300);
     
     grid->add(label, 0, 0);        // Row 0, Col 0
     grid->add(edit, 0, 1, 1, 2);   // Row 0, Col 1-2 (span 2 columns)
@@ -311,11 +334,11 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto dock = std::make_shared<layout::dock_panel>();
     
-    // Create toolbar, status bar, sidebar, and main area
-    auto toolbar = create_static_text(_T("Toolbar"), 0, 0, 100, 30);
-    auto statusbar = create_static_text(_T("Status Bar"), 0, 0, 100, 25);
-    auto sidebar = create_list_box(0, 0, 150, 400);
-    auto content = create_edit_text(0, 0, 500, 400, _T("Main Content Area"));
+    // Create controls - no coordinates needed!
+    auto toolbar = create_static_text(_T("Toolbar"));
+    auto statusbar = create_static_text(_T("Status Bar"));
+    auto sidebar = create_list_box(150);  // 150px wide
+    auto content = create_edit_text(_T("Main Content Area"));
     
     dock->add(toolbar, layout::dock_position::top);
     dock->add(statusbar, layout::dock_position::bottom);
@@ -337,22 +360,22 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     // Top toolbar as horizontal stack
     auto toolbar_stack = std::make_shared<layout::stack_panel>(layout::orientation::horizontal);
     toolbar_stack->set_spacing(5);
-    auto btn_new = create_button(_T("New"), 0, 0, 60, 25);
-    auto btn_open = create_button(_T("Open"), 0, 0, 60, 25);
-    auto btn_save = create_button(_T("Save"), 0, 0, 60, 25);
+    auto btn_new = create_button(_T("New"));
+    auto btn_open = create_button(_T("Open"));
+    auto btn_save = create_button(_T("Save"));
     toolbar_stack->add(btn_new);
     toolbar_stack->add(btn_open);
     toolbar_stack->add(btn_save);
     
     // Side panel as vertical stack
     auto sidebar_stack = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
-    auto tree = create_tree_view(0, 0, 200, 400);
-    auto properties = create_list_view(0, 0, 200, 200);
+    auto tree = create_tree_view(200);      // 200px wide
+    auto properties = create_list_view(200); // 200px wide
     sidebar_stack->add(tree);
     sidebar_stack->add(properties);
     
     // Main content area
-    auto content = create_edit_text(0, 0, 500, 400, _T(""));
+    auto content = create_edit_text(_T(""));
     
     // Compose the layout
     main_dock->add(toolbar_stack, layout::dock_position::top);
@@ -368,17 +391,17 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 #### 3.5 Fluent Builder API (Optional Enhancement)
 ```cpp
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-    // Alternative fluent API
+    // Alternative fluent API for layout-first design
     auto layout = layout::builder()
         .stack_vertical()
             .padding(10)
             .spacing(5)
-            .add(create_button(_T("Button 1"), 0, 0, 150, 30))
-            .add(create_button(_T("Button 2"), 0, 0, 150, 30))
+            .add(create_button(_T("Button 1")))
+            .add(create_button(_T("Button 2")))
             .add_stack_horizontal()
                 .spacing(5)
-                .add(create_button(_T("OK"), 0, 0, 75, 25))
-                .add(create_button(_T("Cancel"), 0, 0, 75, 25))
+                .add(create_button(_T("OK")))
+                .add(create_button(_T("Cancel")))
             .end()
         .end()
         .build();
@@ -467,10 +490,11 @@ float get_dpi_scale(HWND hwnd) {
 - Cache calculated positions to avoid recalculation
 - Use `SetWindowPos` with `SWP_NOACTIVATE | SWP_NOZORDER` for batch updates
 
-### 4. Backward Compatibility
-- All existing APIs remain unchanged
-- Layout system is opt-in via `set_layout()`
-- Manual positioning still works if layout is not set
+### 4. API Simplification
+- All control creation methods remove x, y parameters
+- Width/height parameters optional (default -1 = auto-size)
+- Layout system is required, not optional
+- Manual positioning removed entirely for cleaner API
 
 ### 5. Memory Management
 - Use `std::shared_ptr` for panels and controls
@@ -550,14 +574,15 @@ TEST_CASE("StackPanel vertical layout") {
 
 ## Success Criteria
 
-1. ✅ Backward compatible with existing code
-2. ✅ Reduces code needed for common layouts by 50%+
-3. ✅ Automatically handles window resizing
-4. ✅ DPI-aware by default
-5. ✅ Performance overhead < 5% compared to manual positioning
-6. ✅ Documentation complete and examples provided
-7. ✅ No memory leaks or crashes
-8. ✅ Works on Windows 7 through Windows 11
+1. ✅ Clean, intuitive API focused on usability
+2. ✅ Reduces code needed for layouts by 60%+
+3. ✅ Eliminates all manual coordinate calculations
+4. ✅ Automatically handles window resizing
+5. ✅ DPI-aware by default
+6. ✅ Performance overhead < 5% compared to manual positioning
+7. ✅ Documentation complete and examples provided
+8. ✅ No memory leaks or crashes
+9. ✅ Works on Windows 7 through Windows 11
 
 ## Timeline Estimate
 
