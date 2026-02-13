@@ -8,19 +8,36 @@ The layout manager system provides XAML-inspired automatic layout panels for Win
 
 ### Documents
 
-1. **[Layout Manager Design Plan](LayoutManager_DesignPlan.md)** - Comprehensive design document
+1. **[Layout Manager Design Plan](LayoutManager_DesignPlan.md)** (19.8 KB) - Comprehensive design document
    - Architecture and components
-   - Implementation plan (5 weeks)
-   - Technical considerations
-   - Usage examples
+   - Implementation plan (5 weeks, 4 phases)
+   - Technical considerations and alternatives
+   - Testing strategy
    - Open questions for discussion
 
-2. **[Layout Manager Quick Start Guide](LayoutManager_QuickStart.md)** - Quick reference
+2. **[Layout Manager Quick Start Guide](LayoutManager_QuickStart.md)** (9.7 KB) - Quick reference
    - Before/after examples
    - Available panel types (Stack, Grid, Dock, Wrap)
-   - Common patterns
-   - Migration guide
+   - Common patterns (forms, dialogs, app windows)
+   - Migration guide from manual positioning
    - Tips and troubleshooting
+
+3. **[Layout Manager Architecture](LayoutManager_Architecture.md)** (13.8 KB) - Visual diagrams
+   - Class hierarchy diagrams
+   - Layout process flow
+   - Panel-specific layout examples
+   - Memory model visualization
+   - Algorithm pseudocode
+   - Comparison with other systems
+
+4. **[Layout Manager Examples](LayoutManager_Examples.md)** (19.5 KB) - Real-world code examples
+   - Settings dialog
+   - Text editor window
+   - File explorer with sidebar
+   - Login dialog
+   - Dashboard with grid
+   - Responsive toolbar with WrapPanel
+   - Wizard dialog with navigation
 
 ### Status
 
