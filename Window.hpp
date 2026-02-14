@@ -195,6 +195,7 @@ namespace wpp
 		virtual message_handler on_dpi_changed;
 		virtual message_handler on_ctl_color_edit;
 		virtual message_handler on_ctl_color_static;
+		virtual message_handler on_min_max_info;
 
 		/**
 		 * @brief Creates the window without running a message loop.
@@ -306,6 +307,32 @@ namespace wpp
 		const auto& get_layout() const { return m_layout_panel; }
 
 		/**
+		* @brief Sets whether to keep the minimum size when resizing the window.
+		* @param keep_minimum True to keep minimum size, false otherwise.
+		*/
+		void set_keep_minimum_resize(bool keep_minimum) {
+			m_keep_minimum_size = keep_minimum;
+			if (m_handle) {
+				::SetWindowPos(m_handle, NULL, 0, 0, 0, 0,
+							   SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+			}
+		}
+
+		/**
+		* @brief Sets the minimum size of the window.
+		* @param width Minimum width.
+		* @param height Minimum height.
+		*/
+		void set_minimum_size(int width, int height) {
+			m_original_width = width;
+			m_original_height = height;
+			if (m_handle && m_keep_minimum_size) {
+				::SetWindowPos(m_handle, NULL, 0, 0, 0, 0,
+							   SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+			}
+		}
+
+		/**
 		 * @brief Adds a timer event.
 		 * @tparam DC Callback type.
 		 * @param timer_elapse Timer interval in milliseconds.
@@ -360,11 +387,13 @@ namespace wpp
 	protected:
 		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for window procedure.
 		window_class m_window_class; ///< Window class.
-		int m_x_pos, m_y_pos, m_width, m_height; ///< Window position and size.
+		int m_x_pos, m_y_pos; ///< Initial startup position of the window
+		int m_original_width, m_original_height; ///< Window original size.
 		tstring m_window_name; ///< Window name.
 		HMENU m_menu_handle; ///< Menu handle.
 		HFONT m_font; ///< Font handle.
 		int m_menu_id; ///< Menu ID.
+		bool m_keep_minimum_size = false; ///< Flag to keep minimum size when window is resized.
 		DWORD m_style, m_style_ex; ///< Window styles.
 		UINT m_control_id = WM_USER + 1; ///< Control ID index.
 		UINT_PTR m_internal_timer_id = 0; ///< Internal timer ID.
@@ -378,8 +407,3 @@ namespace wpp
 }
 
 #endif // WPP_WINDOW_HPP
-
-
-
-
-

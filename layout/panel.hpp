@@ -50,6 +50,8 @@ namespace wpp::layout
         // Layout calculations
         virtual void measure(int available_width, int available_height) = 0;
         virtual void arrange(int x, int y, int width, int height) = 0;
+
+		// Optional: custom painting (for advanced panels)
         virtual void paint(HDC hdc) = 0;
 
         // Parent/child relationships

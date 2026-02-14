@@ -6,7 +6,7 @@ namespace wpp
 	window::window(window_class wnd_class, const tstring& window_name, int x_pos, int y_pos, int width, int height, DWORD style,
 				   int menu_id, HMENU menu, HFONT font, DWORD style_ex)
 		: hwnd(NULL), m_window_class(wnd_class), m_window_name(window_name), m_x_pos(x_pos), m_y_pos(y_pos),
-		m_width(width), m_height(height), m_style(style), m_menu_id(menu_id), m_menu_handle(menu), m_font(font), m_style_ex(style_ex) {
+		m_original_width(width), m_original_height(height), m_style(style), m_menu_id(menu_id), m_menu_handle(menu), m_font(font), m_style_ex(style_ex) {
 		init_message_events();
 	}
 
@@ -41,6 +41,7 @@ namespace wpp
 			{WM_CTLCOLOREDIT, std::bind(&window::on_ctl_color_edit, this, _1, _2, _3)},
 			{WM_DPICHANGED, std::bind(&window::on_dpi_changed, this, _1, _2, _3)},
 			{WM_CTLCOLORSTATIC, std::bind(&window::on_ctl_color_static, this, _1, _2, _3)},
+			{WM_GETMINMAXINFO, std::bind(&window::on_min_max_info, this, _1, _2, _3)},
 		};
 	}
 
@@ -129,7 +130,7 @@ namespace wpp
 		m_window_class.Register();
 
 		m_handle = ::CreateWindowEx(m_style_ex, m_window_class.class_name(), m_window_name.c_str(), m_style,
-									m_x_pos, m_y_pos, m_width, m_height, m_parent_handle, m_menu_handle, m_window_class.instance(), param);
+									m_x_pos, m_y_pos, m_original_width, m_original_height, m_parent_handle, m_menu_handle, m_window_class.instance(), param);
 
 		if (!m_handle)
 			return false;
@@ -177,6 +178,8 @@ namespace wpp
 		return true;
 	}
 
+	auto def_proc_blacklist = { WM_COMMAND, WM_GETMINMAXINFO };
+
 	LRESULT window::window_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 		m_handle = hWnd;
 		LRESULT ret = FALSE;
@@ -184,7 +187,7 @@ namespace wpp
 		if (it != m_message_events.end())
 			ret = it->second(hWnd, wParam, lParam);
 
-		if (ret == FALSE) //was handled? otherwise send to default os handler
+		if (ret == FALSE && std::find(def_proc_blacklist.begin(), def_proc_blacklist.end(), Msg) == def_proc_blacklist.end()) // Allow controls to handle WM_COMMAND messages first
 			return ::DefWindowProc(hWnd, Msg, wParam, lParam);
 		else
 			return ret;
@@ -655,6 +658,15 @@ namespace wpp
 		if (m_layout_panel) {
 			float new_dpi = HIWORD(wParam) / 96.0f;
 			m_layout_panel->set_dpi_scale(new_dpi);
+		}
+		return FALSE;
+	}
+
+	LRESULT window::on_min_max_info(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (m_keep_minimum_size && lParam != NULL) {
+			LPMINMAXINFO minMaxInfo = reinterpret_cast<LPMINMAXINFO>(lParam);
+			minMaxInfo->ptMinTrackSize.x = m_original_width;
+			minMaxInfo->ptMinTrackSize.y = m_original_height;
 		}
 		return FALSE;
 	}
