@@ -18,6 +18,7 @@ namespace wpp::layout
         // Layout calculations
         void measure(int available_width, int available_height) override;
         void arrange(int x, int y, int width, int height) override;
+        void paint(HDC hdc) override;
 
         // Configuration
         void set_dock_position(control_ptr<> control, dock_position position);

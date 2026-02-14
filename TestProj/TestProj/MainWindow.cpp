@@ -12,13 +12,6 @@ MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     center_window();
 
-    // Create controls and set their dock positions
-    m_LinkControl = create_link_control(_T("<a href=\"https://www.google.com\">Click me!</a>, or better yet, <a href=\"https://facebook.com\">Click Me!</a>"), 250, 25);
-    m_LinkControl->on_click([this](LPNMHDR nm) {
-        auto item = reinterpret_cast<PNMLINK>(nm)->item;
-        ShellExecuteW(NULL, L"open", item.szUrl, NULL, NULL, SW_SHOWNORMAL);
-    });
-
     m_ButtonOne = create_button(_T("Click Me!"), 150, 25);
     m_ButtonOne->on_click([this](WPARAM, LPARAM) {
         static int x = 0;
@@ -32,9 +25,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     });
 
     m_ComboBoxOne = create_combo_box(150, 25);
-
     m_EditTextOne = create_edit_text(_T("Edit me!"), 150, 25);
-
     m_ListViewOne = create_list_view(350, 150);
 
     m_RadioButtonGroup = create_radio_button_group();
@@ -59,6 +50,12 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     m_ListViewOne->add_item(0, 0, _T("Item 1"));
     m_ListViewOne->add_item(0, 1, _T("Column Item 1"));
     m_ListViewOne->add_item(0, 2, _T("Column Item 2"));
+
+    m_LinkControl = create_link_control(_T("<a href=\"https://www.google.com\">Click me!</a>, or better yet, <a href=\"https://facebook.com\">Click Me!</a>"), 250, 25);
+    m_LinkControl->on_click([this](LPNMHDR nm) {
+        auto item = reinterpret_cast<PNMLINK>(nm)->item;
+        ShellExecuteW(NULL, L"open", item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+    });
 
     return window::on_create(hWnd, wParam, lParam);
 }

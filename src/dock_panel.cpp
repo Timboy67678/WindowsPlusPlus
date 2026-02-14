@@ -3,7 +3,7 @@
 namespace wpp::layout
 {
     dock_panel::dock_panel()
-        : panel(panel_type::dock)
+        : panel(type::dock)
         , m_last_child_fill(true)
     {
     }
@@ -17,12 +17,31 @@ namespace wpp::layout
         if (control) {
             m_children.push_back(control);
             m_dock_positions[control] = position;
+            
+            // Store the original size of the control when first added
+            RECT rc = control->get_rect();
+            int original_width = rc.right - rc.left;
+            int original_height = rc.bottom - rc.top;
+            
+            child_measure measure;
+            measure.control = control;
+            measure.position = position;
+            measure.desired_size = { original_width, original_height };
+            m_child_measures.push_back(measure);
         }
     }
 
     void dock_panel::set_dock_position(control_ptr<> control, dock_position position) {
         if (control) {
             m_dock_positions[control] = position;
+            
+            // Update the position in child_measures too
+            for (auto& measure : m_child_measures) {
+                if (measure.control == control) {
+                    measure.position = position;
+                    break;
+                }
+            }
         }
     }
 
@@ -45,38 +64,28 @@ namespace wpp::layout
         int content_width = available_width - padding_h - margin_h;
         int content_height = available_height - padding_v - margin_v;
 
-        m_child_measures.clear();
-        m_child_measures.reserve(m_children.size());
-
         int remaining_width = content_width;
         int remaining_height = content_height;
 
-        for (size_t i = 0; i < m_children.size(); ++i) {
-            auto& child = m_children[i];
-            if (!child || !child->is_valid()) continue;
-
-            // Determine dock position
-            dock_position pos = get_dock_position(child);
+        // Update positions if last child fill is enabled
+        for (size_t i = 0; i < m_child_measures.size(); ++i) {
+            auto& measure = m_child_measures[i];
+            if (!measure.control || !measure.control->is_valid()) continue;
 
             // If last child and m_last_child_fill is true, override to fill
-            if (m_last_child_fill && i == m_children.size() - 1) {
-                pos = dock_position::fill;
+            if (m_last_child_fill && i == m_child_measures.size() - 1) {
+                measure.position = dock_position::fill;
+            } else {
+                // Use stored position from m_dock_positions
+                measure.position = get_dock_position(measure.control);
             }
 
-            // Get current window size as desired size
-            RECT rc = child->get_rect();
-            int child_width = rc.right - rc.left;
-            int child_height = rc.bottom - rc.top;
-
-            child_measure measure;
-            measure.control = child;
-            measure.position = pos;
-            measure.desired_size = { child_width, child_height };
-
-            m_child_measures.push_back(measure);
+            // Use stored original sizes (no need to query get_rect() every time)
+            int child_width = measure.desired_size.width;
+            int child_height = measure.desired_size.height;
 
             // Reduce remaining space based on dock position
-            switch (pos) {
+            switch (measure.position) {
             case dock_position::left:
             case dock_position::right:
                 remaining_width -= child_width;
@@ -188,5 +197,10 @@ namespace wpp::layout
             // Position the control
             measure.control->move(child_x, child_y, child_width, child_height);
         }
+    }
+
+    void dock_panel::paint(HDC hdc) {
+        // For now, we don't do any custom painting for the dock panel itself.
+		// Child controls will handle their own painting.
     }
 }

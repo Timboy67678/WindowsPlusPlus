@@ -65,7 +65,7 @@ namespace wpp
 
 	void window::update_layout() {
 		if(m_layout_panel) {
-			RECT rc = get_rect();
+			RECT rc = get_client_rect();
 			m_layout_panel->measure(rc.right, rc.bottom);
 			m_layout_panel->arrange(0, 0, rc.right, rc.bottom);
 		}
@@ -150,7 +150,7 @@ namespace wpp
 		update_layout();
 
 		show_window();
-		::UpdateWindow(m_handle);
+		update_window();
 
 		m_window_running = true;
 
@@ -162,7 +162,7 @@ namespace wpp
 			return false;
 
 		show_window();
-		::UpdateWindow(m_handle);
+		update_window();
 
 		MSG msg;
 		while (m_window_running && ::GetMessage(&msg, NULL, NULL, NULL)) {
@@ -212,7 +212,7 @@ namespace wpp
 
 		radiobutton->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_radio_buttons.push_back(radiobutton);
-		m_parent->m_layout_panel->add(radiobutton);
+		m_parent->get_layout()->add(radiobutton);
 		m_parent->m_controls.emplace_back(radiobutton);
 
 		return radiobutton;
@@ -561,10 +561,17 @@ namespace wpp
 	}
 
 	LRESULT window::on_destroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		::PostQuitMessage(0);
 		return TRUE;
 	}
 
 	LRESULT window::on_paint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		PAINTSTRUCT ps = {};
+		HDC hdc = ::BeginPaint(hWnd, &ps);
+		if (m_layout_panel) {
+			m_layout_panel->paint(ps.hdc);
+		}
+		::EndPaint(hWnd, &ps);
 		return FALSE;
 	}
 
@@ -587,13 +594,14 @@ namespace wpp
 	}
 
 	LRESULT window::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		// Get new client area dimensions
-		RECT clientRect = get_client_rect();
-		int newWidth = clientRect.right - clientRect.left;
-		int newHeight = clientRect.bottom - clientRect.top;
-		m_layout_panel->measure(newWidth, newHeight);
-		m_layout_panel->arrange(0, 0, newWidth, newHeight);
-
+		// Get new area dimensions
+		if (m_layout_panel) {
+			int newWidth = LOWORD(lParam);
+			int newHeight = HIWORD(lParam);
+			m_layout_panel->measure(newWidth, newHeight);
+			m_layout_panel->arrange(0, 0, newWidth, newHeight);
+			update_window();
+		}
 		return FALSE;
 	}
 
@@ -689,8 +697,3 @@ namespace wpp
 		cleanup();
 	}
 }
-
-
-
-
-

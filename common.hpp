@@ -235,6 +235,10 @@ namespace wpp
 			::SetWindowPos(m_handle, topmost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 		}
 
+		virtual BOOL update_window() const {
+			return ::UpdateWindow(m_handle);
+		}
+
 		virtual bool is_topmost() const {
 			return (get_ex_style() & WS_EX_TOPMOST) != 0;
 		}

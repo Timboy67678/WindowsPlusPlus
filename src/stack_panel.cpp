@@ -3,23 +3,25 @@
 namespace wpp::layout
 {
     stack_panel::stack_panel(orientation orient)
-        : panel(panel_type::stack)
+        : panel(type::stack)
         , m_orientation(orient)
         , m_spacing(0)
-        , m_alignment(alignment::start)
-    {
+        , m_alignment(alignment::start) {
     }
 
-    void stack_panel::add(control_ptr<> control)
-    {
+    void stack_panel::add(control_ptr<> control) {
         if (control) {
             m_children.push_back(control);
-            m_child_sizes.push_back({ 0, 0 });
+            
+            // Store the original size of the control when first added
+            RECT rc = control->get_rect();
+            int original_width = rc.right - rc.left;
+            int original_height = rc.bottom - rc.top;
+            m_child_sizes.push_back({ original_width, original_height });
         }
     }
 
-    void stack_panel::measure(int available_width, int available_height)
-    {
+    void stack_panel::measure(int available_width, int available_height) {
         // Apply DPI scaling
         int scaled_spacing = static_cast<int>(m_spacing * m_dpi_scale);
         int padding_h = static_cast<int>((m_padding.left + m_padding.right) * m_dpi_scale);
@@ -35,17 +37,22 @@ namespace wpp::layout
         int total_height = 0;
         int max_cross_axis = 0;
 
-        m_child_sizes.resize(m_children.size());
-
         for (size_t i = 0; i < m_children.size(); ++i) {
             auto& child = m_children[i];
             if (!child || !child->is_valid()) continue;
 
-            // Get current window size as desired size
-            RECT rc = child->get_rect();
-            int child_width = rc.right - rc.left;
-            int child_height = rc.bottom - rc.top;
+            // Use the stored original size as base size (not current size)
+            int child_width = m_child_sizes[i].width;
+            int child_height = m_child_sizes[i].height;
 
+            // If stretch alignment, update cross-axis to fill available space
+            if (m_orientation == orientation::horizontal && m_alignment == alignment::stretch) {
+                child_height = content_height;
+            } else if (m_orientation == orientation::vertical && m_alignment == alignment::stretch) {
+                child_width = content_width;
+            }
+
+            // Update child_sizes with potential cross-axis stretch
             m_child_sizes[i] = { child_width, child_height };
 
             if (m_orientation == orientation::horizontal) {
@@ -53,8 +60,7 @@ namespace wpp::layout
                 total_width += child_width;
                 if (i > 0) total_width += scaled_spacing;
                 max_cross_axis = (std::max)(max_cross_axis, child_height);
-            }
-            else {
+            } else {
                 // Stack vertically
                 total_height += child_height;
                 if (i > 0) total_height += scaled_spacing;
@@ -72,8 +78,7 @@ namespace wpp::layout
         }
     }
 
-    void stack_panel::arrange(int x, int y, int width, int height)
-    {
+    void stack_panel::arrange(int x, int y, int width, int height) {
         m_actual_size = { width, height };
 
         // Apply DPI scaling
@@ -97,6 +102,33 @@ namespace wpp::layout
         int content_width = width - margin_left - margin_right - padding_left - padding_right;
         int content_height = height - margin_top - margin_bottom - padding_top - padding_bottom;
 
+        // Calculate extra space to distribute
+        int total_desired_size = 0;
+        int num_valid_children = 0;
+
+        for (size_t i = 0; i < m_children.size(); ++i) {
+            auto& child = m_children[i];
+            if (!child || !child->is_valid()) continue;
+
+            num_valid_children++;
+            if (m_orientation == orientation::horizontal) {
+                total_desired_size += m_child_sizes[i].width;
+            } else {
+                total_desired_size += m_child_sizes[i].height;
+            }
+        }
+
+        // Add spacing to total
+        if (num_valid_children > 1) {
+            total_desired_size += scaled_spacing * (num_valid_children - 1);
+        }
+
+        // Calculate extra space and per-child bonus (can be negative for shrinking)
+        int available_size = (m_orientation == orientation::horizontal) ? content_width : content_height;
+        int extra_space = available_size - total_desired_size;
+        int per_child_extra = (num_valid_children > 0) ? extra_space / num_valid_children : 0;
+        int remainder = (num_valid_children > 0) ? extra_space % num_valid_children : 0;
+
         int current_pos = 0;
 
         for (size_t i = 0; i < m_children.size(); ++i) {
@@ -107,9 +139,17 @@ namespace wpp::layout
             int child_x = 0, child_y = 0, child_width = 0, child_height = 0;
 
             if (m_orientation == orientation::horizontal) {
-                // Horizontal stacking
+                // Horizontal stacking - distribute width
+                child_width = child_size.width + per_child_extra;
+                if (remainder != 0) {
+                    child_width += (remainder > 0) ? 1 : -1;
+                    remainder += (remainder > 0) ? -1 : 1;
+                }
+
+                // Ensure minimum width
+                if (child_width < 1) child_width = 1;
+
                 child_x = content_x + current_pos;
-                child_width = child_size.width;
 
                 // Handle vertical alignment
                 switch (m_alignment) {
@@ -132,11 +172,18 @@ namespace wpp::layout
                 }
 
                 current_pos += child_width + scaled_spacing;
-            }
-            else {
-                // Vertical stacking
+            } else {
+                // Vertical stacking - distribute height
+                child_height = child_size.height + per_child_extra;
+                if (remainder != 0) {
+                    child_height += (remainder > 0) ? 1 : -1;
+                    remainder += (remainder > 0) ? -1 : 1;
+                }
+
+                // Ensure minimum height
+                if (child_height < 1) child_height = 1;
+
                 child_y = content_y + current_pos;
-                child_height = child_size.height;
 
                 // Handle horizontal alignment
                 switch (m_alignment) {
@@ -164,5 +211,9 @@ namespace wpp::layout
             // Position the control
             child->move(child_x, child_y, child_width, child_height);
         }
+    }
+
+    void stack_panel::paint(HDC hdc) {
+        // Currently no custom painting for stack panel itself, just return true to indicate handled
     }
 }

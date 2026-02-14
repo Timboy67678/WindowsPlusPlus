@@ -25,7 +25,7 @@ namespace wpp::layout
         fill
     };
 
-    enum class panel_type {
+    enum class type {
         stack,
         dock,
         grid,
@@ -33,15 +33,15 @@ namespace wpp::layout
         base = -1
 	};
 
-    struct margin_t {  int left, top, right, bottom; };
-    struct padding_t {  int left, top, right, bottom; };
+    struct margin_t { int left, top, right, bottom; };
+    struct padding_t { int left, top, right, bottom; };
 	struct sizing_t { int width, height; };
 
     // Base class for all layout panels
     class panel {
     public:
-		panel(panel_type type) 
-            : m_panel_type(type) {}
+		panel(type) 
+            : m_panel_type(type::base) {}
         virtual ~panel() = default;
 
         // Add a control to this panel
@@ -50,6 +50,7 @@ namespace wpp::layout
         // Layout calculations
         virtual void measure(int available_width, int available_height) = 0;
         virtual void arrange(int x, int y, int width, int height) = 0;
+        virtual void paint(HDC hdc) = 0;
 
         // Parent/child relationships
         void set_parent_window(hwnd parent) { m_parent = parent; }
@@ -75,7 +76,7 @@ namespace wpp::layout
         void set_dpi_scale(float scale) { m_dpi_scale = scale; }
 
 		// Get the type of this panel
-        panel_type get_panel_type() const { return m_panel_type; }
+        type get_type() const { return m_panel_type; }
 
     protected:
         hwnd m_parent = nullptr;
@@ -90,7 +91,7 @@ namespace wpp::layout
         sizing_t m_desired_size{ 0, 0 };
         sizing_t m_actual_size{ 0, 0 };
 
-        panel_type m_panel_type = panel_type::base;
+        type m_panel_type = type::base;
     };
 }
 
