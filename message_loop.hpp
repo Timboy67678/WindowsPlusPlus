@@ -45,7 +45,7 @@ namespace wpp
 		/// @param window The hwnd handle of the window to register.
 		/// @return true if the window was successfully registered, false if already registered.
 		bool register_window(const hwnd& window) {
-			std::lock_guard lock(m_window_mutex);
+			std::lock_guard lock(m_windows_mutex);
 			if (std::find(m_message_windows.begin(), m_message_windows.end(), window) != m_message_windows.end())
 				return false;
 			m_message_windows.push_back(window);
@@ -56,7 +56,7 @@ namespace wpp
 		/// @param window The hwnd handle of the window to unregister.
 		/// @return true if the window was successfully unregistered, false if not found.
 		bool unregister_window(const hwnd& window) {
-			std::lock_guard lock(m_window_mutex);
+			std::lock_guard lock(m_windows_mutex);
 			auto it = std::find(m_message_windows.begin(), m_message_windows.end(), window);
 			if (it != m_message_windows.end()) {
 				m_message_windows.erase(it);
@@ -71,13 +71,24 @@ namespace wpp
 		/// @return The wParam of the WM_QUIT message, or -1 if already running.
 		int run() {
 			if (m_message_loop_running.exchange(true))
-				return -1; // Already running
+				return -1;
 
 			MSG msg{};
 			while (m_message_loop_running.load() && ::GetMessage(&msg, NULL, 0, 0)) {
+				if (msg.message == WM_QUIT) {
+					m_message_loop_running.store(false);
+					return static_cast<int>(msg.wParam);
+				}
+
 				if (!is_dialog_message(msg)) {
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
+				}
+
+				if (cleanup_invalid_windows()) {
+					m_message_loop_running.store(false);
+					::PostQuitMessage(0);
+					return 0;
 				}
 			}
 			m_message_loop_running.store(false);
@@ -93,11 +104,10 @@ namespace wpp
 		/// @return The wParam of WM_QUIT or 0 on normal exit, or -1 if already running.
 		int run_peek(std::function<bool(void*)> idle_callback = nullptr, void* user_data = nullptr) {
 			if (m_message_loop_running.exchange(true))
-				return -1; // Already running
+				return -1;
 
 			MSG msg{};
 			while (m_message_loop_running.load()) {
-				// PM_REMOVE: Remove message from queue after peeking
 				if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 					if (msg.message == WM_QUIT) {
 						m_message_loop_running.store(false);
@@ -107,13 +117,22 @@ namespace wpp
 						::TranslateMessage(&msg);
 						::DispatchMessage(&msg);
 					}
+
+					if (cleanup_invalid_windows()) {
+						m_message_loop_running.store(false);
+						return 0;
+					}
 				} else {
-					// No message available - call idle callback or yield
+					if (cleanup_invalid_windows()) {
+						m_message_loop_running.store(false);
+						return 0;
+					}
+
 					if (idle_callback && !idle_callback(user_data)) {
 						m_message_loop_running.store(false);
 						return 0;
 					} else {
-						::Sleep(0); // Yield to other threads
+						::Sleep(0);
 					}
 				}
 			}
@@ -136,46 +155,42 @@ namespace wpp
 
 		/// @brief Clears all registered windows.
 		void clear_windows() {
-			std::lock_guard lock(m_window_mutex);
+			std::lock_guard lock(m_windows_mutex);
 			m_message_windows.clear();
 		}
 
 		/// @brief Gets the number of registered windows.
 		/// @return The count of currently registered windows.
 		size_t window_count() const {
-			std::lock_guard lock(m_window_mutex);
+			std::lock_guard lock(m_windows_mutex);
 			return m_message_windows.size();
 		}
 
 	private:
-		/// @brief Checks if a message belongs to any registered dialog window.
-		/// Also performs cleanup of invalid window handles.
-		/// @param msg The message to check.
-		/// @return true if the message was processed by a dialog, false otherwise.
-		bool is_dialog_message(MSG& msg) {
-			// Clean up invalid handles
-			std::lock_guard lock(m_window_mutex);
+		/// @brief Removes invalid window handles and returns true if no windows remain.
+		/// @return true if all windows have been removed, false otherwise.
+		bool cleanup_invalid_windows() {
+			std::lock_guard lock(m_windows_mutex);
 			m_message_windows.erase(
 				std::remove_if(m_message_windows.begin(), m_message_windows.end(),
 							   [](const hwnd& handle) { return !::IsWindow(handle.get_handle()); }),
 				m_message_windows.end()
 			);
+			return m_message_windows.empty();
+		}
 
-			if (m_message_windows.empty()) {
-				::PostQuitMessage(0);
-				return false;
-			}
+		bool is_dialog_message(MSG& msg) {
+			std::lock_guard lock(m_windows_mutex);
 
-			// Check if message is for any registered dialog
 			for (const hwnd& window : m_message_windows) {
-				if (::IsDialogMessage(window.get_handle(), &msg))
+				if (::IsWindow(window.get_handle()) && ::IsDialogMessage(window.get_handle(), &msg))
 					return true;
 			}
 
 			return false;
 		}
 
-		mutable std::mutex m_window_mutex;
+		mutable std::mutex m_windows_mutex;				 ///< Mutex to protect access to the message windows collection
 		std::atomic_bool m_message_loop_running = false; ///< Thread-safe flag indicating if loop is running
 		std::vector<hwnd> m_message_windows;             ///< Collection of registered dialog windows
 	};

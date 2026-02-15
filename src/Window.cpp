@@ -23,7 +23,6 @@ namespace wpp
 		m_message_events = {
 			{WM_CREATE, std::bind(&window::on_create, this, _1, _2, _3)},
 			{WM_CLOSE, std::bind(&window::on_close, this, _1, _2, _3)},
-			{WM_QUIT, std::bind(&window::on_quit, this, _1, _2, _3)},
 			{WM_DESTROY, std::bind(&window::on_destroy, this, _1, _2, _3)},
 			{WM_DISPLAYCHANGE, std::bind(&window::on_display_change, this, _1, _2, _3)},
 			{WM_MOVE, std::bind(&window::on_move, this, _1, _2, _3)},
@@ -46,22 +45,9 @@ namespace wpp
 	}
 
 	void window::cleanup() {
-		for (auto& timer : m_timer_events)
-			::KillTimer(m_handle, timer.first);
-		for (auto& control_pair : m_controls) {
-			::DestroyWindow(control_pair->get_handle());
-			control_pair.reset();
+		if (is_valid()) {
+			::DestroyWindow(m_handle);
 		}
-
-		m_controls.clear();
-		m_timer_events.clear();
-		m_menu_command_events.clear();
-
-		::DeleteObject(m_font); m_font = NULL;
-		::DestroyMenu(m_menu_handle); m_menu_handle = NULL;
-		::DestroyWindow(m_handle); m_handle = NULL;
-
-		m_control_id = WM_USER + 1; // reset counter
 	}
 
 	void window::update_layout() {
@@ -135,7 +121,6 @@ namespace wpp
 		if (!m_handle)
 			return false;
 
-		// If no font was provided, create a default one (Segoe UI, 12pt)
 		if (m_font == NULL) {
 			m_font = ::CreateFont(
 				-12, 0, 0, 0,
@@ -153,8 +138,6 @@ namespace wpp
 		show_window();
 		update_window();
 
-		m_window_running = true;
-
 		return true;
 	}
 
@@ -164,6 +147,8 @@ namespace wpp
 
 		show_window();
 		update_window();
+
+		m_window_running = true;
 
 		MSG msg;
 		while (m_window_running && ::GetMessage(&msg, NULL, NULL, NULL)) {
@@ -179,7 +164,6 @@ namespace wpp
 	}
 
 	auto def_proc_blacklist = { WM_COMMAND, WM_GETMINMAXINFO };
-
 	LRESULT window::window_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
 		m_handle = hWnd;
 		LRESULT ret = FALSE;
@@ -555,17 +539,31 @@ namespace wpp
 	}
 
 	LRESULT window::on_close(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		quit_window();
-		return TRUE;
-	}
-
-	LRESULT window::on_quit(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		return TRUE;
+		::DestroyWindow(m_handle);
+		return TRUE; 
 	}
 
 	LRESULT window::on_destroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		::PostQuitMessage(0);
-		return TRUE;
+		m_controls.clear();
+		m_timer_events.clear();
+		m_menu_command_events.clear();
+
+		if (m_font) {
+			::DeleteObject(m_font);
+			m_font = NULL;
+		}
+		if (m_menu_handle) {
+			::DestroyMenu(m_menu_handle);
+			m_menu_handle = NULL;
+		}
+
+		if (m_window_running) {
+			m_window_running = false;
+			::PostQuitMessage(0);
+		}
+
+		m_control_id = WM_USER + 1;
+		return FALSE;
 	}
 
 	LRESULT window::on_paint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
@@ -597,7 +595,6 @@ namespace wpp
 	}
 
 	LRESULT window::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		// Get new area dimensions
 		if (m_layout_panel) {
 			int newWidth = LOWORD(lParam);
 			int newHeight = HIWORD(lParam);
@@ -701,11 +698,13 @@ namespace wpp
 	}
 
 	void window::close_window() {
-		::CloseWindow(m_handle);
+		if (m_handle && ::IsWindow(m_handle)) {
+			::DestroyWindow(m_handle);
+		}
 	}
 
 	void window::quit_window(INT exit_code) {
-		m_window_running = false;
-		cleanup();
+		::DestroyWindow(m_handle);
+		::PostQuitMessage(exit_code);
 	}
 }

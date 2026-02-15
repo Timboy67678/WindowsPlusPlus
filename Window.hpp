@@ -177,7 +177,6 @@ namespace wpp
 
 		virtual message_handler on_create;
 		virtual message_handler on_close;
-		virtual message_handler on_quit;
 		virtual message_handler on_timer;
 		virtual message_handler on_notify;
 		virtual message_handler on_command;
