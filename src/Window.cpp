@@ -5,7 +5,7 @@ namespace wpp
 {
 	window::window(window_class wnd_class, const tstring& window_name, int x_pos, int y_pos, int width, int height, DWORD style,
 				   int menu_id, HMENU menu, HFONT font, DWORD style_ex)
-		: hwnd(NULL), m_window_class(wnd_class), m_window_name(window_name), m_x_pos(x_pos), m_y_pos(y_pos),
+		: window_base(NULL), m_window_class(wnd_class), m_window_name(window_name), m_x_pos(x_pos), m_y_pos(y_pos),
 		m_original_width(width), m_original_height(height), m_style(style), m_menu_id(menu_id), m_menu_handle(menu), m_font(font), m_style_ex(style_ex) {
 		init_message_events();
 	}
@@ -545,7 +545,6 @@ namespace wpp
 
 	LRESULT window::on_destroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		m_controls.clear();
-		m_timer_events.clear();
 		m_menu_command_events.clear();
 
 		if (m_font) {
@@ -586,12 +585,7 @@ namespace wpp
 	}
 
 	LRESULT window::on_timer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		auto it = m_timer_events.find(static_cast<UINT_PTR>(wParam));
-		if (it != m_timer_events.end()) {
-			it->second();
-			return TRUE;
-		}
-		return FALSE;
+		return handle_timer(static_cast<UINT_PTR>(wParam)) ? TRUE : FALSE;
 	}
 
 	LRESULT window::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {

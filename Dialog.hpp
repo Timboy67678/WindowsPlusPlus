@@ -2,9 +2,8 @@
 #define __DIALOG_H__
 
 #include "winplusplus.hpp"
+#include "window_base.hpp"
 #include "message_loop.hpp"
-
-constexpr auto DIALOG_TIMER_OFFSET_START = 0x1374;
 
 namespace wpp
 {
@@ -12,10 +11,9 @@ namespace wpp
 	* @class Dialog
 	* @brief A class representing a dialog window.
 	*/
-	class dialog : public hwnd {
+	class dialog : public window_base {
 	public:
 		using menu_callback = std::function<void(WPARAM, LPARAM)>;
-		using timer_callback = std::function<void()>;
 		using dialog_message_callback = std::function<INT_PTR(HWND, WPARAM, LPARAM)>;
 		using message_handler = INT_PTR(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
@@ -114,18 +112,6 @@ namespace wpp
 		}
 
 		/**
-		* @brief Adds a timer event.
-		* @param timer_elapse The timer elapse time.
-		* @param callback The callback function.
-		*/
-		template<typename DC>
-		void add_timer(INT timer_elapse, DC callback) {
-			const UINT_PTR timer_id = ++m_internal_timerid + DIALOG_TIMER_OFFSET_START;
-			if (::SetTimer(m_handle, timer_id, timer_elapse, NULL) != 0)
-				m_timer_events[timer_id] = DIALOG_TIMER_REF(callback);
-		}
-
-		/**
 		* @brief Registers a control.
 		* @param control_id The control ID.
 		* @param ctrl The control object (output parameter).
@@ -168,25 +154,6 @@ namespace wpp
 			return nullptr;
 		}
 
-		int message_box(const tstring& message, const tstring& title, UINT type) {
-			return ::MessageBox(m_handle, message.c_str(), title.c_str(), type);
-		}
-
-		template<typename... Args>
-		int message_box_info(const tstring& title, tstring_view format_str, Args&&... args) {
-			return message_box(format_tstring(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONINFORMATION);
-		}
-
-		template<typename... Args>
-		int message_box_warn(const tstring& title, tstring_view format_str, Args&&... args) {
-			return message_box(format_string(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONWARNING);
-		}
-
-		template<typename... Args>
-		int message_box_error(const tstring& title, tstring_view format_str, Args&&... args) {
-			return message_box(format_string(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONERROR);
-		}
-
 	private:
 		void init_message_events();
 		void cleanup();
@@ -196,7 +163,6 @@ namespace wpp
 
 	protected:
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
-		std::map<UINT_PTR, timer_callback> m_timer_events; ///< Timer events.
 		std::map<INT, dialog_message_callback> m_message_events; ///< Message events.
 		std::vector<control_ptr<>> m_controls; ///< Controls container.
 

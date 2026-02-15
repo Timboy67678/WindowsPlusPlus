@@ -180,6 +180,7 @@
     <ClInclude Include="..\message_loop.hpp" />
     <ClInclude Include="..\thunk.hpp" />
     <ClInclude Include="..\window.hpp" />
+    <ClInclude Include="..\window_base.hpp" />
     <ClInclude Include="..\winplusplus.hpp" />
   </ItemGroup>
   <ItemGroup>

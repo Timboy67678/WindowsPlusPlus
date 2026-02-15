@@ -2,10 +2,9 @@
 #define WPP_WINDOW_HPP
 
 #include "winplusplus.hpp"
+#include "window_base.hpp"
 #include "message_loop.hpp"
 #include "layout.hpp"
-
-constexpr auto WINDOW_TIMER_OFFSET_START = 0x2374;
 
 namespace wpp
 {
@@ -105,10 +104,9 @@ namespace wpp
 		ATOM m_class_atom = NULL; ///< Class atom.
 	};
 
-	class window : public hwnd {
+	class window : public window_base {
 	public:
 		using menu_callback = std::function<void(WPARAM, LPARAM)>;
-		using timer_callback = std::function<void()>;
 		using window_message_callback = std::function<LRESULT(HWND, WPARAM, LPARAM)>;
 		using message_handler = LRESULT(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
@@ -222,25 +220,6 @@ namespace wpp
 		 */
 		virtual LRESULT window_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-		int message_box(const tstring& message, const tstring& title, UINT type) {
-			return ::MessageBox(m_handle, message.c_str(), title.c_str(), type);
-		}
-
-		template<typename... Args>
-		int message_box_info(const tstring& title, tstring_view format_str, Args&&... args) {
-			return message_box(format_tstring(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONINFORMATION);
-		}
-
-		template<typename... Args>
-		int message_box_warn(const tstring& title, tstring_view format_str, Args&&... args) {
-			return message_box(format_string(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONWARNING);
-		}
-
-		template<typename... Args>
-		int message_box_error(const tstring& title, tstring_view format_str, Args&&... args) {
-			return message_box(format_string(format_str, std::forward<Args>(args)...), title, MB_OK | MB_ICONERROR);
-		}
-
 		/**
 		 * @brief Shows the window.
 		 */
@@ -332,19 +311,6 @@ namespace wpp
 		}
 
 		/**
-		 * @brief Adds a timer event.
-		 * @tparam DC Callback type.
-		 * @param timer_elapse Timer interval in milliseconds.
-		 * @param callback Callback function.
-		 */
-		template<typename DC>
-		void add_timer(INT timer_elapse, DC callback) {
-			const UINT_PTR timer_id = ++m_internal_timer_id + WINDOW_TIMER_OFFSET_START;
-			if (::SetTimer(m_handle, timer_id, timer_elapse, NULL) != 0)
-				m_timer_events[timer_id] = callback;
-		}
-
-		/**
 		* @brief Gets a control by ID.
 		* @tparam CtrlType Control type.
 		* @param control_id Control ID.
@@ -398,7 +364,6 @@ namespace wpp
 		UINT_PTR m_internal_timer_id = 0; ///< Internal timer ID.
 		std::atomic_bool m_window_running = false; ///< Window running flag.
 		std::map<INT, window_message_callback> m_message_events; ///< Message events.
-		std::map<UINT_PTR, timer_callback> m_timer_events; ///< Timer events.
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
 		std::shared_ptr<layout::panel> m_layout_panel; ///< Layout panel for automatic control arrangement.
 		std::vector<control_ptr<>> m_controls; ///< Controls container.

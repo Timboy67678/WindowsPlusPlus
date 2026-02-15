@@ -8,6 +8,7 @@
 
 // Common includes
 #include "common.hpp"
+#include "window_base.hpp"
 #include "controls.hpp"
 
 #endif //__WINPLUSPLUS_H__

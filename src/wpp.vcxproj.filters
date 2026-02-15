@@ -134,6 +134,9 @@
     <ClInclude Include="..\layout.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\window_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

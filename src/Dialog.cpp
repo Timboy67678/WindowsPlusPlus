@@ -4,12 +4,12 @@
 namespace wpp
 {
 	dialog::dialog(HINSTANCE instance, int resource_id, int menu_id)
-		: m_main_instance(instance), hwnd(resource_id, NULL), m_internal_timerid(0), m_menu_id(menu_id), m_menu(NULL) {
+		: window_base(resource_id, NULL), m_main_instance(instance), m_internal_timerid(0), m_menu_id(menu_id), m_menu(NULL) {
 		init_message_events();
 	}
 
 	dialog::dialog(HWND hWnd)
-		: hwnd(hWnd), m_internal_timerid(0), m_menu_id(-1), m_menu(NULL) {
+		: window_base(hWnd), m_internal_timerid(0), m_menu_id(-1), m_menu(NULL) {
 		m_main_instance = (HINSTANCE)::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
 		init_message_events();
 	}
@@ -51,13 +51,9 @@ namespace wpp
 		if (!m_handle)
 			return;
 
-		for (auto& timer : m_timer_events)
-			::KillTimer(m_handle, timer.first);
-
 		for (auto& control_pair : m_controls)
 			control_pair.reset();
 
-		m_timer_events.clear();
 		m_menu_command_events.clear();
 		m_controls.clear();
 
@@ -176,10 +172,7 @@ namespace wpp
 	}
 
 	INT_PTR dialog::on_timer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		auto it = m_timer_events.find((UINT_PTR)wParam);
-		if (it != m_timer_events.end())
-			it->second();
-		return FALSE;
+		return handle_timer(static_cast<UINT_PTR>(wParam)) ? TRUE : FALSE;
 	}
 
 	INT_PTR dialog::on_notify(HWND hWnd, WPARAM wParam, LPARAM lParam) {

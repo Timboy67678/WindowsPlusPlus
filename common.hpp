@@ -110,6 +110,42 @@ namespace wpp
 #endif
 	}
 
+	class timer {
+	public:
+		using callback = std::function<void()>;
+
+		timer(HWND hwnd, UINT_PTR id, UINT interval, callback fn)
+			: m_hwnd(hwnd), m_id(id), m_callback(std::move(fn)) {
+			::SetTimer(m_hwnd, m_id, interval, nullptr);
+		}
+
+		~timer() {
+			if (m_hwnd) ::KillTimer(m_hwnd, m_id);
+		}
+
+		timer(const timer&) = delete;
+		timer& operator=(const timer&) = delete;
+
+		timer(timer&& other) noexcept
+			: m_hwnd(std::exchange(other.m_hwnd, nullptr))
+			, m_id(std::exchange(other.m_id, 0))
+			, m_callback(std::move(other.m_callback)) {
+		}
+
+		void invoke() { if (m_callback) m_callback(); }
+		UINT_PTR get_id() const { return m_id; }
+
+	private:
+		HWND m_hwnd;
+		UINT_PTR m_id;
+		callback m_callback;
+	};
+
+	/**/
+
+	/// <summary>
+	/// A wrapper class for Windows HWND (window handle) that provides an object-oriented interface for window management and manipulation.
+	/// </summary>
 	class hwnd {
 	public:
 		typedef LRESULT(CALLBACK hwnd::* COMMAND_ID_MESSAGE_CALLBACK)(HWND, WPARAM, LPARAM);
@@ -203,7 +239,6 @@ namespace wpp
 			return rc;
 		}
 
-		// Get client area rect (in client coordinates)
 		virtual RECT get_client_rect() const {
 			RECT rc = { 0 };
 			::GetClientRect(m_handle, &rc);
