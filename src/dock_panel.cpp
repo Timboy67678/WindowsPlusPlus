@@ -4,7 +4,6 @@ namespace wpp::layout
 {
     dock_panel::dock_panel()
         : panel(type::dock)
-        , m_last_child_fill(true)
     {
     }
 

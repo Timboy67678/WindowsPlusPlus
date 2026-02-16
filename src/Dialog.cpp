@@ -103,26 +103,6 @@ namespace wpp
 		return false;
 	}
 
-	void dialog::show_dialog() {
-		::ShowWindow(m_handle, SW_SHOWNORMAL);
-	}
-
-	void dialog::hide_dialog() {
-		::ShowWindow(m_handle, SW_HIDE);
-	}
-
-	void dialog::end_dialog() {
-		if (!m_handle)
-			return;
-
-		if (m_is_modeless) {
-			::DestroyWindow(m_handle);
-		} else {
-			cleanup();
-			::EndDialog(m_handle, IDOK);
-		}
-	}
-
 	INT_PTR dialog::run_dlg(HWND parent, LPVOID param) {
 		m_parent_handle = parent;
 		m_is_modeless = false;

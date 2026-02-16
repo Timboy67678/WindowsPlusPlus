@@ -110,6 +110,9 @@ namespace wpp
 #endif
 	}
 
+	/// <summary>
+	/// A RAII wrapper class for Windows timers that automatically manages timer creation and destruction.
+	/// </summary>
 	class timer {
 	public:
 		using callback = std::function<void()>;
@@ -140,8 +143,6 @@ namespace wpp
 		UINT_PTR m_id;
 		callback m_callback;
 	};
-
-	/**/
 
 	/// <summary>
 	/// A wrapper class for Windows HWND (window handle) that provides an object-oriented interface for window management and manipulation.

@@ -3,10 +3,19 @@
 
 namespace wpp
 {
-	window::window(window_class wnd_class, const tstring& window_name, int x_pos, int y_pos, int width, int height, DWORD style,
+	window::window(window_class wnd_class, const tstring& window_name, int width, int height, DWORD style,
 				   int menu_id, HMENU menu, HFONT font, DWORD style_ex)
-		: window_base(NULL), m_window_class(wnd_class), m_window_name(window_name), m_x_pos(x_pos), m_y_pos(y_pos),
-		m_original_width(width), m_original_height(height), m_style(style), m_menu_id(menu_id), m_menu_handle(menu), m_font(font), m_style_ex(style_ex) {
+		: window_base(NULL)
+		, m_window_class(wnd_class)
+		, m_window_name(window_name)
+		, m_original_width(width)
+		, m_original_height(height)
+		, m_style(style)
+		, m_menu_id(menu_id)
+		, m_menu_handle(menu)
+		, m_font(font)
+		, m_style_ex(style_ex)
+	{
 		init_message_events();
 	}
 
@@ -58,7 +67,7 @@ namespace wpp
 		}
 	}
 
-	BOOL window::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
+	bool window::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
 		HWND hScrollBar = (HWND)lParam;
 
 		auto scrollbar = get_control_by_handle<scroll_bar>(hScrollBar);
@@ -91,13 +100,16 @@ namespace wpp
 			}
 
 			scrollbar->on_scroll_event(orientation, wParam, lParam);
-			return TRUE;
+			return true;
 		}
-		return FALSE;
+		return false;
 	}
 
-	bool window::create_window(std::shared_ptr<layout::panel> layout, HWND parent_window, LPVOID param) {
+	bool window::create_window(std::shared_ptr<layout::panel> layout, int x_pos, int y_pos, HWND parent_window, LPVOID param) {
 		m_parent_handle = parent_window;
+		
+		m_x_pos = x_pos;
+		m_y_pos = y_pos;
 
 		if (m_window_class.atom() != NULL)
 			m_window_class.Unregister();
@@ -135,17 +147,17 @@ namespace wpp
 
 		update_layout();
 
-		show_window();
+		show();
 		update_window();
 
 		return true;
 	}
 
-	bool window::run_window(std::shared_ptr<layout::panel> layout, HWND parent_window, LPVOID param) {
-		if (!create_window(layout, parent_window, param))
+	bool window::run_window(std::shared_ptr<layout::panel> layout, int x_pos, int y_pos, HWND parent_window, LPVOID param) {
+		if (!create_window(layout, x_pos, y_pos, parent_window, param))
 			return false;
 
-		show_window();
+		show();
 		update_window();
 
 		m_window_running = true;
@@ -617,14 +629,14 @@ namespace wpp
 
 	LRESULT window::on_h_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		if (lParam != 0) {
-			return handle_scroll_message(scroll_orientation::horizontal, wParam, lParam);
+			return handle_scroll_message(scroll_orientation::horizontal, wParam, lParam) ? TRUE : FALSE;
 		}
 		return FALSE;
 	}
 
 	LRESULT window::on_v_scroll(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		if (lParam != 0) {
-			return handle_scroll_message(scroll_orientation::vertical, wParam, lParam);
+			return handle_scroll_message(scroll_orientation::vertical, wParam, lParam) ? TRUE : FALSE;
 		}
 		return FALSE;
 	}
@@ -682,20 +694,6 @@ namespace wpp
 		return FALSE;
 	}
 #pragma endregion
-
-	void window::show_window() {
-		::ShowWindow(m_handle, SW_SHOWNORMAL);
-	}
-
-	void window::hide_window() {
-		::ShowWindow(m_handle, SW_HIDE);
-	}
-
-	void window::close_window() {
-		if (m_handle && ::IsWindow(m_handle)) {
-			::DestroyWindow(m_handle);
-		}
-	}
 
 	void window::quit_window(INT exit_code) {
 		::DestroyWindow(m_handle);

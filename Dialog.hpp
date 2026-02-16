@@ -7,33 +7,32 @@
 
 namespace wpp
 {
-	/**
-	* @class Dialog
-	* @brief A class representing a dialog window.
-	*/
+	/// <summary>
+	/// Represents a dialog window in a Windows application.
+	/// </summary>
 	class dialog : public window_base {
 	public:
 		using menu_callback = std::function<void(WPARAM, LPARAM)>;
 		using dialog_message_callback = std::function<INT_PTR(HWND, WPARAM, LPARAM)>;
 		using message_handler = INT_PTR(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
-		/**
-		* @brief Constructs a Dialog object.
-		* @param instance The instance handle.
-		* @param resource_id The resource ID of the dialog.
-		* @param menu_id The menu ID of the dialog (default is -1).
-		*/
+		/// <summary>
+		/// Constructs a dialog using the specified application instance and resource identifiers.
+		/// </summary>
+		/// <param name="instance">A handle to the application instance that contains the dialog resource.</param>
+		/// <param name="resource_id">The identifier of the dialog resource template.</param>
+		/// <param name="menu_id">The identifier of the menu resource to attach to the dialog. Defaults to -1 if no menu is specified.</param>
 		dialog(HINSTANCE instance, int resource_id, int menu_id = -1);
 
-		/**
-		* @brief Constructs a Dialog object from an existing window handle.
-		* @param hWnd The window handle.
-		*/
+		/// <summary>
+		/// Creates or displays a dialog window.
+		/// </summary>
+		/// <param name="hWnd">A handle to the parent or owner window for the dialog.</param>
 		dialog(HWND hWnd);
 
-		/**
-		* @brief Destroys the Dialog object.
-		*/
+		/// <summary>
+		/// Virtual destructor for the dialog class.
+		/// </summary>
 		virtual ~dialog() noexcept;
 
 		virtual message_handler on_init_dialog;
@@ -53,57 +52,50 @@ namespace wpp
 		virtual message_handler on_v_scroll;
 		virtual message_handler on_drop_files;
 
-		/**
-		* @brief Runs the dialog.
-		* @param parent The parent window handle (default is NULL).
-		* @param param Additional parameter (default is NULL).
-		* @return The result of the dialog procedure.
-		*/
+		/// <summary>
+		/// Runs the dialog box with optional parent window and parameter.
+		/// </summary>
+		/// <param name="parent">Handle to the parent window. If NULL, the dialog has no parent.</param>
+		/// <param name="param">Optional pointer to user-defined data passed to the dialog.</param>
+		/// <returns>The dialog result value, typically indicating how the dialog was closed.</returns>
 		virtual INT_PTR run_dlg(HWND parent = NULL, LPVOID param = NULL);
 
-		/** 
-		* @brief Creates a modeless dialog.
-		* @param parent The parent window handle (default is NULL).
-		* @param param Additional parameter (default is NULL).
-		*/
+		/// <summary>
+		/// Creates a modeless dialog or window.
+		/// </summary>
+		/// <param name="parent">Handle to the parent window. If NULL, the dialog has no parent.</param>
+		/// <param name="param">Optional user-defined data to pass to the dialog during creation.</param>
 		virtual void create_modeless(HWND parent = NULL, LPVOID param = NULL);
 
-		/**
-		* @brief The dialog procedure.
-		* @param hWnd The window handle.
-		* @param Msg The message.
-		* @param wParam Additional message information.
-		* @param lParam Additional message information.
-		* @return The result of the message processing.
-		* @note if you override this method, make sure to call the base implementation for unhandled messages to ensure proper dialog behavior.
-		*/
+		/// <summary>
+		/// Processes messages for a dialog window.
+		/// </summary>
+		/// <param name="hWnd">A handle to the dialog box.</param>
+		/// <param name="Msg">The message identifier.</param>
+		/// <param name="wParam">Additional message-specific information.</param>
+		/// <param name="lParam">Additional message-specific information.</param>
+		/// <returns>The return value is typically TRUE if the message was processed, or FALSE otherwise. The specific meaning depends on the message being processed.</returns>
 		virtual INT_PTR dialog_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-		/**
-		* @brief Shows the dialog.
-		*/
-		void show_dialog();
-
-		/**
-		* @brief Hides the dialog.
-		*/
-		void hide_dialog();
-
-		/**
-		* @brief Ends the dialog.
-		*/
-		void end_dialog();
-
-		/** 
-		* @brief Checks if the dialog is modeless.
-		* @return True if the dialog is modeless, false otherwise.
-		*/
+		/// <summary>
+		/// Determines whether this object is modeless.
+		/// </summary>
+		/// <returns>True if the object is modeless; otherwise, false.</returns>
 		bool is_modeless() const { return m_is_modeless; }
 
+		void end_dialog(INT_PTR result) {
+			if (m_is_modeless) {
+				destroy();
+			} else {
+				::EndDialog(m_handle, result);
+			}
+		}
 
-		/**
-		* @brief Registers a menu command
-		*/
+		/// <summary>
+		/// Registers or unregisters a callback for a menu command.
+		/// </summary>
+		/// <param name="menu_id">The unique identifier of the menu command.</param>
+		/// <param name="callback">The callback function to register. If null or empty, the menu command callback is unregistered.</param>
 		void register_menu_command(UINT_PTR menu_id, menu_callback callback) {
 			if (callback)
 				m_menu_command_events[menu_id] = std::move(callback);
@@ -111,12 +103,13 @@ namespace wpp
 				m_menu_command_events.erase(menu_id);
 		}
 
-		/**
-		* @brief Registers a control.
-		* @param control_id The control ID.
-		* @param ctrl The control object (output parameter).
-		* @return TRUE if successful, FALSE otherwise.
-		*/
+		/// <summary>
+		/// Registers a control by creating and storing it in the control collection.
+		/// </summary>
+		/// <typeparam name="CtrlType">The type of control to register. Defaults to the base control type.</typeparam>
+		/// <param name="control_id">The unique identifier for the control to register.</param>
+		/// <param name="ctrl">A reference to a control pointer that will be populated with the newly created control.</param>
+		/// <returns>True if the control was successfully created and registered; otherwise, false.</returns>
 		template<typename CtrlType = control>
 		bool register_control(UINT control_id, control_ptr<CtrlType>& ctrl) {
 			ctrl = std::make_shared<CtrlType>(control_id, m_handle);
@@ -125,11 +118,12 @@ namespace wpp
 			return ctrl != nullptr;
 		}
 
-		/**
-		* @brief Gets a control.
-		* @param control_id The control ID.
-		* @return The control object.
-		*/
+		/// <summary>
+		/// Retrieves a control by its ID and casts it to the specified control type.
+		/// </summary>
+		/// <typeparam name="CtrlType">The type of control to cast the result to. Defaults to the base control type.</typeparam>
+		/// <param name="control_id">The unique identifier of the control to retrieve.</param>
+		/// <returns>A shared pointer to the control cast to the specified type, or nullptr if no control with the given ID is found or the cast fails.</returns>
 		template<typename CtrlType = control>
 		control_ptr<CtrlType> get_control(UINT control_id) {
 			for (auto& control : m_controls)
@@ -138,20 +132,21 @@ namespace wpp
 			return nullptr;
 		}
 
-		/**
-		* @brief Gets a control by its handle.
-		* @param handle The handle of the control.
-		* @return The control object.
-		*/
+		/// <summary>
+		/// Retrieves a control from the collection by its window handle.
+		/// </summary>
+		/// <typeparam name="CtrlType">The type of control to retrieve. Defaults to the base control type.</typeparam>
+		/// <param name="handle">The window handle (HWND) of the control to find.</param>
+		/// <returns>A shared pointer to the control of the specified type if found and the cast succeeds; otherwise, nullptr.</returns>
 		template<typename CtrlType = control>
-		inline control_ptr<CtrlType> get_control_by_handle(HWND handle) {
+		inline control_ptr<CtrlType> get_control_by_handle(HWND handle) const {
+			if (!handle) return nullptr;
+
 			auto it = std::find_if(m_controls.begin(), m_controls.end(), [handle](const auto& control) {
 				return control && control->get_handle() == handle;
 			});
-			if (it != m_controls.end() && *it) {
-				return std::dynamic_pointer_cast<CtrlType>(*it);
-			}
-			return nullptr;
+
+			return (it != m_controls.end()) ? std::dynamic_pointer_cast<CtrlType>(*it) : nullptr;
 		}
 
 	private:
@@ -159,13 +154,13 @@ namespace wpp
 		void cleanup();
 		bool handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
 
-		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for dialog procedure.
-
 	protected:
+		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for dialog procedure.
+		
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
 		std::map<INT, dialog_message_callback> m_message_events; ///< Message events.
 		std::vector<control_ptr<>> m_controls; ///< Controls container.
-
+		
 		bool m_is_modeless = false; ///< Modeless flag.
 
 		UINT_PTR m_internal_timerid; ///< Internal timer ID.

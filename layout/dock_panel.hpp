@@ -30,12 +30,12 @@ namespace wpp::layout
 
     private:
         std::unordered_map<control_ptr<>, dock_position> m_dock_positions;
-        bool m_last_child_fill;
+        bool m_last_child_fill = true;
 
         struct child_measure {
             control_ptr<> control;
-            dock_position position;
-            sizing_t desired_size;
+            dock_position position = dock_position::fill;
+            sizing_t desired_size = {};
         };
         std::vector<child_measure> m_child_measures;
     };

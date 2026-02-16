@@ -23,7 +23,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     register_control(IDC_TAB_TEST, m_tab);
 
     register_menu_command(IDM_EXIT, [this](WPARAM, LPARAM) {
-        end_dialog();
+        end_dialog(EXIT_SUCCESS);
     });
 
     register_menu_command(IDM_ABOUT, [this](WPARAM, LPARAM) {
