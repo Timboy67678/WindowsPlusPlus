@@ -40,6 +40,41 @@
 
 namespace wpp
 {
+	// Convert between char and wchar_t strings
+	inline std::wstring convert_to_wstring(const std::string& str) {
+		if (str.empty()) return std::wstring();
+		if (str.size() > static_cast<size_t>((std::numeric_limits<int>::max)()))
+			return std::wstring();
+
+		int size_needed = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.c_str(), static_cast<int>(str.size()), nullptr, 0);
+		if (size_needed <= 0)
+			return std::wstring();
+
+		std::wstring result(static_cast<size_t>(size_needed), L'\0');
+		int converted = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.c_str(), static_cast<int>(str.size()), result.data(), size_needed);
+		if (converted <= 0)
+			return std::wstring();
+
+		return result;
+	}
+
+	inline std::string convert_to_string(const std::wstring& wstr) {
+		if (wstr.empty()) return std::string();
+		if (wstr.size() > static_cast<size_t>((std::numeric_limits<int>::max)()))
+			return std::string();
+
+		int size_needed = ::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), nullptr, 0, nullptr, nullptr);
+		if (size_needed <= 0)
+			return std::string();
+
+		std::string result(static_cast<size_t>(size_needed), '\0');
+		int converted = ::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), result.data(), size_needed, nullptr, nullptr);
+		if (converted <= 0)
+			return std::string();
+
+		return result;
+	}
+
 #ifdef _UNICODE
 	using tstring = std::wstring;
 	using tstring_view = std::wstring_view;
@@ -47,6 +82,19 @@ namespace wpp
 	template <typename Type> tstring to_tstring(Type t) {
 		return std::to_wstring(t);
 	}
+
+	inline bool tstrcmpi(const tstring& str1, const tstring& str2) {
+		if (str1.length() != str2.length()) {
+			return false;
+		}
+		return std::equal(str1.begin(), str1.end(), str2.begin(),
+						  [](wchar_t a, wchar_t b) {
+			return std::tolower(a) == std::tolower(b);
+		});
+	}
+
+	inline tstring to_tstring(const std::string& str) { return convert_to_wstring(str); }
+	inline tstring to_tstring(const std::wstring& str) { return str; }
 #else
 	using tstring = std::string;
 	using tstring_view = std::string_view;
@@ -54,30 +102,17 @@ namespace wpp
 	template <typename Type> tstring to_tstring(Type t) {
 		return std::to_string(t);
 	}
-#endif
 
-	// Convert between char and wchar_t strings
-	inline std::wstring convert_to_wstring(const std::string& str) {
-		if (str.empty()) return std::wstring();
-		int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), NULL, 0);
-		std::wstring result(size_needed, 0);
-		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), &result[0], size_needed);
-		return result;
+	inline bool tstrcmpi(const tstring& str1, const tstring& str2) {
+		if (str1.length() != str2.length()) {
+			return false;
+		}
+		return std::equal(str1.begin(), str1.end(), str2.begin(),
+						  [](unsigned char a, unsigned char b) {
+			return std::tolower(a) == std::tolower(b);
+		});
 	}
 
-	inline std::string convert_to_string(const std::wstring& wstr) {
-		if (wstr.empty()) return std::string();
-		int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
-		std::string result(size_needed, 0);
-		WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), &result[0], size_needed, NULL, NULL);
-		return result;
-	}
-
-	// Convert to tstring from opposite type
-#ifdef _UNICODE
-	inline tstring to_tstring(const std::string& str) { return convert_to_wstring(str); }
-	inline tstring to_tstring(const std::wstring& str) { return str; }
-#else
 	inline tstring to_tstring(const std::string& str) { return str; }
 	inline tstring to_tstring(const std::wstring& wstr) { return convert_to_string(wstr); }
 #endif
@@ -228,6 +263,13 @@ namespace wpp
 			std::vector<TCHAR> buffer(length + 1);
 			::GetWindowText(m_handle, buffer.data(), length + 1);
 			return tstring(buffer.data());
+		}
+
+		virtual tstring get_class_name() const {
+			if (!m_handle) return tstring();
+			TCHAR buffer[1024];
+			::GetClassName(m_handle, buffer, 1024);
+			return tstring(buffer);
 		}
 
 		virtual int get_text_length() const {
@@ -440,6 +482,23 @@ namespace wpp
 
 		virtual BOOL set_size(int width, int height) {
 			return ::SetWindowPos(m_handle, NULL, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
+		}
+
+		/// <summary>
+		/// Iterate over all child windows, calling the provided callback for each child.
+		/// </summary>
+		/// <param name="callback">Function to call for each child window. Return false to stop iteration.</param>
+		template<typename Func>
+		void for_each_child(Func callback) const {
+			HWND hChild = ::GetWindow(m_handle, GW_CHILD);
+			while (hChild) {
+				if constexpr (std::is_invocable_r_v<bool, Func, HWND>) {
+					if (!callback(hChild)) break;
+				} else {
+					callback(hChild);
+				}
+				hChild = ::GetWindow(hChild, GW_HWNDNEXT);
+			}
 		}
 
 	protected:

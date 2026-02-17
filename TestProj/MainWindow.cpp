@@ -187,8 +187,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(right_panel);
     main_dock->set_dock_position(right_panel, wpp::layout::dock_position::right);
 
-
-    //center'd panel with tab control, list box, and rich edit
+    // center panel with tab control, list box, and rich edit
     auto center_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
     center_panel->set_spacing(10);
     center_panel->set_padding(15);
@@ -222,8 +221,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(center_panel);
     main_dock->set_dock_position(center_panel, wpp::layout::dock_position::fill);
 
-    RECT client_rect;
-    GetClientRect(hWnd, &client_rect);
+    RECT client_rect = get_client_rect();
     main_dock->measure(client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
     main_dock->arrange(0, 0, client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
 
