@@ -12,12 +12,12 @@ MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     center_window();
 
-    // Create the main dock panel layout
     auto main_dock = std::make_shared<wpp::layout::dock_panel>(hWnd);
     main_dock->set_padding(10);
     m_root_panel = main_dock;
 
-    // ===== TOP SECTION: Header with title and action buttons =====
+    // top panel with title and buttons
+
     auto top_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::horizontal, hWnd);
     top_panel->set_spacing(10);
     top_panel->set_padding(5);
@@ -43,7 +43,8 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(top_panel);
     main_dock->set_dock_position(top_panel, wpp::layout::dock_position::top);
 
-    // ===== BOTTOM SECTION: Status bar and links =====
+    // bottom panel with status and link
+
     auto bottom_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::horizontal, hWnd);
     bottom_panel->set_spacing(10);
     bottom_panel->set_padding(5);
@@ -61,12 +62,10 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(bottom_panel);
     main_dock->set_dock_position(bottom_panel, wpp::layout::dock_position::bottom);
 
-    // ===== LEFT SECTION: Input Controls Panel =====
     auto left_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
     left_panel->set_spacing(8);
     left_panel->set_padding(10);
 
-    // Button with counter
     auto btn_section_label = create_static_control(_T("Button Controls:"), 200, 20);
     left_panel->add(btn_section_label);
 
@@ -78,7 +77,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     });
     left_panel->add(m_ButtonOne);
 
-    // Checkbox that controls button shield
     m_CheckBoxOne = create_check_box(_T("Enable Shield Icon"), 200, 25);
     m_CheckBoxOne->on_click([this](WPARAM, LPARAM) {
         m_ButtonOne->set_shield(m_CheckBoxOne->get_checked() == BST_CHECKED);
@@ -88,7 +86,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto checkbox2 = create_check_box(_T("Check Box 2"), 200, 25);
     left_panel->add(checkbox2);
 
-    // Radio buttons in a group box
     auto radio_label = create_static_control(_T("Radio Group 1:"), 200, 20);
     left_panel->add(radio_label);
 
@@ -102,7 +99,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto radiobuttonthree = m_RadioButtonGroup->create_button(_T("Option C"), 200, 25);
     left_panel->add(radiobuttonthree);
 
-    // Second radio group
     auto radio2_label = create_static_control(_T("Radio Group 2:"), 200, 20);
     left_panel->add(radio2_label);
 
@@ -116,7 +112,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto radio_three = radio_grptwo->create_button(_T("Choice 3"), 200, 25);
     left_panel->add(radio_three);
 
-    // ComboBox
     auto combo_label = create_static_control(_T("Combo Box:"), 200, 20);
     left_panel->add(combo_label);
 
@@ -127,14 +122,12 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     m_ComboBoxOne->add(_T("FreeBSD"));
     left_panel->add(m_ComboBoxOne);
 
-    // Edit Text
     auto edit_label = create_static_control(_T("Text Input:"), 200, 20);
     left_panel->add(edit_label);
 
     m_EditTextOne = create_edit_text(_T("Type here..."), 200, 25);
     left_panel->add(m_EditTextOne);
 
-    // Progress Bar
     auto progress_label = create_static_control(_T("Progress Bar:"), 200, 20);
     left_panel->add(progress_label);
 
@@ -146,7 +139,8 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(left_panel);
     main_dock->set_dock_position(left_panel, wpp::layout::dock_position::left);
 
-    // ===== RIGHT SECTION: Tree and List View Panel =====
+    // right-side panel with list view and tree view
+
     auto right_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
     right_panel->set_spacing(8);
     right_panel->set_padding(10);
@@ -172,9 +166,10 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     m_ListViewOne->add_item(2, 1, _T("Video"));
     m_ListViewOne->add_item(2, 2, _T("45 MB"));
 
+    m_ListViewOne->auto_size_columns();
+
     right_panel->add(m_ListViewOne);
 
-    // Tree View
     auto treeview_label = create_static_control(_T("Tree View:"), 250, 20);
     right_panel->add(treeview_label);
 
@@ -192,12 +187,12 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(right_panel);
     main_dock->set_dock_position(right_panel, wpp::layout::dock_position::right);
 
-    // ===== CENTER SECTION: Main Content Area =====
+
+    //center'd panel with tab control, list box, and rich edit
     auto center_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
     center_panel->set_spacing(10);
     center_panel->set_padding(15);
 
-    // Tab Control
     auto tab_label = create_static_control(_T("Tab Control:"), 400, 25);
     center_panel->add(tab_label);
 
@@ -207,7 +202,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     tab_control->add_item(_T("Settings"));
     center_panel->add(tab_control);
 
-    // List Box
     auto listbox_label = create_static_control(_T("List Box:"), 400, 20);
     center_panel->add(listbox_label);
 
@@ -219,7 +213,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     list_box->add(_T("Item Epsilon"));
     center_panel->add(list_box);
 
-    // Rich Edit Control
     auto richedit_label = create_static_control(_T("Rich Edit Control:"), 400, 20);
     center_panel->add(richedit_label);
 
@@ -229,7 +222,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(center_panel);
     main_dock->set_dock_position(center_panel, wpp::layout::dock_position::fill);
 
-    // Perform layout
     RECT client_rect;
     GetClientRect(hWnd, &client_rect);
     main_dock->measure(client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);

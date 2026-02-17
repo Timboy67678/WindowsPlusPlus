@@ -373,7 +373,7 @@ namespace wpp
 		/// <param name="style">The window style flags for the control (e.g., ES_MULTILINE, WS_VISIBLE).</param>
 		/// <param name="style_ex">The extended window style flags for the control.</param>
 		/// <returns>A smart pointer to the created rich edit text control.</returns>
-		control_ptr<rich_edit_text> create_rich_edit(const tstring& initial_text = _T(""), int width = 300, int height = 200, DWORD style = ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
+		control_ptr<rich_edit_text> create_rich_edit(const tstring& initial_text = _T(""), int width = 300, int height = 200, DWORD style = ES_MULTILINE | ES_AUTOVSCROLL | WS_CHILD | WS_VISIBLE, DWORD style_ex = WS_EX_CLIENTEDGE);
 
 		/// <summary>
 		/// Creates a system link control with the specified text and dimensions.

@@ -92,9 +92,18 @@ namespace wpp::layout
             if (auto child_panel = as_panel(measure.control)) {
                 child_panel->measure(remaining_width, remaining_height);
                 auto desired = child_panel->get_desired_size();
-                child_width = desired.width;
-                child_height = desired.height;
-                measure.desired_size = { child_width, child_height };
+
+                // Use the measured size for this pass, but preserve stored desired size if available
+                if (measure.desired_size.width > 0 && measure.desired_size.height > 0) {
+                    // Use stored preferred size, clamped to available space
+                    child_width = (std::min)(measure.desired_size.width, remaining_width);
+                    child_height = (std::min)(measure.desired_size.height, remaining_height);
+                } else {
+                    // First time measuring, store the result as preferred size
+                    child_width = desired.width;
+                    child_height = desired.height;
+                    measure.desired_size = { child_width, child_height };
+                }
             } else {
                 // Use stored original sizes
                 child_width = measure.desired_size.width;
