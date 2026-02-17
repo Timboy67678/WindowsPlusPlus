@@ -20,9 +20,9 @@
 
 #include "resource.h"
 
-#include "..\..\winplusplus.hpp"
-#include "..\..\dialog.hpp"
-#include "..\..\window.hpp"
+#include "..\winplusplus.hpp"
+#include "..\dialog.hpp"
+#include "..\window.hpp"
 
 using namespace wpp;
 

@@ -2,6 +2,7 @@
 #define WPP_WINDOW_BASE_HPP
 
 #include "common.hpp"
+#include "controls/control.hpp"
 
 namespace wpp
 {
@@ -149,6 +150,15 @@ namespace wpp
 				return true;
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Gets a read-only reference to the controls collection.
+		/// </summary>
+		/// <returns>A const reference to the vector of controls.</returns>
+		virtual const std::vector<control_ptr<>>& get_controls() const {
+			static const std::vector<control_ptr<>> empty_controls;
+			return empty_controls;
 		}
 
 	protected:

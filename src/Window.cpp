@@ -60,10 +60,10 @@ namespace wpp
 	}
 
 	void window::update_layout() {
-		if(m_layout_panel) {
+		if(m_root_panel) {
 			RECT rc = get_client_rect();
-			m_layout_panel->measure(rc.right, rc.bottom);
-			m_layout_panel->arrange(0, 0, rc.right, rc.bottom);
+			m_root_panel->measure(rc.right, rc.bottom);
+			m_root_panel->arrange(0, 0, rc.right, rc.bottom);
 		}
 	}
 
@@ -114,10 +114,7 @@ namespace wpp
 		if (m_window_class.atom() != NULL)
 			m_window_class.Unregister();
 
-		m_layout_panel = layout;
-		if (m_layout_panel && m_handle) {
-			m_layout_panel->set_parent_window(m_handle);
-		}
+		m_root_panel = layout;
 
 		auto thunk = new Win32Thunk<WNDPROC, window>{ &window::window_proc, this };
 		m_thunk_storage = std::unique_ptr<void, void(*)(void*)>(
@@ -132,6 +129,11 @@ namespace wpp
 
 		if (!m_handle)
 			return false;
+
+		// Initialize the layout panel window if it exists
+		if (m_root_panel) {
+			m_root_panel->initialize_window(m_handle);
+		}
 
 		if (m_font == NULL) {
 			m_font = ::CreateFont(
@@ -211,7 +213,6 @@ namespace wpp
 
 		radiobutton->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_radio_buttons.push_back(radiobutton);
-		m_parent->get_layout()->add(radiobutton);
 		m_parent->m_controls.emplace_back(radiobutton);
 
 		return radiobutton;
@@ -243,7 +244,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(button_ctrl);
-		m_layout_panel->add(button_ctrl);
 		return button_ctrl;
 	}
 
@@ -262,7 +262,6 @@ namespace wpp
 
 		checkbox->set_checked(initial_state ? BST_CHECKED : BST_UNCHECKED);
 		m_controls.emplace_back(checkbox);
-		m_layout_panel->add(checkbox);
 		return checkbox;
 	}
 
@@ -280,7 +279,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(groupbox);
-		m_layout_panel->add(groupbox);
 		return groupbox;
 	}
 
@@ -298,7 +296,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(static_ctrl);
-		m_layout_panel->add(static_ctrl);
 		return static_ctrl;
 	}
 
@@ -316,7 +313,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(combobox);
-		m_layout_panel->add(combobox);
 		return combobox;
 	}
 
@@ -334,7 +330,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(edittext);
-		m_layout_panel->add(edittext);
 		return edittext;
 	}
 
@@ -352,7 +347,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(listbox);
-		m_layout_panel->add(listbox);
 		return listbox;
 	}
 
@@ -370,7 +364,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(listview);
-		m_layout_panel->add(listview);
 		return listview;
 	}
 
@@ -388,7 +381,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(treeview);
-		m_layout_panel->add(treeview);
 		return treeview;
 	}
 
@@ -406,7 +398,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(tabcontrol);
-		m_layout_panel->add(tabcontrol);
 		return tabcontrol;
 	}
 
@@ -424,7 +415,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(progressbar);
-		m_layout_panel->add(progressbar);
 		return progressbar;
 	}
 
@@ -442,7 +432,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(spincontrol);
-		m_layout_panel->add(spincontrol);
 		return spincontrol;
 	}
 
@@ -467,7 +456,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(richedit);
-		m_layout_panel->add(richedit);
 		return richedit;
 	}
 
@@ -485,7 +473,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(linkcontrol);
-		m_layout_panel->add(linkcontrol);
 		return linkcontrol;
 	}
 
@@ -501,7 +488,6 @@ namespace wpp
 			return nullptr;
 		}
 		m_controls.emplace_back(updown);
-		m_layout_panel->add(updown);
 		return updown;
 	}
 
@@ -517,7 +503,6 @@ namespace wpp
 			return nullptr;
 		}
 		m_controls.emplace_back(scrollbar);
-		m_layout_panel->add(scrollbar);
 		return scrollbar;
 	}
 
@@ -535,7 +520,6 @@ namespace wpp
 		}
 
 		m_controls.emplace_back(trackbar);
-		m_layout_panel->add(trackbar);
 		return trackbar;
 	}
 
@@ -580,8 +564,8 @@ namespace wpp
 	LRESULT window::on_paint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT ps = {};
 		HDC hdc = ::BeginPaint(hWnd, &ps);
-		if (m_layout_panel) {
-			m_layout_panel->paint(ps.hdc);
+		if (m_root_panel) {
+			m_root_panel->paint(ps.hdc);
 		}
 		::EndPaint(hWnd, &ps);
 		return FALSE;
@@ -601,11 +585,11 @@ namespace wpp
 	}
 
 	LRESULT window::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		if (m_layout_panel) {
+		if (m_root_panel) {
 			int newWidth = LOWORD(lParam);
 			int newHeight = HIWORD(lParam);
-			m_layout_panel->measure(newWidth, newHeight);
-			m_layout_panel->arrange(0, 0, newWidth, newHeight);
+			m_root_panel->measure(newWidth, newHeight);
+			m_root_panel->arrange(0, 0, newWidth, newHeight);
 			update_window();
 		}
 		return FALSE;
@@ -658,9 +642,9 @@ namespace wpp
 	}
 
 	LRESULT window::on_dpi_changed(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		if (m_layout_panel) {
+		if (m_root_panel) {
 			float new_dpi = HIWORD(wParam) / 96.0f;
-			m_layout_panel->set_dpi_scale(new_dpi);
+			m_root_panel->set_dpi_scale(new_dpi);
 		}
 		return FALSE;
 	}

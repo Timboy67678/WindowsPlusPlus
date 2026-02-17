@@ -8,11 +8,19 @@ namespace wpp::layout
     // Stack panel - arranges children in a linear sequence (horizontal or vertical)
     class stack_panel : public panel {
     public:
-        explicit stack_panel(orientation orient = orientation::vertical);
+        explicit stack_panel(orientation orient = orientation::vertical, HWND parent = nullptr);
         virtual ~stack_panel() = default;
 
         // Add a control to this panel
         void add(control_ptr<> control) override;
+
+		// Add all controls from a window (used when adding a window to the panel)
+        void add_window_controls(window_base* window) override {
+            if (window != nullptr) {
+                for (const auto& control : window->get_controls())
+                    add(control);
+            }
+		}
 
         // Layout calculations
         void measure(int available_width, int available_height) override;

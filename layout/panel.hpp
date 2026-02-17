@@ -2,61 +2,91 @@
 #define WPP_LAYOUT_PANEL_HPP
 
 #include "../winplusplus.hpp"
+#include "../controls/control.hpp"
 
 namespace wpp::layout
 {
-    enum class orientation {
-        horizontal,
-        vertical
-    };
-
-    enum class alignment {
-        start,
-        center,
-        end,
-        stretch
-    };
-
-    enum class dock_position {
-        left,
-        top,
-        right,
-        bottom,
-        fill
-    };
-
-    enum class type {
-        stack,
-        dock,
-        grid,
-        absolute,
-        base = -1
+	enum class orientation {
+		horizontal,
+		vertical
 	};
 
-    struct margin_t { int left, top, right, bottom; };
-    struct padding_t { int left, top, right, bottom; };
+	enum class alignment {
+		start,
+		center,
+		end,
+		stretch
+	};
+
+	enum class dock_position {
+		left,
+		top,
+		right,
+		bottom,
+		fill
+	};
+
+	enum class type {
+		stack,
+		dock,
+		grid,
+		absolute,
+		base = -1
+	};
+
+	struct margin_t { int left, top, right, bottom; };
+	struct padding_t { int left, top, right, bottom; };
 	struct sizing_t { int width, height; };
 
-    // Base class for all layout panels
-    class panel {
-    public:
-		panel(type) 
-            : m_panel_type(type::base) {}
+	// Base class for all layout panels - inherits from control to allow nesting
+	class panel : public control {
+	public:
+		panel(type panel_type, HWND parent = nullptr) 
+			: control(create_panel_window(parent)),
+			m_panel_type(panel_type) {
+			// If no parent provided yet (created before window), m_handle will be nullptr
+			// It will be set later when the panel is attached to a window
+		}
         virtual ~panel() = default;
 
-        // Add a control to this panel
-        virtual void add(control_ptr<> control) = 0;
+		// Add a control to this panel
+		virtual void add(control_ptr<> control) = 0;
+		virtual void add_window_controls(window_base* window) = 0;
 
-        // Layout calculations
-        virtual void measure(int available_width, int available_height) = 0;
-        virtual void arrange(int x, int y, int width, int height) = 0;
+		// Add a panel to this panel (for nesting)
+		void add_panel(std::shared_ptr<panel> child_panel) {
+			if (child_panel) {
+				// Attach the panel's window as a child
+				attach_child(child_panel->get_handle());
+				// Store in children collection as a control_ptr
+				add(std::static_pointer_cast<control>(child_panel));
+			}
+		}
+
+		// Layout calculations
+		virtual void measure(int available_width, int available_height) = 0;
+		virtual void arrange(int x, int y, int width, int height) = 0;
 
 		// Optional: custom painting (for advanced panels)
-        virtual void paint(HDC hdc) = 0;
+		virtual void paint(HDC hdc) = 0;
 
-        // Parent/child relationships
-        void set_parent_window(hwnd parent) { m_parent = parent; }
-        hwnd get_parent_window() const { return m_parent; }
+		// Check if a child control is actually a panel
+		static bool is_panel(const control_ptr<>& child) {
+			return std::dynamic_pointer_cast<panel>(child) != nullptr;
+		}
+
+		// Get a child as a panel (returns nullptr if not a panel)
+		static std::shared_ptr<panel> as_panel(const control_ptr<>& child) {
+			return std::dynamic_pointer_cast<panel>(child);
+		}
+
+		// Initialize the panel window if it wasn't created with a parent
+		void initialize_window(HWND parent) {
+			if (!m_handle && parent) {
+				m_handle = create_panel_window(parent);
+				m_parent_handle = parent;
+			}
+		}
 
         // Margin and padding
         void set_margin(int left, int top, int right, int bottom) {
@@ -78,11 +108,32 @@ namespace wpp::layout
         void set_dpi_scale(float scale) { m_dpi_scale = scale; }
 
 		// Get the type of this panel
-        type get_type() const { return m_panel_type; }
+		type get_type() const { return m_panel_type; }
 
-    protected:
-        hwnd m_parent = nullptr;
-        std::vector<control_ptr<>> m_children;
+		// Get the desired size (calculated during measure phase)
+		sizing_t get_desired_size() const { return m_desired_size; }
+
+		// Get the actual size (set during arrange phase)
+		sizing_t get_actual_size() const { return m_actual_size; }
+
+	protected:
+		// Helper function to create a panel container window
+		inline HWND create_panel_window(HWND parent) {
+			if (!parent) return nullptr;
+			return ::CreateWindowEx(
+				0,
+				TEXT("STATIC"),
+				TEXT(""),
+				WS_CHILD | WS_VISIBLE,
+				0, 0, 0, 0,
+				parent,
+				nullptr,
+				::GetModuleHandle(nullptr),
+				nullptr
+			);
+		}
+
+		std::vector<control_ptr<>> m_children;
 
         // Layout properties
         margin_t m_margin{ 0,0,0,0 };

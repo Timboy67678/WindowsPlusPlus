@@ -2,21 +2,27 @@
 
 namespace wpp::layout
 {
-    stack_panel::stack_panel(orientation orient)
-        : panel(type::stack)
+    stack_panel::stack_panel(orientation orient, HWND parent)
+        : panel(type::stack, parent)
         , m_orientation(orient)
         , m_spacing(0)
         , m_alignment(alignment::start) {
     }
 
     void stack_panel::add(control_ptr<> control) {
-        if (control) {
+        if (control && std::find(m_children.begin(), m_children.end(), control) == m_children.end()) {
             m_children.push_back(control);
-            
-            RECT rc = control->get_rect();
-            int original_width = rc.right - rc.left;
-            int original_height = rc.bottom - rc.top;
-            m_child_sizes.push_back({ original_width, original_height });
+
+            // For nested panels, we'll measure them later
+            // For regular controls, use their current size
+            if (is_panel(control)) {
+                m_child_sizes.push_back({ 0, 0 });
+            } else {
+                RECT rc = control->get_rect();
+                int original_width = rc.right - rc.left;
+                int original_height = rc.bottom - rc.top;
+                m_child_sizes.push_back({ original_width, original_height });
+            }
         }
     }
 
@@ -39,8 +45,19 @@ namespace wpp::layout
             auto& child = m_children[i];
             if (!child || !child->is_valid()) continue;
 
-            int child_width = m_child_sizes[i].width;
-            int child_height = m_child_sizes[i].height;
+            int child_width = 0;
+            int child_height = 0;
+
+            // If this child is a nested panel, recursively measure it
+            if (auto child_panel = as_panel(child)) {
+                child_panel->measure(content_width, content_height);
+                auto desired = child_panel->get_desired_size();
+                child_width = desired.width;
+                child_height = desired.height;
+            } else {
+                child_width = m_child_sizes[i].width;
+                child_height = m_child_sizes[i].height;
+            }
 
             if (m_orientation == orientation::horizontal && m_alignment == alignment::stretch) {
                 child_height = content_height;
@@ -190,6 +207,11 @@ namespace wpp::layout
             }
 
             child->move(child_x, child_y, child_width, child_height);
+
+            // If this is a nested panel, arrange its children
+            if (auto child_panel = as_panel(child)) {
+                child_panel->arrange(child_x, child_y, child_width, child_height);
+            }
         }
     }
 

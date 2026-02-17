@@ -149,6 +149,12 @@ namespace wpp
 			return (it != m_controls.end()) ? std::dynamic_pointer_cast<CtrlType>(*it) : nullptr;
 		}
 
+		/// <summary>
+		/// Gets a read-only reference to the controls collection.
+		/// </summary>
+		/// <returns>A const reference to the vector of controls.</returns>
+		inline const std::vector<control_ptr<>>& get_controls() const override { return m_controls; }
+
 	private:
 		void init_message_events();
 		void cleanup();

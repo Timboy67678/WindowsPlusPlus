@@ -433,7 +433,7 @@ namespace wpp
 		/// Gets a read-only reference to the layout panel.
 		/// </summary>
 		/// <returns>A const reference to the layout panel.</returns>
-		inline const auto& get_layout() const { return m_layout_panel; }
+		inline const auto& get_root_panel() const { return m_root_panel; }
 		
 		/// <summary>
 		/// Sets whether the window should keep its minimum size when resized.
@@ -495,6 +495,12 @@ namespace wpp
 			return nullptr;
 		}
 
+		/// <summary>
+		/// Gets a read-only reference to the controls collection.
+		/// </summary>
+		/// <returns>A const reference to the vector of controls.</returns>
+		inline const std::vector<control_ptr<>>& get_controls() const override { return m_controls; }
+
 	private:
 		void init_message_events();
 		void cleanup();
@@ -517,7 +523,7 @@ namespace wpp
 		std::atomic_bool m_window_running = false; ///< Window running flag.
 		std::map<INT, window_message_callback> m_message_events; ///< Message events.
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
-		std::shared_ptr<layout::panel> m_layout_panel; ///< Layout panel for automatic control arrangement.
+		std::shared_ptr<layout::panel> m_root_panel; ///< Layout panel for automatic control arrangement.
 		std::vector<control_ptr<>> m_controls; ///< Controls container.
 	};
 }

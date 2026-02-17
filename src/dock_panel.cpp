@@ -2,8 +2,8 @@
 
 namespace wpp::layout
 {
-    dock_panel::dock_panel()
-        : panel(type::dock)
+    dock_panel::dock_panel(HWND parent)
+        : panel(type::dock, parent)
     {
     }
 
@@ -13,19 +13,25 @@ namespace wpp::layout
     }
 
     void dock_panel::add(control_ptr<> control, dock_position position) {
-        if (control) {
+        if (control && std::find(m_children.begin(), m_children.end(), control) == m_children.end()) {
             m_children.push_back(control);
             m_dock_positions[control] = position;
-            
-            // Store the original size of the control when first added
-            RECT rc = control->get_rect();
-            int original_width = rc.right - rc.left;
-            int original_height = rc.bottom - rc.top;
-            
+
             child_measure measure;
             measure.control = control;
             measure.position = position;
-            measure.desired_size = { original_width, original_height };
+
+            // For nested panels, we'll measure them later
+            // For regular controls, use their current size
+            if (is_panel(control)) {
+                measure.desired_size = { 0, 0 };
+            } else {
+                RECT rc = control->get_rect();
+                int original_width = rc.right - rc.left;
+                int original_height = rc.bottom - rc.top;
+                measure.desired_size = { original_width, original_height };
+            }
+
             m_child_measures.push_back(measure);
         }
     }
@@ -79,9 +85,21 @@ namespace wpp::layout
                 measure.position = get_dock_position(measure.control);
             }
 
-            // Use stored original sizes (no need to query get_rect() every time)
-            int child_width = measure.desired_size.width;
-            int child_height = measure.desired_size.height;
+            int child_width = 0;
+            int child_height = 0;
+
+            // If this child is a nested panel, recursively measure it
+            if (auto child_panel = as_panel(measure.control)) {
+                child_panel->measure(remaining_width, remaining_height);
+                auto desired = child_panel->get_desired_size();
+                child_width = desired.width;
+                child_height = desired.height;
+                measure.desired_size = { child_width, child_height };
+            } else {
+                // Use stored original sizes
+                child_width = measure.desired_size.width;
+                child_height = measure.desired_size.height;
+            }
 
             // Reduce remaining space based on dock position
             switch (measure.position) {
@@ -195,6 +213,11 @@ namespace wpp::layout
 
             // Position the control
             measure.control->move(child_x, child_y, child_width, child_height);
+
+            // If this is a nested panel, arrange its children
+            if (auto child_panel = as_panel(measure.control)) {
+                child_panel->arrange(child_x, child_y, child_width, child_height);
+            }
         }
     }
 

@@ -9,18 +9,18 @@ INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
         ::LoadLibrary(TEXT("Riched20.dll"));
 
     auto mainwindow = std::make_unique<MainWindow>(TEXT("Test Window"), 0, 0, hInstance);
-    auto dialog = std::make_unique<MainDialog>(hInstance);
+    //auto dialog = std::make_unique<MainDialog>(hInstance);
 
     auto window_layout = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
     window_layout->set_margin(15);
     window_layout->set_spacing(10);
     window_layout->set_alignment(layout::alignment::stretch);
     mainwindow->create_window(window_layout);
-    dialog->create_modeless();
+    //dialog->create_modeless();
 
     message_loop loop;
     loop.register_window(*mainwindow);
-    loop.register_window(*dialog);
+    //loop.register_window(*dialog);
     loop.run();
 
     return 0;

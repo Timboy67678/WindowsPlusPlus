@@ -8,12 +8,20 @@ namespace wpp::layout
     // Dock panel - arranges children along edges (left/top/right/bottom) with one fill element
     class dock_panel : public panel {
     public:
-        dock_panel();
+        explicit dock_panel(HWND parent = nullptr);
         virtual ~dock_panel() = default;
 
         // Add a control with dock position
         void add(control_ptr<> control) override;
         void add(control_ptr<> control, dock_position position);
+
+		// Add all controls from a window (used when adding a window to the panel)
+        void add_window_controls(window_base* window) override {
+            if (window != nullptr) {
+                for (const auto& control : window->get_controls())
+                    add(control);
+            }
+        }
 
         // Layout calculations
         void measure(int available_width, int available_height) override;
