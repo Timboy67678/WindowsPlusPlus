@@ -2,6 +2,7 @@
 #include "resource.h"
 #include "MainDialog.hpp"
 #include "MainWindow.hpp"
+#include "WindowGridPanel.hpp"
 
 INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPTSTR lpCmdLine, _In_ INT nCmdShow) {
     InitCommonControls();
@@ -9,17 +10,16 @@ INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
         ::LoadLibrary(TEXT("Riched20.dll"));
 
     auto mainwindow = std::make_unique<MainWindow>(TEXT("Test Window"), 0, 0, hInstance);
+    //auto grid_window = std::make_unique<WindowGridPanel>(TEXT("Grid Panel Demo"), 0, 0, hInstance);
     //auto dialog = std::make_unique<MainDialog>(hInstance);
 
-    auto window_layout = std::make_shared<layout::stack_panel>(layout::orientation::vertical);
-    window_layout->set_margin(15);
-    window_layout->set_spacing(10);
-    window_layout->set_alignment(layout::alignment::stretch);
-    mainwindow->create_window(window_layout);
+    mainwindow->create_window();
+    //grid_window->create_window();
     //dialog->create_modeless();
 
     message_loop loop;
     loop.register_window(*mainwindow);
+    //loop.register_window(*grid_window);
     //loop.register_window(*dialog);
     loop.run();
 

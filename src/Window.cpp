@@ -130,14 +130,12 @@ namespace wpp
 		if (!m_handle)
 			return false;
 
-		// Initialize the layout panel window if it exists
 		if (m_root_panel) {
 			m_root_panel->initialize_window(m_handle);
 		}
 
 		if (m_font == NULL) {
-			m_font = ::CreateFont(
-				-12, 0, 0, 0,
+			m_font = ::CreateFont(-12, 0, 0, 0,
 				FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
 				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Segoe UI"));
 		}

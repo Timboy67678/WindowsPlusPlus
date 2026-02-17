@@ -5,5 +5,6 @@
 #include "layout/panel.hpp"
 #include "layout/stack_panel.hpp"
 #include "layout/dock_panel.hpp"
+#include "layout/grid_panel.hpp"
 
 #endif // WPP_LAYOUT_HPP

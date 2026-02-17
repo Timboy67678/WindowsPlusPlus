@@ -14,8 +14,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     auto main_dock = std::make_shared<wpp::layout::dock_panel>(hWnd);
     main_dock->set_padding(10);
-    m_root_panel = main_dock;
-
+   
     // top panel with title and buttons
 
     auto top_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::horizontal, hWnd);
@@ -224,6 +223,8 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     RECT client_rect = get_client_rect();
     main_dock->measure(client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
     main_dock->arrange(0, 0, client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
+
+    root_panel() = main_dock;
 
     return window::on_create(hWnd, wParam, lParam);
 }

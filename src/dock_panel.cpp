@@ -226,7 +226,21 @@ namespace wpp::layout
             // If this is a nested panel, arrange its children
             if (auto child_panel = as_panel(measure.control)) {
                 child_panel->arrange(child_x, child_y, child_width, child_height);
+                // Invalidate panel window to ensure it repaints
+                if (child_panel->get_handle()) {
+                    ::InvalidateRect(child_panel->get_handle(), NULL, FALSE);
+                }
             }
+
+            // Invalidate control to prevent artifacts during resize
+            if (measure.control->get_handle()) {
+                ::InvalidateRect(measure.control->get_handle(), NULL, FALSE);
+            }
+        }
+
+        // Invalidate the panel window itself
+        if (m_handle) {
+            ::InvalidateRect(m_handle, NULL, FALSE);
         }
     }
 

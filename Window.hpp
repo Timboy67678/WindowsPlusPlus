@@ -203,7 +203,7 @@ namespace wpp
 		/// <param name="parent_window">A handle to the parent window. Defaults to HWND_DESKTOP.</param>
 		/// <param name="param">Additional parameter data to pass to the window. Defaults to NULL.</param>
 		/// <returns>True if the window was created successfully; otherwise, false.</returns>
-		virtual bool create_window(std::shared_ptr<layout::panel> layout, int x_pos = 0, int y_pos = 0, HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
+		virtual bool create_window(std::shared_ptr<layout::panel> layout = nullptr, int x_pos = 0, int y_pos = 0, HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
 
 		/// <summary>
 		/// Creates and runs a window with the specified layout and positioning.
@@ -214,7 +214,7 @@ namespace wpp
 		/// <param name="parent_window">The handle to the parent window. Defaults to HWND_DESKTOP.</param>
 		/// <param name="param">An optional parameter to pass to the window. Defaults to NULL.</param>
 		/// <returns>True if the window was successfully created and run; otherwise, false.</returns>
-		virtual bool run_window(std::shared_ptr<layout::panel> layout, int x_pos = 0, int y_pos = 0, HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
+		virtual bool run_window(std::shared_ptr<layout::panel> layout = nullptr, int x_pos = 0, int y_pos = 0, HWND parent_window = HWND_DESKTOP, LPVOID param = NULL);
 
 		/// <summary>
 		/// Processes Windows messages for the window.
@@ -506,8 +506,12 @@ namespace wpp
 		void cleanup();
 		void update_layout();
 		bool handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
+		
+		std::shared_ptr<layout::panel> m_root_panel; ///< Layout panel for automatic control arrangement.
 
 	protected:
+		auto& root_panel() { return m_root_panel; }
+
 		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for window procedure.
 		window_class m_window_class; ///< Window class.
 		int m_x_pos, m_y_pos; ///< Initial startup position of the window
@@ -523,7 +527,6 @@ namespace wpp
 		std::atomic_bool m_window_running = false; ///< Window running flag.
 		std::map<INT, window_message_callback> m_message_events; ///< Message events.
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
-		std::shared_ptr<layout::panel> m_root_panel; ///< Layout panel for automatic control arrangement.
 		std::vector<control_ptr<>> m_controls; ///< Controls container.
 	};
 }

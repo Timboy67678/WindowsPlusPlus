@@ -33,6 +33,9 @@
     <ClInclude Include="MainWindow.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WindowGridPanel.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TestProj.cpp">
@@ -45,6 +48,9 @@
       <Filter>Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="MainWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowGridPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

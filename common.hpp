@@ -314,6 +314,7 @@ namespace wpp
 		}
 
 		virtual BOOL update_window() const {
+			::InvalidateRect(m_handle, NULL, TRUE);
 			return ::UpdateWindow(m_handle);
 		}
 

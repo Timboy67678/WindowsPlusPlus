@@ -154,12 +154,14 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="WindowGridPanel.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainDialog.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestProj.cpp" />
+    <ClCompile Include="WindowGridPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TestProj.rc" />

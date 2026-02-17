@@ -33,6 +33,9 @@
     <ClCompile Include="stack_panel.cpp">
       <Filter>Header Files\Layouts</Filter>
     </ClCompile>
+    <ClCompile Include="grid_panel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\winplusplus.hpp">

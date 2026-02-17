@@ -124,7 +124,7 @@ namespace wpp::layout
 				0,
 				TEXT("STATIC"),
 				TEXT(""),
-				WS_CHILD | WS_VISIBLE,
+				WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN,
 				0, 0, 0, 0,
 				parent,
 				nullptr,

@@ -130,8 +130,14 @@ namespace wpp::layout
 
         int available_size = (m_orientation == orientation::horizontal) ? content_width : content_height;
         int extra_space = available_size - total_desired_size;
-        int per_child_extra = (num_valid_children > 0) ? extra_space / num_valid_children : 0;
-        int remainder = (num_valid_children > 0) ? extra_space % num_valid_children : 0;
+
+        // Only distribute extra space equally if alignment is stretch
+        int per_child_extra = 0;
+        int remainder = 0;
+        if (m_alignment == alignment::stretch) {
+            per_child_extra = (num_valid_children > 0) ? extra_space / num_valid_children : 0;
+            remainder = (num_valid_children > 0) ? extra_space % num_valid_children : 0;
+        }
 
         int current_pos = 0;
 
@@ -211,7 +217,21 @@ namespace wpp::layout
             // If this is a nested panel, arrange its children
             if (auto child_panel = as_panel(child)) {
                 child_panel->arrange(child_x, child_y, child_width, child_height);
+                // Invalidate panel window to ensure it repaints
+                if (child_panel->get_handle()) {
+                    ::InvalidateRect(child_panel->get_handle(), NULL, FALSE);
+                }
             }
+
+            // Invalidate control to prevent artifacts during resize
+            if (child->get_handle()) {
+                ::InvalidateRect(child->get_handle(), NULL, FALSE);
+            }
+        }
+
+        // Invalidate the panel window itself
+        if (m_handle) {
+            ::InvalidateRect(m_handle, NULL, FALSE);
         }
     }
 
