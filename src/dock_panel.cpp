@@ -228,19 +228,19 @@ namespace wpp::layout
                 child_panel->arrange(child_x, child_y, child_width, child_height);
                 // Invalidate panel window to ensure it repaints
                 if (child_panel->get_handle()) {
-                    ::InvalidateRect(child_panel->get_handle(), NULL, FALSE);
+                    child_panel->invalidate();
                 }
             }
 
             // Invalidate control to prevent artifacts during resize
             if (measure.control->get_handle()) {
-                ::InvalidateRect(measure.control->get_handle(), NULL, FALSE);
+				measure.control->invalidate();
             }
         }
 
         // Invalidate the panel window itself
         if (m_handle) {
-            ::InvalidateRect(m_handle, NULL, FALSE);
+            invalidate();
         }
     }
 

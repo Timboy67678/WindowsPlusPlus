@@ -207,11 +207,7 @@ namespace wpp::layout
             }
         }
 
-        // Use DeferWindowPos for better performance and proper Z-order
-        HDWP hdwp = nullptr;
-        if (valid_control_count > 0) {
-            hdwp = ::BeginDeferWindowPos(valid_control_count);
-        }
+        deferred_window_pos dwp(valid_control_count);
 
         // Arrange children
         for (auto& child : m_children) {
@@ -296,28 +292,22 @@ namespace wpp::layout
                     break;
                 }
 
-                // Position the control with proper Z-order using DeferWindowPos
-                if (child->get_handle() && hdwp) {
-                    hdwp = ::DeferWindowPos(hdwp, child->get_handle(), nullptr,
-                        final_x, final_y, final_width, final_height,
-                        SWP_NOACTIVATE | SWP_NOZORDER);
-                } else if (child->get_handle()) {
-                    // Fallback to direct move if DeferWindowPos wasn't created
-                    child->move(final_x, final_y, final_width, final_height);
+                // Position the control using deferred positioning
+                if (child->get_handle()) {
+                    if (dwp.is_valid()) {
+                        dwp.defer(child->get_handle(), final_x, final_y, final_width, final_height);
+                    } else {
+                        // Fallback to direct move if deferred positioning isn't available
+                        child->move(final_x, final_y, final_width, final_height);
+                    }
                 }
             }
         }
 
-        // End deferred window positioning
-        if (hdwp) {
-            ::EndDeferWindowPos(hdwp);
-        }
-
         // Update panel window position
         if (m_handle) {
-            ::SetWindowPos(m_handle, nullptr, x, y, width, height,
-                SWP_NOZORDER | SWP_NOACTIVATE);
-            ::InvalidateRect(m_handle, NULL, FALSE);
+			set_position(x, y, width, height);
+            invalidate();
         }
     }
 

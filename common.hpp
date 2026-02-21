@@ -181,6 +181,119 @@ namespace wpp
 	};
 
 	/// <summary>
+	/// RAII wrapper for DeferWindowPos that automatically handles BeginDeferWindowPos and EndDeferWindowPos.
+	/// Provides exception-safe and convenient batching of multiple window position changes for better performance.
+	/// </summary>
+	class deferred_window_pos {
+	public:
+		/// <summary>
+		/// Begins a deferred window position update for the specified number of windows.
+		/// </summary>
+		/// <param name="count">The number of windows to be repositioned.</param>
+		explicit deferred_window_pos(int count)
+			: m_hdwp(count > 0 ? ::BeginDeferWindowPos(count) : nullptr) {
+		}
+
+		/// <summary>
+		/// Automatically ends the deferred window position update.
+		/// </summary>
+		~deferred_window_pos() {
+			end();
+		}
+
+		// Non-copyable
+		deferred_window_pos(const deferred_window_pos&) = delete;
+		deferred_window_pos& operator=(const deferred_window_pos&) = delete;
+
+		// Movable
+		deferred_window_pos(deferred_window_pos&& other) noexcept
+			: m_hdwp(std::exchange(other.m_hdwp, nullptr)) {
+		}
+
+		deferred_window_pos& operator=(deferred_window_pos&& other) noexcept {
+			if (this != &other) {
+				end();
+				m_hdwp = std::exchange(other.m_hdwp, nullptr);
+			}
+			return *this;
+		}
+
+		/// <summary>
+		/// Defers the positioning of a window.
+		/// </summary>
+		/// <param name="hwnd">Handle to the window to be repositioned.</param>
+		/// <param name="hwnd_insert_after">Handle to the window to precede hwnd in the Z order.</param>
+		/// <param name="x">X-coordinate of the window.</param>
+		/// <param name="y">Y-coordinate of the window.</param>
+		/// <param name="cx">Width of the window.</param>
+		/// <param name="cy">Height of the window.</param>
+		/// <param name="flags">Window positioning flags (e.g., SWP_NOACTIVATE | SWP_NOZORDER).</param>
+		/// <returns>True if successful, false otherwise.</returns>
+		bool defer(HWND hwnd, HWND hwnd_insert_after, int x, int y, int cx, int cy, UINT flags) {
+			if (!m_hdwp || !hwnd) return false;
+
+			HDWP new_hdwp = ::DeferWindowPos(m_hdwp, hwnd, hwnd_insert_after, x, y, cx, cy, flags);
+			if (new_hdwp) {
+				m_hdwp = new_hdwp;
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Defers the positioning of a window (convenience overload without Z-order control).
+		/// </summary>
+		/// <param name="hwnd">Handle to the window to be repositioned.</param>
+		/// <param name="x">X-coordinate of the window.</param>
+		/// <param name="y">Y-coordinate of the window.</param>
+		/// <param name="cx">Width of the window.</param>
+		/// <param name="cy">Height of the window.</param>
+		/// <param name="flags">Window positioning flags (default: SWP_NOACTIVATE | SWP_NOZORDER).</param>
+		/// <returns>True if successful, false otherwise.</returns>
+		bool defer(HWND hwnd, int x, int y, int cx, int cy, UINT flags = SWP_NOACTIVATE | SWP_NOZORDER) {
+			return defer(hwnd, nullptr, x, y, cx, cy, flags);
+		}
+
+		/// <summary>
+		/// Checks if the deferred window position handle is valid.
+		/// </summary>
+		/// <returns>True if valid, false otherwise.</returns>
+		bool is_valid() const {
+			return m_hdwp != nullptr;
+		}
+
+		/// <summary>
+		/// Explicit boolean conversion operator.
+		/// </summary>
+		explicit operator bool() const {
+			return is_valid();
+		}
+
+		/// <summary>
+		/// Manually ends the deferred window position update (called automatically by destructor).
+		/// </summary>
+		/// <returns>True if successful, false otherwise.</returns>
+		bool end() {
+			if (m_hdwp) {
+				BOOL result = ::EndDeferWindowPos(m_hdwp);
+				m_hdwp = nullptr;
+				return result != FALSE;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Gets the raw HDWP handle (use with caution).
+		/// </summary>
+		HDWP get_handle() const {
+			return m_hdwp;
+		}
+
+	private:
+		HDWP m_hdwp;
+	};
+
+	/// <summary>
 	/// A wrapper class for Windows HWND (window handle) that provides an object-oriented interface for window management and manipulation.
 	/// </summary>
 	class hwnd {
@@ -478,12 +591,22 @@ namespace wpp
 			return ::MoveWindow(m_handle, x, y, width, height, repaint);
 		}
 
+		virtual BOOL set_position(int x, int y, int width, int height, UINT flags = SWP_NOZORDER | SWP_NOACTIVATE) {
+			if (x == 0 && y == 0) flags |= SWP_NOMOVE;
+			if (width == 0 && height == 0) flags |= SWP_NOSIZE;
+			return ::SetWindowPos(m_handle, NULL, x, y, width, height, flags);
+		}
+
 		virtual BOOL set_pos(int x, int y) {
-			return ::SetWindowPos(m_handle, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+			return set_position(x, y, 0, 0);
 		}
 
 		virtual BOOL set_size(int width, int height) {
-			return ::SetWindowPos(m_handle, NULL, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
+			return set_position(0, 0, width, height);
+		}
+
+		virtual BOOL invalidate(LPRECT rect = NULL, BOOL erase = FALSE) {
+			return ::InvalidateRect(m_handle, rect, erase);
 		}
 
 		/// <summary>
