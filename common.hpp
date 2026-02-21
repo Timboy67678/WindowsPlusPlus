@@ -41,6 +41,7 @@
 namespace wpp
 {
 	// Convert between char and wchar_t strings
+
 	inline std::wstring convert_to_wstring(const std::string& str) {
 		if (str.empty()) return std::wstring();
 		if (str.size() > static_cast<size_t>((std::numeric_limits<int>::max)()))

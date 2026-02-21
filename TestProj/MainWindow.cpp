@@ -6,7 +6,7 @@ constexpr auto DEFAULT_WINDOW_HEIGHT = 700;
 MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
     : window(window_class{ _T("MainWindowWPP"), instance },
              window_title, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT) {
-    set_keep_minimum_resize(true);
+    //set_keep_minimum_resize(true);
 }
 
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
@@ -26,7 +26,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     auto btn_refresh = create_button(_T("Refresh"), 80, 25);
     btn_refresh->on_click([this](WPARAM, LPARAM) {
-        MessageBox(get_handle(), _T("Refresh clicked!"), _T("Info"), MB_OK | MB_ICONINFORMATION);
+        message_box_info(_T("Refreshed"), _T("Refresh clicked!"));
     });
     top_panel->add(btn_refresh);
 
@@ -35,7 +35,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     auto btn_about = create_button(_T("About"), 80, 25);
     btn_about->on_click([this](WPARAM, LPARAM) {
-        MessageBox(get_handle(), _T("WindowsPlusPlus v1.0\nA modern C++ wrapper for Windows UI"), _T("About"), MB_OK | MB_ICONINFORMATION);
+        message_box_info(_T("About"), _T("WindowsPlusPlus v1.0\nA modern C++ wrapper for Windows UI"));
     });
     top_panel->add(btn_about);
 

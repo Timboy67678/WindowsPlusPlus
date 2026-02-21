@@ -157,7 +157,7 @@ namespace wpp
 		/// </summary>
 		/// <returns>A const reference to the vector of controls.</returns>
 		virtual const std::vector<control_ptr<>>& get_controls() const {
-			static const std::vector<control_ptr<>> empty_controls;
+			static const std::vector<control_ptr<>> empty_controls{};
 			return empty_controls;
 		}
 

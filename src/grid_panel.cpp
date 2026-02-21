@@ -199,6 +199,20 @@ namespace wpp::layout
             current_x += m_column_widths[i] + scaled_column_spacing;
         }
 
+        // Count valid non-panel children for DeferWindowPos (panels handle their own windows)
+        int valid_control_count = 0;
+        for (auto& child : m_children) {
+            if (child && child->is_valid() && child->get_handle() && !as_panel(child)) {
+                valid_control_count++;
+            }
+        }
+
+        // Use DeferWindowPos for better performance and proper Z-order
+        HDWP hdwp = nullptr;
+        if (valid_control_count > 0) {
+            hdwp = ::BeginDeferWindowPos(valid_control_count);
+        }
+
         // Arrange children
         for (auto& child : m_children) {
             if (!child || !child->is_valid()) continue;
@@ -232,10 +246,6 @@ namespace wpp::layout
             // Arrange child - panels are arranged, controls are moved
             if (auto child_panel = as_panel(child)) {
                 child_panel->arrange(cell_x, cell_y, cell_width, cell_height);
-                // Invalidate panel window to ensure it repaints
-                if (child_panel->get_handle()) {
-                    ::InvalidateRect(child_panel->get_handle(), NULL, FALSE);
-                }
             } else {
                 // Get alignment for this control
                 auto align = get_alignment(child);
@@ -286,14 +296,21 @@ namespace wpp::layout
                     break;
                 }
 
-                // Position the control
-                child->move(final_x, final_y, final_width, final_height);
+                // Position the control with proper Z-order using DeferWindowPos
+                if (child->get_handle() && hdwp) {
+                    hdwp = ::DeferWindowPos(hdwp, child->get_handle(), nullptr,
+                        final_x, final_y, final_width, final_height,
+                        SWP_NOACTIVATE | SWP_NOZORDER);
+                } else if (child->get_handle()) {
+                    // Fallback to direct move if DeferWindowPos wasn't created
+                    child->move(final_x, final_y, final_width, final_height);
+                }
             }
+        }
 
-            // Invalidate control to prevent artifacts
-            if (child->get_handle()) {
-                ::InvalidateRect(child->get_handle(), NULL, FALSE);
-            }
+        // End deferred window positioning
+        if (hdwp) {
+            ::EndDeferWindowPos(hdwp);
         }
 
         // Update panel window position
