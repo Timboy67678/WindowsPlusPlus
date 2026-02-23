@@ -345,6 +345,7 @@ namespace wpp::layout
                 ::LineTo(hdc, content_x + total_width, current_y);
                 current_y += m_row_heights[i] + scaled_row_spacing;
             }
+
             // Draw the bottom border
             ::MoveToEx(hdc, content_x, content_y + total_height, nullptr);
             ::LineTo(hdc, content_x + total_width, content_y + total_height);
@@ -356,6 +357,7 @@ namespace wpp::layout
                 ::LineTo(hdc, current_x, content_y + total_height);
                 current_x += m_column_widths[i] + scaled_column_spacing;
             }
+
             // Draw the rightmost border
             ::MoveToEx(hdc, content_x + total_width, content_y, nullptr);
             ::LineTo(hdc, content_x + total_width, content_y + total_height);

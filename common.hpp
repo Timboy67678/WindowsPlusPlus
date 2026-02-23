@@ -456,16 +456,6 @@ namespace wpp
 			return ::GetWindowLongPtr(m_handle, index);
 		}
 
-		template<typename T = LONG_PTR>
-		T get_window_long(int index) const {
-			LONG_PTR result = get_window_long(index);
-			if constexpr (std::is_pointer_v<T>) {
-				return reinterpret_cast<T>(result);
-			} else {
-				return static_cast<T>(result);
-			}
-		}
-
 		virtual LONG_PTR set_window_long(int index, LONG_PTR dwNewLong) {
 			return ::SetWindowLongPtr(m_handle, index, dwNewLong);
 		}

@@ -14,7 +14,6 @@ namespace wpp::layout
 	LRESULT CALLBACK panel::panel_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		panel* panel_ptr = reinterpret_cast<panel*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
-		// Call original window proc first for all messages
 		LRESULT result = 0;
 		if (panel_ptr && panel_ptr->m_original_wndproc) {
 			result = ::CallWindowProc(panel_ptr->m_original_wndproc, hwnd, msg, wParam, lParam);
@@ -22,7 +21,6 @@ namespace wpp::layout
 			result = ::DefWindowProc(hwnd, msg, wParam, lParam);
 		}
 
-		// After original processing, paint grid lines on top
 		if (msg == WM_PAINT && panel_ptr) {
 			HDC hdc = ::GetDC(hwnd);
 			if (hdc) {
