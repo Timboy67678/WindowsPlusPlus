@@ -55,7 +55,7 @@ namespace wpp
 
 	void window::cleanup() {
 		if (is_valid()) {
-			::DestroyWindow(m_handle);
+			destroy();
 		}
 	}
 
@@ -68,7 +68,7 @@ namespace wpp
 	}
 
 	bool window::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
-		HWND hScrollBar = (HWND)lParam;
+		HWND hScrollBar = reinterpret_cast<HWND>(lParam);
 
 		auto scrollbar = get_control_by_handle<scroll_bar>(hScrollBar);
 		if (scrollbar) {
@@ -560,12 +560,6 @@ namespace wpp
 	}
 
 	LRESULT window::on_paint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		PAINTSTRUCT ps = {};
-		HDC hdc = ::BeginPaint(hWnd, &ps);
-		if (m_root_panel) {
-			m_root_panel->paint(ps.hdc);
-		}
-		::EndPaint(hWnd, &ps);
 		return FALSE;
 	}
 

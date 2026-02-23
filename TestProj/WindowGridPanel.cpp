@@ -178,7 +178,12 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto options_title = create_static_control(_T("Options"), 250, 25);
     options_panel->add(options_title);
 
-    auto check1 = create_check_box(_T("Enable feature A"), 250, 25);
+    auto check1 = create_check_box(_T("Enable grid lines drawing"), 250, 25);
+    check1->on_click([this, check1, main_grid](WPARAM, LPARAM) {
+        main_grid->paint_grid_lines() = check1->is_checked();
+        invalidate();
+        update_window();
+    });
     options_panel->add(check1);
 
     auto check2 = create_check_box(_T("Enable feature B"), 250, 25);
@@ -203,6 +208,7 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         auto item = reinterpret_cast<PNMLINK>(nm)->item;
         ShellExecuteW(NULL, L"open", item.szUrl, NULL, NULL, SW_SHOWNORMAL);
     });
+    footer->set_margin(15, 15, 0, 0);
     footer->add(link);
 
     main_grid->add_panel(footer);

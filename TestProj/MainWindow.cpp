@@ -61,6 +61,8 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     main_dock->add_panel(bottom_panel);
     main_dock->set_dock_position(bottom_panel, wpp::layout::dock_position::bottom);
 
+    // left panel with various controls
+
     auto left_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
     left_panel->set_spacing(8);
     left_panel->set_padding(10);

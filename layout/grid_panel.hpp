@@ -2,8 +2,6 @@
 #define WPP_LAYOUT_GRID_PANEL_HPP
 
 #include "panel.hpp"
-#include <vector>
-#include <unordered_map>
 
 namespace wpp::layout
 {
@@ -96,7 +94,11 @@ namespace wpp::layout
             m_column_spacing = spacing;
         }
 
+		bool& paint_grid_lines() { return m_paint_grid_lines; }
+
     private:
+        bool m_paint_grid_lines = false; // For debugging: whether to draw grid lines
+
         std::vector<grid_length> m_row_definitions;
         std::vector<grid_length> m_column_definitions;
         std::unordered_map<control_ptr<>, grid_position> m_grid_positions;

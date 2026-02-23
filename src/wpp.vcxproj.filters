@@ -34,7 +34,10 @@
       <Filter>Header Files\Layouts</Filter>
     </ClCompile>
     <ClCompile Include="grid_panel.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\Layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="panel.cpp">
+      <Filter>Header Files\Layouts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -139,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="..\window_base.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\layout\grid_panel.hpp">
+      <Filter>Header Files\Layouts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

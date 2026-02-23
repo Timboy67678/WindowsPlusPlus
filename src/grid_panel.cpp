@@ -312,8 +312,57 @@ namespace wpp::layout
     }
 
     void grid_panel::paint(HDC hdc) {
-        // Optional: draw grid lines for debugging
-        // Base implementation does nothing
+        if (m_paint_grid_lines) {
+            // Draw grid lines for debugging
+            HPEN hPen = ::CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+            HGDIOBJ oldPen = ::SelectObject(hdc, hPen);
+
+            int margin_left = static_cast<int>(m_margin.left * m_dpi_scale);
+            int margin_top = static_cast<int>(m_margin.top * m_dpi_scale);
+            int padding_left = static_cast<int>(m_padding.left * m_dpi_scale);
+            int padding_top = static_cast<int>(m_padding.top * m_dpi_scale);
+            int scaled_row_spacing = static_cast<int>(m_row_spacing * m_dpi_scale);
+            int scaled_column_spacing = static_cast<int>(m_column_spacing * m_dpi_scale);
+
+            int content_x = margin_left + padding_left;
+            int content_y = margin_top + padding_top;
+
+            // Calculate total grid dimensions
+            int total_width = std::accumulate(m_column_widths.begin(), m_column_widths.end(), 0);
+            if (m_column_widths.size() > 1) {
+                total_width += scaled_column_spacing * (static_cast<int>(m_column_widths.size()) - 1);
+            }
+
+            int total_height = std::accumulate(m_row_heights.begin(), m_row_heights.end(), 0);
+            if (m_row_heights.size() > 1) {
+                total_height += scaled_row_spacing * (static_cast<int>(m_row_heights.size()) - 1);
+            }
+
+            // Draw horizontal grid lines (including top and bottom borders)
+            int current_y = content_y;
+            for (size_t i = 0; i < m_row_heights.size(); ++i) {
+                ::MoveToEx(hdc, content_x, current_y, nullptr);
+                ::LineTo(hdc, content_x + total_width, current_y);
+                current_y += m_row_heights[i] + scaled_row_spacing;
+            }
+            // Draw the bottom border
+            ::MoveToEx(hdc, content_x, content_y + total_height, nullptr);
+            ::LineTo(hdc, content_x + total_width, content_y + total_height);
+
+            // Draw vertical grid lines (including left and right borders)
+            int current_x = content_x;
+            for (size_t i = 0; i < m_column_widths.size(); ++i) {
+                ::MoveToEx(hdc, current_x, content_y, nullptr);
+                ::LineTo(hdc, current_x, content_y + total_height);
+                current_x += m_column_widths[i] + scaled_column_spacing;
+            }
+            // Draw the rightmost border
+            ::MoveToEx(hdc, content_x + total_width, content_y, nullptr);
+            ::LineTo(hdc, content_x + total_width, content_y + total_height);
+
+            ::SelectObject(hdc, oldPen);
+            ::DeleteObject(hPen);
+        }
     }
 
     void grid_panel::ensure_grid_capacity(int row, int column) {

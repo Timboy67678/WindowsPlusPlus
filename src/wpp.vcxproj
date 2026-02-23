@@ -145,6 +145,7 @@
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="dock_panel.cpp" />
     <ClCompile Include="grid_panel.cpp" />
+    <ClCompile Include="panel.cpp" />
     <ClCompile Include="stack_panel.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
@@ -176,6 +177,7 @@
     <ClInclude Include="..\dialog.hpp" />
     <ClInclude Include="..\layout.hpp" />
     <ClInclude Include="..\layout\dock_panel.hpp" />
+    <ClInclude Include="..\layout\grid_panel.hpp" />
     <ClInclude Include="..\layout\panel.hpp" />
     <ClInclude Include="..\layout\stack_panel.hpp" />
     <ClInclude Include="..\message_loop.hpp" />
