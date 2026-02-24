@@ -21,7 +21,62 @@
 
 ---
 
-## Example: Application Entry Point
+## Example: Creating a Window
+
+```cpp
+#include "window.hpp"
+#include "layout.hpp"
+#include "controls.hpp"
+
+using namespace wpp;
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+    // Create a window
+    auto window = std::make_shared<window_base>();
+
+    // Create a grid panel as root layout
+    auto layout = std::make_shared<layout::grid_panel>(window->get_handle());
+
+    // Add controls to grid positions
+    auto btn1 = std::make_shared<button>("OK");
+    auto btn2 = std::make_shared<button>("Cancel");
+
+    layout->add(btn1, /*row=*/0, /*column=*/0);
+    layout->add(btn2, /*row=*/0, /*column=*/1);
+
+    return window->run_window(layout);
+}
+```
+
+#### This example uses the `grid_panel` layout. You can also use `stack_panel` or `dock_panel` for other layout scenarios. Panels allow flexible nesting and layout of controls/windows.
+
+---
+
+## Example: Creating a Dialog
+
+```cpp
+#include "stdafx.h"
+#include "dialog.hpp"
+
+using namespace wpp;
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+    // IDD_MYDIALOG is a dialog resource defined in your .rc file
+    dialog dlg(hInstance, IDD_MYDIALOG);
+
+    // Optionally, connect handlers, e.g.
+    // dlg.on_init_dialog = [](HWND hWnd, WPARAM, LPARAM) -> INT_PTR {
+    //     // Initialization code here
+    //     return TRUE;
+    // };
+
+    return dlg.run_dlg();
+}
+```
+
+---
+
+## Example: Example Messaqge Loop implementation
 
 ```cpp
 #include "stdafx.h"
@@ -45,89 +100,6 @@ INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
     loop.run();
 
     return 0;
-}
-```
-
----
-
-## Example: Creating a Main Window
-
-```cpp
-// MainWindow.hpp
-class MainWindow : public window {
-public:
-    MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance = NULL);
-    message_handler on_create;
-private:
-    control_ptr<button> m_ButtonOne;
-    control_ptr<check_box> m_CheckBoxOne;
-    control_ptr<combo_box> m_ComboBoxOne;
-    control_ptr<edit_text> m_EditTextOne;
-    control_ptr<list_view> m_ListViewOne;
-    control_ptr<window::radio_button_group> m_RadioButtonGroup;
-    control_ptr<sys_link> m_LinkControl;
-};
-
-// MainWindow.cpp
-MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
-    : window(window_class{ _T("MainWindowWPP"), instance },
-             window_title, x, y, 800, 600, WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_SIZEBOX)) {}
-
-LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-    center_window();
-
-    m_ButtonOne = create_button(_T("Click Me!"), 10, 0, 150, 25);
-    m_ButtonOne->on_click([this](WPARAM, LPARAM) {
-        static int x = 0;
-        std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
-        m_ButtonOne->set_text(button_counter_str);
-    });
-
-    m_CheckBoxOne = create_check_box(_T("Check Me!"), 10, 30, 150, 25);
-    m_CheckBoxOne->on_click([this](WPARAM, LPARAM) {
-        m_ButtonOne->set_shield(m_CheckBoxOne->get_checked() == BST_CHECKED);
-    });
-
-    m_ComboBoxOne = create_combo_box(10, 60, 150, 25);
-    // More controls ...
-}
-```
-
----
-
-## Example: Creating a Main Dialog
-
-```cpp
-// MainDialog.hpp
-class MainDialog : public dialog {
-public:
-    MainDialog(HINSTANCE hInstance) : dialog(hInstance, IDD_MAINDLG, IDC_TESTPROJ) {}
-    message_handler on_init_dialog;
-private:
-    control_ptr<combo_box> m_combo;
-    control_ptr<button> m_dostuff;
-    control_ptr<check_box> m_check;
-    // ... other controls
-};
-
-// MainDialog.cpp
-INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-    register_control(IDC_TEST_CHECK, m_check);
-    register_control(IDC_LISTBOX_TEST, m_list);
-    // ... register other controls
-
-    m_dostuff->on_click([this](WPARAM, LPARAM) {
-        m_list->reset_content();
-        m_combo->reset_content();
-        m_tree->delete_all_items();
-        // ... manipulate controls
-    });
-
-    m_check->on_click([this](WPARAM, LPARAM) {
-        m_dostuff->set_shield(m_check->get_checked() == BST_CHECKED);
-    });
-
-    // ... other callbacks and control handling
 }
 ```
 
