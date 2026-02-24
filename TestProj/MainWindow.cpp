@@ -12,12 +12,12 @@ MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     center_window();
 
-    auto main_dock = std::make_shared<wpp::layout::dock_panel>(hWnd);
+    auto main_dock = std::make_shared<layout::dock_panel>(hWnd);
     main_dock->set_padding(10);
    
     // top panel with title and buttons
 
-    auto top_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::horizontal, hWnd);
+    auto top_panel = std::make_shared<layout::stack_panel>(layout::orientation::horizontal, hWnd);
     top_panel->set_spacing(10);
     top_panel->set_padding(5);
 
@@ -40,11 +40,11 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     top_panel->add(btn_about);
 
     main_dock->add_panel(top_panel);
-    main_dock->set_dock_position(top_panel, wpp::layout::dock_position::top);
+    main_dock->set_dock_position(top_panel, layout::dock_position::top);
 
     // bottom panel with status and link
 
-    auto bottom_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::horizontal, hWnd);
+    auto bottom_panel = std::make_shared<layout::stack_panel>(layout::orientation::horizontal, hWnd);
     bottom_panel->set_spacing(10);
     bottom_panel->set_padding(5);
 
@@ -59,11 +59,11 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     bottom_panel->add(m_LinkControl);
 
     main_dock->add_panel(bottom_panel);
-    main_dock->set_dock_position(bottom_panel, wpp::layout::dock_position::bottom);
+    main_dock->set_dock_position(bottom_panel, layout::dock_position::bottom);
 
     // left panel with various controls
 
-    auto left_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
+    auto left_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
     left_panel->set_spacing(8);
     left_panel->set_padding(10);
 
@@ -138,11 +138,11 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     left_panel->add(progress_bar);
 
     main_dock->add_panel(left_panel);
-    main_dock->set_dock_position(left_panel, wpp::layout::dock_position::left);
+    main_dock->set_dock_position(left_panel, layout::dock_position::left);
 
     // right-side panel with list view and tree view
 
-    auto right_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
+    auto right_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
     right_panel->set_spacing(8);
     right_panel->set_padding(10);
 
@@ -186,10 +186,10 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     right_panel->add(tree_view);
 
     main_dock->add_panel(right_panel);
-    main_dock->set_dock_position(right_panel, wpp::layout::dock_position::right);
+    main_dock->set_dock_position(right_panel, layout::dock_position::right);
 
     // center panel with tab control, list box, and rich edit
-    auto center_panel = std::make_shared<wpp::layout::stack_panel>(wpp::layout::orientation::vertical, hWnd);
+    auto center_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
     center_panel->set_spacing(10);
     center_panel->set_padding(15);
 
@@ -220,7 +220,7 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     center_panel->add(rich_edit);
 
     main_dock->add_panel(center_panel);
-    main_dock->set_dock_position(center_panel, wpp::layout::dock_position::fill);
+    main_dock->set_dock_position(center_panel, layout::dock_position::fill);
 
     RECT client_rect = get_client_rect();
     main_dock->measure(client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);

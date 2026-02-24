@@ -2,7 +2,6 @@
 #define __MESSAGE_LOOP_H__
 
 #include "winplusplus.hpp"
-#include <optional>
 
 namespace wpp
 {
