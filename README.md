@@ -1,6 +1,6 @@
 # WindowsPlusPlus
 
-**WindowsPlusPlus** is a C++ library providing object-oriented wrappers and abstractions for Windows dialogs, windows, and controls. It enables rapid development of rich, interactive GUIs using modern C++ techniques and inspiration from [Xenos Injector](https://github.com/DarthTon/Xenos) and [WTL](http://wtl.sourceforge.net/).
+**WindowsPlusPlus** is a C++ library providing object-oriented wrappers and abstractions for Windows dialogs, windows, and controls. It enables rapid development of rich, interactive GUIs using modern C++ techniques.
 
 ## Features
 
@@ -148,7 +148,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
 ## Credits
 
-- DarthTon's Xenos Injector for message mapping ideas
+- DarthTon's Xenos Injector for message mapping ideas and bound member thunking
 - WTL for dialog abstraction patterns
 
 ## License
