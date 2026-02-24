@@ -10,7 +10,7 @@
 - Designed for modularity and extensibility
 - Easily manage multiple windows with the message_loop implementation
 - XAML-Style window layout panels (Grid, Stack and Dock panels included)
-- 
+  
 ## Quick Start
 
 ### Requirements
