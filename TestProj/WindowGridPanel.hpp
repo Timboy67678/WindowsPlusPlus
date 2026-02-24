@@ -4,7 +4,7 @@
 
 class WindowGridPanel : public window {
 public:
-    WindowGridPanel(LPCTSTR window_title, int x, int y, HINSTANCE instance);
+    WindowGridPanel(LPCTSTR window_title, int x, int y, HINSTANCE instance = NULL);
     virtual ~WindowGridPanel() = default;
 
 protected:

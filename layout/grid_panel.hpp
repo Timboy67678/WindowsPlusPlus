@@ -59,6 +59,8 @@ namespace wpp::layout
         // Layout calculations
         void measure(int available_width, int available_height) override;
         void arrange(int x, int y, int width, int height) override;
+       
+		// Optional: custom painting (for debugging grid lines)
         void paint(HDC hdc) override;
 
         // Configure rows and columns
