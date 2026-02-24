@@ -8,6 +8,8 @@
 - Automatic mapping of Win32 messages to C++ callbacks  
 - Easy creation and management of common controls (buttons, checkboxes, tabs, list views, etc.)  
 - Designed for modularity and extensibility
+- Easily manage multiple windows with the message_loop implementation
+- XAML-Style window layout panels (Grid, Stack and Dock panels included)
 
 ## Inspirations
 
