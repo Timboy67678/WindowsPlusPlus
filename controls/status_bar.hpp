@@ -102,19 +102,19 @@ namespace wpp
 			return nPane >= 0 && nPane < get_part_count();
 		}
 
-		std::tstring get_text_str(int nPane) const {
+		tstring get_text_str(int nPane) const {
 			int len = get_text_length(nPane);
-			if (len <= 0) return std::tstring();
+			if (len <= 0) return tstring();
 
 			std::vector<TCHAR> buffer(len + 1);
 			get_text(nPane, buffer.data());
-			return std::tstring(buffer.data());
+			return tstring(buffer.data());
 		}
 
-		std::tstring get_tip_text_str(int nPane) const {
+		tstring get_tip_text_str(int nPane) const {
 			TCHAR buffer[256] = { 0 };
 			get_tip_text(nPane, buffer, 256);
-			return std::tstring(buffer);
+			return tstring(buffer);
 		}
 
 		std::vector<int> get_part_widths() const {
@@ -131,8 +131,8 @@ namespace wpp
 			return set_parts((int)widths.size(), const_cast<int*>(widths.data()));
 		}
 
-		std::vector<std::tstring> get_all_texts() const {
-			std::vector<std::tstring> texts;
+		std::vector<tstring> get_all_texts() const {
+			std::vector<tstring> texts;
 			int count = get_part_count();
 			for (int i = 0; i < count; i++) {
 				texts.push_back(get_text_str(i));
@@ -162,8 +162,8 @@ namespace wpp
 			return set_text(0, lpszText);
 		}
 
-		std::tstring get_text_simple() const {
-			return is_simple() ? get_text_str(0) : std::tstring();
+		tstring get_text_simple() const {
+			return is_simple() ? get_text_str(0) : tstring();
 		}
 
 		BOOL remove_icon(int nPane) {
@@ -326,13 +326,13 @@ namespace wpp
 		}
 
 		BOOL append_text(int nPane, LPCTSTR lpszText) {
-			std::tstring current = get_text_str(nPane);
+			tstring current = get_text_str(nPane);
 			current += lpszText;
 			return set_text(nPane, current.c_str());
 		}
 
 		BOOL prepend_text(int nPane, LPCTSTR lpszText) {
-			std::tstring current = get_text_str(nPane);
+			tstring current = get_text_str(nPane);
 			current.insert(0, lpszText);
 			return set_text(nPane, current.c_str());
 		}
@@ -403,9 +403,9 @@ namespace wpp
 			return last >= 0 ? set_text(last, lpszText) : FALSE;
 		}
 
-		std::tstring get_last_pane_text() const {
+		tstring get_last_pane_text() const {
 			int last = get_last_pane();
-			return last >= 0 ? get_text_str(last) : std::tstring();
+			return last >= 0 ? get_text_str(last) : tstring();
 		}
 
 		void refresh_pane(int nPane) {

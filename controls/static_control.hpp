@@ -306,7 +306,7 @@ namespace wpp
 			}
 		}
 
-		std::tstring get_label_text() const {
+		tstring get_label_text() const {
 			return get_text();
 		}
 
@@ -314,7 +314,7 @@ namespace wpp
 			set_text(text);
 		}
 
-		void set_label_text(const std::tstring& text) {
+		void set_label_text(const tstring& text) {
 			set_text(text.c_str());
 		}
 
@@ -332,7 +332,7 @@ namespace wpp
 		void resize_to_fit_text() {
 			HDC hdc = ::GetDC(m_handle);
 			if (hdc) {
-				std::tstring text = get_text();
+				tstring text = get_text();
 				HFONT hFont = get_font();
 				HFONT hOldFont = hFont ? (HFONT)::SelectObject(hdc, hFont) : NULL;
 

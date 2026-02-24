@@ -1,5 +1,162 @@
 # WindowsPlusPlus
-Library for object oriented dialogs
 
-Big thanks to DarthTon's Xenos Injector (https://github.com/DarthTon/Xenos) for his pseudo win32++ impl, helped a ton (especially mapping message values to appropriate callbacks with help from his bound member thunking)
-and to the creator of WTL:: (http://wtl.sourceforge.net/) For his functions that i started implementing but half way through just ended up copying his impl
+**WindowsPlusPlus** is a C++ library providing object-oriented wrappers and abstractions for Windows dialogs, windows, and controls. It enables rapid development of rich, interactive GUIs using modern C++ techniques and inspiration from [Xenos Injector](https://github.com/DarthTon/Xenos) and [WTL](http://wtl.sourceforge.net/).
+
+## Features
+
+- Object-oriented dialog and window classes  
+- Automatic mapping of Win32 messages to C++ callbacks  
+- Easy creation and management of common controls (buttons, checkboxes, tabs, list views, etc.)  
+- Designed for modularity and extensibility
+- Easily manage multiple windows with the message_loop implementation
+- XAML-Style window layout panels (Grid, Stack and Dock panels included)
+
+## Inspirations
+
+- [DarthTon's Xenos Injector](https://github.com/DarthTon/Xenos): for pseudo win32++ and callback mapping  
+- [WTL](http://wtl.sourceforge.net/): for dialog and control abstraction
+
+## Quick Start
+
+### Requirements
+
+- Windows (Win32 API)
+- C++17 or later
+- Visual Studio or compatible toolchain
+
+---
+
+## Example: Application Entry Point
+
+```cpp
+#include "stdafx.h"
+#include "resource.h"
+#include "MainDialog.hpp"
+#include "MainWindow.hpp"
+
+INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPTSTR lpCmdLine, _In_ INT nCmdShow) {
+    InitCommonControls();
+    if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL)
+        ::LoadLibrary(TEXT("Riched20.dll"));
+
+    auto mainwindow = std::make_unique<MainWindow>(TEXT("Test Window"), 0, 0, hInstance);
+    auto dialog = std::make_unique<MainDialog>(hInstance);
+    mainwindow->create_window();
+    dialog->create_modeless();
+
+    message_loop loop;
+    loop.register_window(*mainwindow);
+    loop.register_window(*dialog);
+    loop.run();
+
+    return 0;
+}
+```
+
+---
+
+## Example: Creating a Main Window
+
+```cpp
+// MainWindow.hpp
+class MainWindow : public window {
+public:
+    MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance = NULL);
+    message_handler on_create;
+private:
+    control_ptr<button> m_ButtonOne;
+    control_ptr<check_box> m_CheckBoxOne;
+    control_ptr<combo_box> m_ComboBoxOne;
+    control_ptr<edit_text> m_EditTextOne;
+    control_ptr<list_view> m_ListViewOne;
+    control_ptr<window::radio_button_group> m_RadioButtonGroup;
+    control_ptr<sys_link> m_LinkControl;
+};
+
+// MainWindow.cpp
+MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
+    : window(window_class{ _T("MainWindowWPP"), instance },
+             window_title, x, y, 800, 600, WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_SIZEBOX)) {}
+
+LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+    center_window();
+
+    m_ButtonOne = create_button(_T("Click Me!"), 10, 0, 150, 25);
+    m_ButtonOne->on_click([this](WPARAM, LPARAM) {
+        static int x = 0;
+        std::tstring button_counter_str = TEXT("Button Clicked: ") + std::to_tstring(++x);
+        m_ButtonOne->set_text(button_counter_str);
+    });
+
+    m_CheckBoxOne = create_check_box(_T("Check Me!"), 10, 30, 150, 25);
+    m_CheckBoxOne->on_click([this](WPARAM, LPARAM) {
+        m_ButtonOne->set_shield(m_CheckBoxOne->get_checked() == BST_CHECKED);
+    });
+
+    m_ComboBoxOne = create_combo_box(10, 60, 150, 25);
+    // More controls ...
+}
+```
+
+---
+
+## Example: Creating a Main Dialog
+
+```cpp
+// MainDialog.hpp
+class MainDialog : public dialog {
+public:
+    MainDialog(HINSTANCE hInstance) : dialog(hInstance, IDD_MAINDLG, IDC_TESTPROJ) {}
+    message_handler on_init_dialog;
+private:
+    control_ptr<combo_box> m_combo;
+    control_ptr<button> m_dostuff;
+    control_ptr<check_box> m_check;
+    // ... other controls
+};
+
+// MainDialog.cpp
+INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+    register_control(IDC_TEST_CHECK, m_check);
+    register_control(IDC_LISTBOX_TEST, m_list);
+    // ... register other controls
+
+    m_dostuff->on_click([this](WPARAM, LPARAM) {
+        m_list->reset_content();
+        m_combo->reset_content();
+        m_tree->delete_all_items();
+        // ... manipulate controls
+    });
+
+    m_check->on_click([this](WPARAM, LPARAM) {
+        m_dostuff->set_shield(m_check->get_checked() == BST_CHECKED);
+    });
+
+    // ... other callbacks and control handling
+}
+```
+
+---
+
+## How It Works
+
+- Use `window` and `dialog` base classes to create custom windows/dialogs.
+- Register controls with IDs and bind event handlers using lambdas or member functions.
+- Use the provided `message_loop` class to run your GUI event loop.
+
+---
+
+## Credits
+
+- DarthTon's Xenos Injector for message mapping ideas
+- WTL for dialog abstraction patterns
+
+## License
+
+MIT (see LICENSE)
+
+---
+
+For more code and usage, visit the [TestProj directory](https://github.com/Timboy67678/WindowsPlusPlus/tree/master/TestProj/TestProj/) and view individual classes for implementation details.
+
+---

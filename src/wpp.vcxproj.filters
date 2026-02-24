@@ -16,6 +16,9 @@
     <Filter Include="Header Files\Controls">
       <UniqueIdentifier>{2646b34a-4cfa-47e4-870a-960a31560ed9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Layouts">
+      <UniqueIdentifier>{7d9ce290-3a97-4c28-a5da-812d54666c4f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dialog.cpp">
@@ -23,6 +26,18 @@
     </ClCompile>
     <ClCompile Include="window.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dock_panel.cpp">
+      <Filter>Header Files\Layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="stack_panel.cpp">
+      <Filter>Header Files\Layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="grid_panel.cpp">
+      <Filter>Header Files\Layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="panel.cpp">
+      <Filter>Header Files\Layouts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -112,6 +127,24 @@
     </ClInclude>
     <ClInclude Include="..\message_loop.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\layout\panel.hpp">
+      <Filter>Header Files\Layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\layout\dock_panel.hpp">
+      <Filter>Header Files\Layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\layout\stack_panel.hpp">
+      <Filter>Header Files\Layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\layout.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\window_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\layout\grid_panel.hpp">
+      <Filter>Header Files\Layouts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

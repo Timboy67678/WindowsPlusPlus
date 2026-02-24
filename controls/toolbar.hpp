@@ -154,57 +154,57 @@ namespace wpp
 		}
 
 		DWORD get_style() const {
-			return (DWORD)SendMessage(m_handle, TB_GETSTYLE, 0, 0L);
+			return send_message<DWORD>(TB_GETSTYLE, 0, 0L);
 		}
 
 		void set_style_ex(DWORD dwStyle) {
-			SendMessage(m_handle, TB_SETSTYLE, 0, dwStyle);
+			send_message(TB_SETSTYLE, 0, dwStyle);
 		}
 
 		DWORD get_button_size() const {
-			return (DWORD)SendMessage(m_handle, TB_GETBUTTONSIZE, 0, 0L);
+			return send_message<DWORD>(TB_GETBUTTONSIZE, 0, 0L);
 		}
 
 		void get_button_size(SIZE& size) const {
-			DWORD dwRet = (DWORD)SendMessage(m_handle, TB_GETBUTTONSIZE, 0, 0L);
+			DWORD dwRet = send_message<DWORD>(TB_GETBUTTONSIZE, 0, 0L);
 			size.cx = LOWORD(dwRet);
 			size.cy = HIWORD(dwRet);
 		}
 
 		BOOL get_rect(int nID, LPRECT lpRect) const {
-			return (BOOL)SendMessage(m_handle, TB_GETRECT, nID, (LPARAM)lpRect);
+			return send_message<BOOL>(TB_GETRECT, nID, (LPARAM)lpRect);
 		}
 
 		int get_text_rows() const {
-			return (int)SendMessage(m_handle, TB_GETTEXTROWS, 0, 0L);
+			return send_message<int>(TB_GETTEXTROWS, 0, 0L);
 		}
 
 		BOOL set_button_width(int cxMin, int cxMax) {
-			return (BOOL)SendMessage(m_handle, TB_SETBUTTONWIDTH, 0, MAKELPARAM(cxMin, cxMax));
+			return send_message<BOOL>(TB_SETBUTTONWIDTH, 0, MAKELPARAM(cxMin, cxMax));
 		}
 
 		BOOL set_indent(int nIndent) {
-			return (BOOL)SendMessage(m_handle, TB_SETINDENT, nIndent, 0L);
+			return send_message<BOOL>(TB_SETINDENT, nIndent, 0L);
 		}
 
 		BOOL set_max_text_rows(int nMaxTextRows) {
-			return (BOOL)SendMessage(m_handle, TB_SETMAXTEXTROWS, nMaxTextRows, 0L);
+			return send_message<BOOL>(TB_SETMAXTEXTROWS, nMaxTextRows, 0L);
 		}
 
 		BOOL get_anchor_highlight() const {
-			return (BOOL)SendMessage(m_handle, TB_GETANCHORHIGHLIGHT, 0, 0L);
+			return send_message<BOOL>(TB_GETANCHORHIGHLIGHT, 0, 0L);
 		}
 
 		BOOL set_anchor_highlight(BOOL bEnable = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_SETANCHORHIGHLIGHT, bEnable, 0L);
+			return send_message<BOOL>(TB_SETANCHORHIGHLIGHT, bEnable, 0L);
 		}
 
 		int get_button_info(int nID, LPTBBUTTONINFO lptbbi) const {
-			return (int)SendMessage(m_handle, TB_GETBUTTONINFO, nID, (LPARAM)lptbbi);
+			return send_message<int>(TB_GETBUTTONINFO, nID, (LPARAM)lptbbi);
 		}
 
 		BOOL set_button_info(int nID, LPTBBUTTONINFO lptbbi) {
-			return (BOOL)SendMessage(m_handle, TB_SETBUTTONINFO, nID, (LPARAM)lptbbi);
+			return send_message<BOOL>(TB_SETBUTTONINFO, nID, (LPARAM)lptbbi);
 		}
 
 		BOOL set_button_info(int nID, DWORD dwMask, BYTE Style, BYTE State, LPCTSTR lpszItem,
@@ -219,69 +219,69 @@ namespace wpp
 			tbbi.cx = cx;
 			tbbi.pszText = (LPTSTR)lpszItem;
 			tbbi.lParam = lParam;
-			return (BOOL)SendMessage(m_handle, TB_SETBUTTONINFO, nID, (LPARAM)&tbbi);
+			return send_message<BOOL>(TB_SETBUTTONINFO, nID, (LPARAM)&tbbi);
 		}
 
 		int get_hot_item() const {
-			return (int)SendMessage(m_handle, TB_GETHOTITEM, 0, 0L);
+			return send_message<int>(TB_GETHOTITEM, 0, 0L);
 		}
 
 		int set_hot_item(int nItem) {
-			return (int)SendMessage(m_handle, TB_SETHOTITEM, nItem, 0L);
+			return send_message<int>(TB_SETHOTITEM, nItem, 0L);
 		}
 
 		BOOL is_button_highlighted(int nButtonID) const {
-			return (BOOL)SendMessage(m_handle, TB_ISBUTTONHIGHLIGHTED, nButtonID, 0L);
+			return send_message<BOOL>(TB_ISBUTTONHIGHLIGHTED, nButtonID, 0L);
 		}
 
 		DWORD set_draw_text_flags(DWORD dwMask, DWORD dwFlags) {
-			return (DWORD)SendMessage(m_handle, TB_SETDRAWTEXTFLAGS, dwMask, dwFlags);
+			return send_message<DWORD>(TB_SETDRAWTEXTFLAGS, dwMask, dwFlags);
 		}
 
 		BOOL get_color_scheme(LPCOLORSCHEME lpcs) const {
-			return (BOOL)SendMessage(m_handle, TB_GETCOLORSCHEME, 0, (LPARAM)lpcs);
+			return send_message<BOOL>(TB_GETCOLORSCHEME, 0, (LPARAM)lpcs);
 		}
 
 		void set_color_scheme(LPCOLORSCHEME lpcs) {
-			SendMessage(m_handle, TB_SETCOLORSCHEME, 0, (LPARAM)lpcs);
+			send_message(TB_SETCOLORSCHEME, 0, (LPARAM)lpcs);
 		}
 
 		DWORD get_extended_style() const {
-			return (DWORD)SendMessage(m_handle, TB_GETEXTENDEDSTYLE, 0, 0L);
+			return send_message<DWORD>(TB_GETEXTENDEDSTYLE, 0, 0L);
 		}
 
 		DWORD set_extended_style(DWORD dwStyle) {
-			return (DWORD)SendMessage(m_handle, TB_SETEXTENDEDSTYLE, 0, dwStyle);
+			return send_message<DWORD>(TB_SETEXTENDEDSTYLE, 0, dwStyle);
 		}
 
 		void get_insert_mark(LPTBINSERTMARK lptbim) const {
-			SendMessage(m_handle, TB_GETINSERTMARK, 0, (LPARAM)lptbim);
+			send_message(TB_GETINSERTMARK, 0, (LPARAM)lptbim);
 		}
 
 		void set_insert_mark(LPTBINSERTMARK lptbim) {
-			SendMessage(m_handle, TB_SETINSERTMARK, 0, (LPARAM)lptbim);
+			send_message(TB_SETINSERTMARK, 0, (LPARAM)lptbim);
 		}
 
 		COLORREF get_insert_mark_color() const {
-			return (COLORREF)SendMessage(m_handle, TB_GETINSERTMARKCOLOR, 0, 0L);
+			return send_message<COLORREF>(TB_GETINSERTMARKCOLOR, 0, 0L);
 		}
 
 		COLORREF set_insert_mark_color(COLORREF clr) {
-			return (COLORREF)SendMessage(m_handle, TB_SETINSERTMARKCOLOR, 0, (LPARAM)clr);
+			return send_message<COLORREF>(TB_SETINSERTMARKCOLOR, 0, (LPARAM)clr);
 		}
 
 		BOOL get_max_size(LPSIZE lpSize) const {
-			return (BOOL)SendMessage(m_handle, TB_GETMAXSIZE, 0, (LPARAM)lpSize);
+			return send_message<BOOL>(TB_GETMAXSIZE, 0, (LPARAM)lpSize);
 		}
 
 		void get_padding(LPSIZE lpSizePadding) const {
-			DWORD dwRet = (DWORD)SendMessage(m_handle, TB_GETPADDING, 0, 0L);
+			DWORD dwRet = send_message<DWORD>(TB_GETPADDING, 0, 0L);
 			lpSizePadding->cx = GET_X_LPARAM(dwRet);
 			lpSizePadding->cy = GET_Y_LPARAM(dwRet);
 		}
 
 		void set_padding(int cx, int cy, LPSIZE lpSizePadding = NULL) {
-			DWORD dwRet = (DWORD)SendMessage(m_handle, TB_SETPADDING, 0, MAKELPARAM(cx, cy));
+			DWORD dwRet = send_message<DWORD>(TB_SETPADDING, 0, MAKELPARAM(cx, cy));
 			if (lpSizePadding != NULL) {
 				lpSizePadding->cx = GET_X_LPARAM(dwRet);
 				lpSizePadding->cy = GET_Y_LPARAM(dwRet);
@@ -289,81 +289,81 @@ namespace wpp
 		}
 
 		BOOL get_unicode_format() const {
-			return (BOOL)SendMessage(m_handle, TB_GETUNICODEFORMAT, 0, 0L);
+			return send_message<BOOL>(TB_GETUNICODEFORMAT, 0, 0L);
 		}
 
 		BOOL set_unicode_format(BOOL bUnicode = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_SETUNICODEFORMAT, bUnicode, 0L);
+			return send_message<BOOL>(TB_SETUNICODEFORMAT, bUnicode, 0L);
 		}
 
 		int get_string(int nString, LPTSTR lpstrString, int cchMaxLen) const {
-			return (int)SendMessage(m_handle, TB_GETSTRING, MAKEWPARAM(cchMaxLen, nString), (LPARAM)lpstrString);
+			return send_message<int>(TB_GETSTRING, MAKEWPARAM(cchMaxLen, nString), (LPARAM)lpstrString);
 		}
 
 		void get_metrics(LPTBMETRICS lptbm) const {
-			SendMessage(m_handle, TB_GETMETRICS, 0, (LPARAM)lptbm);
+			send_message(TB_GETMETRICS, 0, (LPARAM)lptbm);
 		}
 
 		void set_metrics(LPTBMETRICS lptbm) {
-			SendMessage(m_handle, TB_SETMETRICS, 0, (LPARAM)lptbm);
+			send_message(TB_SETMETRICS, 0, (LPARAM)lptbm);
 		}
 
 		void set_window_theme(LPCWSTR lpstrTheme) {
-			SendMessage(m_handle, TB_SETWINDOWTHEME, 0, (LPARAM)lpstrTheme);
+			send_message(TB_SETWINDOWTHEME, 0, (LPARAM)lpstrTheme);
 		}
 
 		image_list get_pressed_image_list(int nIndex = 0) const {
-			return image_list{ (HIMAGELIST)SendMessage(m_handle, TB_GETPRESSEDIMAGELIST, nIndex, 0L) };
+			return image_list{ send_message<HIMAGELIST>(TB_GETPRESSEDIMAGELIST, nIndex, 0L) };
 		}
 
 		image_list set_pressed_image_list(HIMAGELIST hImageList, int nIndex = 0) {
-			return image_list{ (HIMAGELIST)SendMessage(m_handle, TB_SETPRESSEDIMAGELIST, nIndex, (LPARAM)hImageList) };
+			return image_list{ send_message<HIMAGELIST>(TB_SETPRESSEDIMAGELIST, nIndex, (LPARAM)hImageList) };
 		}
 
-		void get_item_drop_down_rect(int nIndex, LPRECT lpRect) const {
-			BOOL bRet = (BOOL)SendMessage(m_handle, TB_GETITEMDROPDOWNRECT, nIndex, (LPARAM)lpRect);
+		BOOL get_item_drop_down_rect(int nIndex, LPRECT lpRect) const {
+			return send_message<BOOL>(TB_GETITEMDROPDOWNRECT, nIndex, (LPARAM)lpRect);
 		}
 
 		BOOL enable_button(int nID, BOOL bEnable = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_ENABLEBUTTON, nID, MAKELPARAM(bEnable, 0));
+			return send_message<BOOL>(TB_ENABLEBUTTON, nID, MAKELPARAM(bEnable, 0));
 		}
 
 		BOOL check_button(int nID, BOOL bCheck = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_CHECKBUTTON, nID, MAKELPARAM(bCheck, 0));
+			return send_message<BOOL>(TB_CHECKBUTTON, nID, MAKELPARAM(bCheck, 0));
 		}
 
 		BOOL press_button(int nID, BOOL bPress = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_PRESSBUTTON, nID, MAKELPARAM(bPress, 0));
+			return send_message<BOOL>(TB_PRESSBUTTON, nID, MAKELPARAM(bPress, 0));
 		}
 
 		BOOL hide_button(int nID, BOOL bHide = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_HIDEBUTTON, nID, MAKELPARAM(bHide, 0));
+			return send_message<BOOL>(TB_HIDEBUTTON, nID, MAKELPARAM(bHide, 0));
 		}
 
 		BOOL indeterminate(int nID, BOOL bIndeterminate = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_INDETERMINATE, nID, MAKELPARAM(bIndeterminate, 0));
+			return send_message<BOOL>(TB_INDETERMINATE, nID, MAKELPARAM(bIndeterminate, 0));
 		}
 
 		int add_bitmap(int nNumButtons, UINT nBitmapID) {
 			TBADDBITMAP tbab = { 0 };
 			tbab.hInst = GetModuleHandle(0);
 			tbab.nID = nBitmapID;
-			return (int)SendMessage(m_handle, TB_ADDBITMAP, (WPARAM)nNumButtons, (LPARAM)&tbab);
+			return send_message<int>(TB_ADDBITMAP, (WPARAM)nNumButtons, (LPARAM)&tbab);
 		}
 
 		int add_bitmap(int nNumButtons, HBITMAP hBitmap) {
 			TBADDBITMAP tbab = { 0 };
 			tbab.hInst = NULL;
 			tbab.nID = (UINT_PTR)hBitmap;
-			return (int)SendMessage(m_handle, TB_ADDBITMAP, (WPARAM)nNumButtons, (LPARAM)&tbab);
+			return send_message<int>(TB_ADDBITMAP, (WPARAM)nNumButtons, (LPARAM)&tbab);
 		}
 
 		BOOL add_buttons(int nNumButtons, LPTBBUTTON lpButtons) {
-			return (BOOL)SendMessage(m_handle, TB_ADDBUTTONS, nNumButtons, (LPARAM)lpButtons);
+			return send_message<BOOL>(TB_ADDBUTTONS, nNumButtons, (LPARAM)lpButtons);
 		}
 
 		BOOL insert_button(int nIndex, LPTBBUTTON lpButton) {
-			return (BOOL)SendMessage(m_handle, TB_INSERTBUTTON, nIndex, (LPARAM)lpButton);
+			return send_message<BOOL>(TB_INSERTBUTTON, nIndex, (LPARAM)lpButton);
 		}
 
 		BOOL insert_button(int nIndex, int iCommand, BYTE Style, BYTE State, int iBitmap,
@@ -375,7 +375,7 @@ namespace wpp
 			tbb.iBitmap = iBitmap;
 			tbb.iString = iString;
 			tbb.dwData = lParam;
-			return (BOOL)SendMessage(m_handle, TB_INSERTBUTTON, nIndex, (LPARAM)&tbb);
+			return send_message<BOOL>(TB_INSERTBUTTON, nIndex, (LPARAM)&tbb);
 		}
 
 		BOOL insert_button(int nIndex, int iCommand, BYTE Style, BYTE State, int iBitmap,
@@ -396,7 +396,7 @@ namespace wpp
 		}
 
 		BOOL delete_button(int nIndex) {
-			return (BOOL)SendMessage(m_handle, TB_DELETEBUTTON, nIndex, 0L);
+			return send_message<BOOL>(TB_DELETEBUTTON, nIndex, 0L);
 		}
 
 		BOOL insert_separator(int nIndex, int cxWidth = 8) {
@@ -408,7 +408,7 @@ namespace wpp
 		}
 
 		int command_to_index(UINT nID) const {
-			return (int)SendMessage(m_handle, TB_COMMANDTOINDEX, nID, 0L);
+			return send_message<int>(TB_COMMANDTOINDEX, nID, 0L);
 		}
 
 		void save_state(HKEY hKeyRoot, LPCTSTR lpszSubKey, LPCTSTR lpszValueName) {
@@ -416,7 +416,7 @@ namespace wpp
 			tbs.hkr = hKeyRoot;
 			tbs.pszSubKey = lpszSubKey;
 			tbs.pszValueName = lpszValueName;
-			SendMessage(m_handle, TB_SAVERESTORE, (WPARAM)TRUE, (LPARAM)&tbs);
+			send_message(TB_SAVERESTORE, (WPARAM)TRUE, (LPARAM)&tbs);
 		}
 
 		void restore_state(HKEY hKeyRoot, LPCTSTR lpszSubKey, LPCTSTR lpszValueName) {
@@ -424,68 +424,68 @@ namespace wpp
 			tbs.hkr = hKeyRoot;
 			tbs.pszSubKey = lpszSubKey;
 			tbs.pszValueName = lpszValueName;
-			SendMessage(m_handle, TB_SAVERESTORE, (WPARAM)FALSE, (LPARAM)&tbs);
+			send_message(TB_SAVERESTORE, (WPARAM)FALSE, (LPARAM)&tbs);
 		}
 
 		void customize() {
-			SendMessage(m_handle, TB_CUSTOMIZE, 0, 0L);
+			send_message(TB_CUSTOMIZE, 0, 0L);
 		}
 
 		int add_string(UINT nStringID) {
-			return (int)SendMessage(m_handle, TB_ADDSTRING, (WPARAM)GetModuleHandle(NULL), (LPARAM)nStringID);
+			return send_message<int>(TB_ADDSTRING, (WPARAM)GetModuleHandle(NULL), (LPARAM)nStringID);
 		}
 
 		int add_strings(LPCTSTR lpszStrings) {
-			return (int)SendMessage(m_handle, TB_ADDSTRING, 0, (LPARAM)lpszStrings);
+			return send_message<int>(TB_ADDSTRING, 0, (LPARAM)lpszStrings);
 		}
 
 		void auto_size() {
-			SendMessage(m_handle, TB_AUTOSIZE, 0, 0L);
+			send_message(TB_AUTOSIZE, 0, 0L);
 		}
 
 		BOOL change_bitmap(int nID, int nBitmap) {
-			return (BOOL)SendMessage(m_handle, TB_CHANGEBITMAP, nID, MAKELPARAM(nBitmap, 0));
+			return send_message<BOOL>(TB_CHANGEBITMAP, nID, MAKELPARAM(nBitmap, 0));
 		}
 
 		int load_images(int nBitmapID) {
-			return (int)SendMessage(m_handle, TB_LOADIMAGES, nBitmapID, (LPARAM)GetModuleHandle(NULL));
+			return send_message<int>(TB_LOADIMAGES, nBitmapID, (LPARAM)GetModuleHandle(NULL));
 		}
 
 		int load_std_images(int nBitmapID) {
-			return (int)SendMessage(m_handle, TB_LOADIMAGES, nBitmapID, (LPARAM)HINST_COMMCTRL);
+			return send_message<int>(TB_LOADIMAGES, nBitmapID, (LPARAM)HINST_COMMCTRL);
 		}
 
 		BOOL replace_bitmap(LPTBREPLACEBITMAP ptbrb) {
-			return (BOOL)SendMessage(m_handle, TB_REPLACEBITMAP, 0, (LPARAM)ptbrb);
+			return send_message<BOOL>(TB_REPLACEBITMAP, 0, (LPARAM)ptbrb);
 		}
 
 		int hit_test(LPPOINT lpPoint) const {
-			return (int)SendMessage(m_handle, TB_HITTEST, 0, (LPARAM)lpPoint);
+			return send_message<int>(TB_HITTEST, 0, (LPARAM)lpPoint);
 		}
 
 		BOOL insert_mark_hit_test(LPPOINT lpPoint, LPTBINSERTMARK lptbim) const {
-			return (BOOL)SendMessage(m_handle, TB_INSERTMARKHITTEST, (WPARAM)lpPoint, (LPARAM)lptbim);
+			return send_message<BOOL>(TB_INSERTMARKHITTEST, (WPARAM)lpPoint, (LPARAM)lptbim);
 		}
 
 		BOOL insert_mark_hit_test(int x, int y, LPTBINSERTMARK lptbim) const {
 			POINT pt = { x, y };
-			return (BOOL)SendMessage(m_handle, TB_INSERTMARKHITTEST, (WPARAM)&pt, (LPARAM)lptbim);
+			return send_message<BOOL>(TB_INSERTMARKHITTEST, (WPARAM)&pt, (LPARAM)lptbim);
 		}
 
 		BOOL map_accelerator(TCHAR chAccel, int& nID) const {
-			return (BOOL)SendMessage(m_handle, TB_MAPACCELERATOR, (WPARAM)chAccel, (LPARAM)&nID);
+			return send_message<BOOL>(TB_MAPACCELERATOR, (WPARAM)chAccel, (LPARAM)&nID);
 		}
 
 		BOOL mark_button(int nID, BOOL bHighlight = TRUE) {
-			return (BOOL)SendMessage(m_handle, TB_MARKBUTTON, nID, MAKELPARAM(bHighlight, 0));
+			return send_message<BOOL>(TB_MARKBUTTON, nID, MAKELPARAM(bHighlight, 0));
 		}
 
 		BOOL move_button(int nOldPos, int nNewPos) {
-			return (BOOL)SendMessage(m_handle, TB_MOVEBUTTON, nOldPos, nNewPos);
+			return send_message<BOOL>(TB_MOVEBUTTON, nOldPos, nNewPos);
 		}
 
 		HRESULT get_object_from_iid(REFIID iid, LPVOID* ppvObject) {
-			return (HRESULT)SendMessage(m_handle, TB_GETOBJECT, (WPARAM)&iid, (LPARAM)ppvObject);
+			return send_message<HRESULT>(TB_GETOBJECT, (WPARAM)&iid, (LPARAM)ppvObject);
 		}
 
 		int get_count() const { return get_button_count(); }
@@ -493,10 +493,10 @@ namespace wpp
 		BOOL is_valid_index(int nIndex) const { return nIndex >= 0 && nIndex < get_button_count(); }
 		BOOL is_valid_button(int nID) const { return command_to_index(nID) >= 0; }
 
-		std::tstring get_button_text_str(int nID) const {
+		tstring get_button_text_str(int nID) const {
 			TCHAR buffer[256] = { 0 };
 			get_button_text(nID, buffer);
-			return std::tstring(buffer);
+			return tstring(buffer);
 		}
 
 		std::vector<int> get_all_button_ids() const {
@@ -558,7 +558,7 @@ namespace wpp
 			for (int i = 0; i < count; i++) {
 				TBBUTTON btn = { 0 };
 				if (get_button(i, &btn)) {
-					std::tstring btnText = get_button_text_str(btn.idCommand);
+					tstring btnText = get_button_text_str(btn.idCommand);
 					if (bExact) {
 						if (lstrcmp(btnText.c_str(), lpszText) == 0) return btn.idCommand;
 					} else {
@@ -814,15 +814,15 @@ namespace wpp
 			if (index < 0) return FALSE;
 			RECT rc;
 			if (get_item_rect(index, &rc)) {
-				InvalidateRect(m_handle, &rc, TRUE);
+				::InvalidateRect(m_handle, &rc, TRUE);
 				return TRUE;
 			}
 			return FALSE;
 		}
 
 		void refresh_all() {
-			InvalidateRect(m_handle, NULL, TRUE);
-			UpdateWindow(m_handle);
+			::InvalidateRect(m_handle, NULL, TRUE);
+			::UpdateWindow(m_handle);
 		}
 
 		BOOL has_buttons() const { return !is_empty(); }
@@ -841,8 +841,8 @@ namespace wpp
 			return get_button(count - 1, &btn) ? btn.idCommand : -1;
 		}
 
-		std::vector<std::tstring> get_all_button_texts() const {
-			std::vector<std::tstring> texts;
+		std::vector<tstring> get_all_button_texts() const {
+			std::vector<tstring> texts;
 			int count = get_button_count();
 			for (int i = 0; i < count; i++) {
 				TBBUTTON btn = { 0 };

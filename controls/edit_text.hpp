@@ -360,17 +360,17 @@ namespace wpp
 			return end - start;
 		}
 
-		std::tstring get_selected_text() const {
+		tstring get_selected_text() const {
 			int start = 0, end = 0;
 			get_sel(start, end);
 
-			if (start == end) return std::tstring();
+			if (start == end) return tstring();
 
-			std::tstring fullText = get_text();
+			tstring fullText = get_text();
 			if (start >= 0 && end <= (int)fullText.length() && start < end) {
 				return fullText.substr(start, end - start);
 			}
-			return std::tstring();
+			return tstring();
 		}
 
 		void delete_selected() {
@@ -379,7 +379,7 @@ namespace wpp
 
 		void select_word_at_caret() {
 			int caretPos = get_selection_start();
-			std::tstring text = get_text();
+			tstring text = get_text();
 			
 			if (caretPos < 0 || caretPos >= (int)text.length()) return;
 			
@@ -400,23 +400,23 @@ namespace wpp
 			set_sel(lineStart, lineStart + lineLen);
 		}
 
-		std::tstring get_line_text(int line) const {
+		tstring get_line_text(int line) const {
 			if (line < 0 || line >= get_line_count()) {
-				return std::tstring();
+				return tstring();
 			}
 			
 			int len = line_length(line_index(line));
-			if (len <= 0) return std::tstring();
+			if (len <= 0) return tstring();
 
 			std::vector<TCHAR> buffer(len + 1);
 			*(WORD*)buffer.data() = (WORD)len;
 			int copied = get_line(line, buffer.data(), len);
 			buffer[copied] = 0;
-			return std::tstring(buffer.data());
+			return tstring(buffer.data());
 		}
 
-		std::vector<std::tstring> get_all_lines() const {
-			std::vector<std::tstring> lines;
+		std::vector<tstring> get_all_lines() const {
+			std::vector<tstring> lines;
 			int count = get_line_count();
 			for (int i = 0; i < count; i++) {
 				lines.push_back(get_line_text(i));
@@ -428,7 +428,7 @@ namespace wpp
 			return line_from_char(-1);
 		}
 
-		std::tstring get_current_line_text() const {
+		tstring get_current_line_text() const {
 			return get_line_text(get_current_line());
 		}
 
@@ -474,8 +474,8 @@ namespace wpp
 		}
 
 		int find_text(LPCTSTR searchText, int startPos = 0, BOOL caseSensitive = FALSE) const {
-			std::tstring text = get_text();
-			std::tstring search = searchText;
+			tstring text = get_text();
+			tstring search = searchText;
 
 			if (!caseSensitive) {
 				std::transform(text.begin(), text.end(), text.begin(), ::_totupper);
@@ -483,7 +483,7 @@ namespace wpp
 			}
 			
 			size_t pos = text.find(search, startPos);
-			return pos != std::tstring::npos ? (int)pos : -1;
+			return pos != tstring::npos ? (int)pos : -1;
 		}
 
 		BOOL find_and_select(LPCTSTR searchText, int startPos = 0, BOOL caseSensitive = FALSE) {
@@ -537,11 +537,11 @@ namespace wpp
 			int charIndex = line_index(line);
 			if (charIndex < 0) charIndex = get_text_length();
 			
-			std::tstring insertText = text;
+			tstring insertText = text;
 			if (line < get_line_count()) {
 				insertText += TEXT("\r\n");
 			} else if (!is_empty()) {
-				insertText = std::tstring(TEXT("\r\n")) + insertText;
+				insertText = tstring(TEXT("\r\n")) + insertText;
 			}
 			
 			insert_text(charIndex, insertText.c_str(), FALSE, TRUE);
@@ -549,12 +549,12 @@ namespace wpp
 
 		int get_char_at(int pos) const {
 			if (pos < 0 || pos >= get_text_length()) return -1;
-			std::tstring text = get_text();
+			tstring text = get_text();
 			return text[pos];
 		}
 
 		int get_word_count() const {
-			std::tstring text = get_text();
+			tstring text = get_text();
 			int count = 0;
 			BOOL inWord = FALSE;
 			
@@ -570,7 +570,7 @@ namespace wpp
 		}
 
 		void uppercase_selection() {
-			std::tstring selected = get_selected_text();
+			tstring selected = get_selected_text();
 			if (!selected.empty()) {
 				std::transform(selected.begin(), selected.end(), selected.begin(), ::_totupper);
 				replace_sel(selected.c_str(), TRUE);
@@ -578,7 +578,7 @@ namespace wpp
 		}
 
 		void lowercase_selection() {
-			std::tstring selected = get_selected_text();
+			tstring selected = get_selected_text();
 			if (!selected.empty()) {
 				std::transform(selected.begin(), selected.end(), selected.begin(), ::_totlower);
 				replace_sel(selected.c_str(), TRUE);
@@ -586,12 +586,12 @@ namespace wpp
 		}
 
 		void trim_whitespace() {
-			std::tstring text = get_text();
+			tstring text = get_text();
 			
 			size_t start = text.find_first_not_of(TEXT(" \t\r\n"));
 			size_t end = text.find_last_not_of(TEXT(" \t\r\n"));
 			
-			if (start == std::tstring::npos) {
+			if (start == tstring::npos) {
 				clear_all();
 			} else {
 				set_text(text.substr(start, end - start + 1).c_str());
@@ -601,7 +601,7 @@ namespace wpp
 		BOOL is_valid_number() const {
 			if (!is_number()) return FALSE;
 			
-			std::tstring text = get_text();
+			tstring text = get_text();
 			if (text.empty()) return FALSE;
 			
 			for (size_t i = 0; i < text.length(); i++) {
@@ -613,7 +613,7 @@ namespace wpp
 		}
 
 		int get_number_value() const {
-			std::tstring text = get_text();
+			tstring text = get_text();
 			return text.empty() ? 0 : _ttoi(text.c_str());
 		}
 
@@ -676,7 +676,7 @@ namespace wpp
 
 		void duplicate_current_line() {
 			int line = get_current_line();
-			std::tstring lineText = get_line_text(line);
+			tstring lineText = get_line_text(line);
 			int lineEnd = line_index(line) + line_length(line_index(line));
 			insert_text(lineEnd, (TEXT("\r\n") + lineText).c_str(), FALSE, TRUE);
 		}
@@ -684,8 +684,8 @@ namespace wpp
 		void move_line_up(int line) {
 			if (line <= 0 || line >= get_line_count()) return;
 			
-			std::tstring currentLine = get_line_text(line);
-			std::tstring prevLine = get_line_text(line - 1);
+			tstring currentLine = get_line_text(line);
+			tstring prevLine = get_line_text(line - 1);
 			
 			delete_line(line);
 			delete_line(line - 1);
@@ -698,8 +698,8 @@ namespace wpp
 		void move_line_down(int line) {
 			if (line < 0 || line >= get_line_count() - 1) return;
 			
-			std::tstring currentLine = get_line_text(line);
-			std::tstring nextLine = get_line_text(line + 1);
+			tstring currentLine = get_line_text(line);
+			tstring nextLine = get_line_text(line + 1);
 			
 			delete_line(line + 1);
 			delete_line(line);
@@ -718,7 +718,7 @@ namespace wpp
 			int startLine = line_from_char(start);
 			int endLine = line_from_char(end);
 			
-			std::tstring result;
+			tstring result;
 			for (int i = startLine; i <= endLine; i++) {
 				result += indentText;
 				result += get_line_text(i);
@@ -742,10 +742,10 @@ namespace wpp
 			int endLine = line_from_char(end);
 			
 			int indentLen = lstrlen(indentText);
-			std::tstring result;
+			tstring result;
 			
 			for (int i = startLine; i <= endLine; i++) {
-				std::tstring line = get_line_text(i);
+				tstring line = get_line_text(i);
 				if (line.length() >= (size_t)indentLen && 
 				    line.substr(0, indentLen) == indentText) {
 					result += line.substr(indentLen);
@@ -786,7 +786,7 @@ namespace wpp
 			return Edit_GetLine(m_handle, index, buffer, max_length);
 		}
 
-		std::tstring get_line(int index) const {
+		tstring get_line(int index) const {
 			int length = line_length(line_index(index));
 			if (length <= 0) return _T("");
 
@@ -794,16 +794,16 @@ namespace wpp
 			*(LPWORD)buffer.data() = (WORD)length;
 			int chars = (int)SendMessage(m_handle, EM_GETLINE, index, (LPARAM)buffer.data());
 			buffer[chars] = 0;
-			return std::tstring(buffer.data());
+			return tstring(buffer.data());
 		}
 
-		std::tstring get_text() const {
+		tstring get_text() const {
 			int length = get_text_length();
 			if (length <= 0) return _T("");
 
 			std::vector<TCHAR> buffer(length + 1);
 			GetWindowText(m_handle, buffer.data(), length + 1);
-			return std::tstring(buffer.data());
+			return tstring(buffer.data());
 		}
 
 		int get_text_ex(LPTSTR text, int text_len, DWORD flags = GT_DEFAULT, UINT code_page = CP_ACP,
@@ -862,14 +862,14 @@ namespace wpp
 			return (LONG)SendMessage(m_handle, EM_GETSELTEXT, 0, (LPARAM)buffer);
 		}
 
-		std::tstring get_sel_text() const {
+		tstring get_sel_text() const {
 			CHARRANGE cr = get_sel();
 			int length = cr.cpMax - cr.cpMin;
 			if (length <= 0) return _T("");
 
 			std::vector<TCHAR> buffer(length + 1);
 			SendMessage(m_handle, EM_GETSELTEXT, 0, (LPARAM)buffer.data());
-			return std::tstring(buffer.data());
+			return tstring(buffer.data());
 		}
 
 		WORD get_selection_type() const {
@@ -885,7 +885,7 @@ namespace wpp
 			SendMessage(m_handle, EM_REPLACESEL, (WPARAM)can_undo, (LPARAM)new_text);
 		}
 
-		void replace_sel(const std::tstring& new_text, bool can_undo = false) {
+		void replace_sel(const tstring& new_text, bool can_undo = false) {
 			replace_sel(new_text.c_str(), can_undo);
 		}
 
@@ -907,7 +907,7 @@ namespace wpp
 			return (int)SendMessage(m_handle, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 		}
 
-		std::tstring get_text_range(LONG start_char, LONG end_char) const {
+		tstring get_text_range(LONG start_char, LONG end_char) const {
 			if (start_char >= end_char) return _T("");
 
 			std::vector<TCHAR> buffer(end_char - start_char + 1);
@@ -916,7 +916,7 @@ namespace wpp
 			tr.chrg.cpMax = end_char;
 			tr.lpstrText = buffer.data();
 			SendMessage(m_handle, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-			return std::tstring(buffer.data());
+			return tstring(buffer.data());
 		}
 
 		bool get_modify() const {
@@ -1256,7 +1256,7 @@ namespace wpp
 			set_selection_char_format(cf);
 		}
 
-		void set_font_name(const std::tstring& font_name) {
+		void set_font_name(const tstring& font_name) {
 			CHARFORMAT2 cf = { 0 };
 			cf.cbSize = sizeof(cf);
 			cf.dwMask = CFM_FACE;
@@ -1301,7 +1301,7 @@ namespace wpp
 			return ret;
 		}
 
-		int insert_text(LONG insert_after_char, const std::tstring& text, bool can_undo = false) {
+		int insert_text(LONG insert_after_char, const tstring& text, bool can_undo = false) {
 			return insert_text(insert_after_char, text.c_str(), can_undo);
 		}
 
@@ -1309,11 +1309,11 @@ namespace wpp
 			return insert_text(get_text_length(), text, can_undo);
 		}
 
-		int append_text(const std::tstring& text, bool can_undo = false) {
+		int append_text(const tstring& text, bool can_undo = false) {
 			return append_text(text.c_str(), can_undo);
 		}
 
-		void append_line(const std::tstring& text, bool can_undo = false) {
+		void append_line(const tstring& text, bool can_undo = false) {
 			append_text(L"\r\n" + text, can_undo);
 		}
 
@@ -1333,7 +1333,7 @@ namespace wpp
 #endif
 		}
 
-		LONG find_text(const std::tstring& search_text, LONG start = 0, LONG end = -1, DWORD flags = 0) const {
+		LONG find_text(const tstring& search_text, LONG start = 0, LONG end = -1, DWORD flags = 0) const {
 			FINDTEXTEX ft = { 0 };
 			ft.chrg.cpMin = start;
 			ft.chrg.cpMax = end;
@@ -1341,7 +1341,7 @@ namespace wpp
 			return find_text(flags, ft);
 		}
 
-		bool find_and_select(const std::tstring& search_text, LONG start = 0, DWORD flags = 0) {
+		bool find_and_select(const tstring& search_text, LONG start = 0, DWORD flags = 0) {
 			LONG pos = find_text(search_text, start, -1, flags);
 			if (pos != -1) {
 				set_sel(pos, pos + (LONG)search_text.length());
@@ -1482,7 +1482,7 @@ namespace wpp
 			return SendMessage(m_handle, EM_SETUIANAME, 0, (LPARAM)name) != 0;
 		}
 
-		bool set_uia_name(const std::tstring& name) {
+		bool set_uia_name(const tstring& name) {
 			return set_uia_name(name.c_str());
 		}
 
@@ -1491,8 +1491,8 @@ namespace wpp
 			clear();
 		}
 
-		std::vector<std::tstring> get_all_lines() const {
-			std::vector<std::tstring> lines;
+		std::vector<tstring> get_all_lines() const {
+			std::vector<tstring> lines;
 			int count = get_line_count();
 			for (int i = 0; i < count; i++) {
 				lines.push_back(get_line(i));
@@ -1500,8 +1500,8 @@ namespace wpp
 			return lines;
 		}
 
-		void set_lines(const std::vector<std::tstring>& lines) {
-			std::tstring text;
+		void set_lines(const std::vector<tstring>& lines) {
+			tstring text;
 			for (size_t i = 0; i < lines.size(); i++) {
 				text += lines[i];
 				if (i < lines.size() - 1) {
@@ -1511,7 +1511,7 @@ namespace wpp
 			set_text(text);
 		}
 
-		void replace_all(const std::tstring& find_text_needle, const std::tstring& replace_text, DWORD flags = 0) {
+		void replace_all(const tstring& find_text_needle, const tstring& replace_text, DWORD flags = 0) {
 			LONG start = 0;
 			while (true) {
 				LONG pos = find_text(find_text_needle, start, -1, flags);

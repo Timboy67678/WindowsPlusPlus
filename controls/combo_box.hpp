@@ -15,7 +15,7 @@ namespace wpp
 		public:
 			iterator(const combo_box* combo, int index) : m_combo(combo), m_index(index) {}
 
-			std::tstring operator*() const {
+			tstring operator*() const {
 				return m_combo->get_item_text(m_index);
 			}
 
@@ -134,9 +134,9 @@ namespace wpp
 			return (int)SendMessage(m_handle, CB_GETLBTEXTLEN, index, 0L);
 		}
 
-		std::tstring get_selected_text() const {
+		tstring get_selected_text() const {
 			int sel = get_cur_sel();
-			return sel >= 0 ? get_item_text(sel) : std::tstring();
+			return sel >= 0 ? get_item_text(sel) : tstring();
 		}
 
 		int get_item_height(int index) {
@@ -262,18 +262,18 @@ namespace wpp
 			set_cur_sel(-1);
 		}
 
-		std::tstring get_item_text(int index) const {
+		tstring get_item_text(int index) const {
 			int len = get_list_text_length(index);
-			if (len <= 0) return std::tstring();
+			if (len <= 0) return tstring();
 
 			std::vector<TCHAR> buffer(len + 1);
 			get_list_text(index, buffer.data());
 			return std::basic_string<TCHAR>(buffer.data());
 		}
 
-		std::tstring get_selected_item_text() const {
+		tstring get_selected_item_text() const {
 			int sel = get_cur_sel();
-			return sel >= 0 ? get_item_text(sel) : std::tstring();
+			return sel >= 0 ? get_item_text(sel) : tstring();
 		}
 
 		DWORD_PTR get_selected_data() const {
@@ -287,8 +287,8 @@ namespace wpp
 			return sel >= 0 ? get_item_data_t<T>(sel) : nullptr;
 		}
 
-		std::vector<std::tstring> get_all_items() const {
-			std::vector<std::tstring> items;
+		std::vector<tstring> get_all_items() const {
+			std::vector<tstring> items;
 			int count = get_count();
 			for (int i = 0; i < count; i++) {
 				items.push_back(get_item_text(i));
@@ -296,7 +296,7 @@ namespace wpp
 			return items;
 		}
 
-		int add_items(const std::vector<std::tstring>& items) {
+		int add_items(const std::vector<tstring>& items) {
 			int lastIndex = CB_ERR;
 			for (const auto& item : items) {
 				lastIndex = add(item.c_str());
@@ -437,8 +437,8 @@ namespace wpp
 			return get_dropped_state();
 		}
 
-		std::tstring get_edit_text() const {
-			if (!has_edit_control()) return std::tstring();
+		tstring get_edit_text() const {
+			if (!has_edit_control()) return tstring();
 			return get_text();
 		}
 
@@ -529,19 +529,19 @@ namespace wpp
 			return LOWORD(sel) != HIWORD(sel);
 		}
 
-		std::tstring get_edit_selected_text() const {
+		tstring get_edit_selected_text() const {
 			if (!has_edit_control() || !has_edit_selection()) {
-				return std::tstring();
+				return tstring();
 			}
 
-			std::tstring fullText = get_edit_text();
+			tstring fullText = get_edit_text();
 			int start = get_edit_selection_start();
 			int end = get_edit_selection_end();
 
 			if (start >= 0 && end <= (int)fullText.length() && start < end) {
 				return fullText.substr(start, end - start);
 			}
-			return std::tstring();
+			return tstring();
 		}
 
 		void ensure_visible(int index) {
@@ -629,14 +629,14 @@ namespace wpp
 			return minVisible > 0 ? minVisible : 30;
 		}
 
-		void for_each_item(std::function<void(int, const std::tstring&)> func) const {
+		void for_each_item(std::function<void(int, const tstring&)> func) const {
 			int count = get_count();
 			for (int i = 0; i < count; i++) {
 				func(i, get_item_text(i));
 			}
 		}
 
-		void for_each_item_with_data(std::function<void(int, const std::tstring&, DWORD_PTR)> func) const {
+		void for_each_item_with_data(std::function<void(int, const tstring&, DWORD_PTR)> func) const {
 			int count = get_count();
 			for (int i = 0; i < count; i++) {
 				func(i, get_item_text(i), get_item_data(i));
@@ -671,8 +671,8 @@ namespace wpp
 			std::vector<int> indices;
 			int count = get_count();
 			for (int i = 0; i < count; i++) {
-				std::tstring item_text = get_item_text(i);
-				bool match = exact_match ? (item_text == text) : (item_text.find(text) != std::tstring::npos);
+				tstring item_text = get_item_text(i);
+				bool match = exact_match ? (item_text == text) : (item_text.find(text) != tstring::npos);
 				if (match) {
 					indices.push_back(i);
 				}
@@ -683,10 +683,10 @@ namespace wpp
 		void sort_items(bool ascending = true) {
 			if (is_sorted()) return;
 
-			std::vector<std::pair<std::tstring, DWORD_PTR>> items;
+			std::vector<std::pair<tstring, DWORD_PTR>> items;
 			int count = get_count();
 			int selected = get_cur_sel();
-			std::tstring selected_text = selected >= 0 ? get_item_text(selected) : std::tstring();
+			tstring selected_text = selected >= 0 ? get_item_text(selected) : tstring();
 
 			for (int i = 0; i < count; i++) {
 				items.push_back({ get_item_text(i), get_item_data(i) });
@@ -720,7 +720,7 @@ namespace wpp
 			return true;
 		}
 
-		void populate(const std::vector<std::tstring>& items, bool clear_first = true) {
+		void populate(const std::vector<tstring>& items, bool clear_first = true) {
 			if (clear_first) {
 				reset_content();
 			}
@@ -730,7 +730,7 @@ namespace wpp
 		}
 
 		template<typename T>
-		void populate_with_data(const std::vector<std::pair<std::tstring, T*>>& items, bool clear_first = true) {
+		void populate_with_data(const std::vector<std::pair<tstring, T*>>& items, bool clear_first = true) {
 			if (clear_first) {
 				reset_content();
 			}
@@ -927,12 +927,12 @@ namespace wpp
 			return (BOOL)SendMessage(m_handle, CBEM_GETITEM, 0, (LPARAM)&cbex);
 		}
 
-		std::tstring get_item_text(int nIndex) const {
+		tstring get_item_text(int nIndex) const {
 			TCHAR buffer[1024] = { 0 };
 			if (get_item_text(nIndex, buffer, 1024)) {
-				return std::tstring(buffer);
+				return tstring(buffer);
 			}
-			return std::tstring();
+			return tstring();
 		}
 
 		BOOL set_item_text(int nIndex, LPCTSTR lpszItem) {

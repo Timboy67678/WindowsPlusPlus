@@ -16,7 +16,7 @@ namespace wpp
 			return SendMessage(m_handle, ACM_OPEN, 0, (LPARAM)file_name) != 0;
 		}
 
-		bool open(const std::tstring& file_name) {
+		bool open(const tstring& file_name) {
 			return open(file_name.c_str());
 		}
 

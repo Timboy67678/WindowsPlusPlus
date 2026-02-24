@@ -154,7 +154,7 @@ namespace wpp
 			return get_item_count() - 1;
 		}
 
-		std::tstring get_item_text(int nIndex) const {
+		tstring get_item_text(int nIndex) const {
 			TCHAR buffer[256] = { 0 };
 			HDITEM hdi = { 0 };
 			hdi.mask = HDI_TEXT;
@@ -162,9 +162,9 @@ namespace wpp
 			hdi.cchTextMax = 256;
 
 			if (get_item(nIndex, &hdi)) {
-				return std::tstring(buffer);
+				return tstring(buffer);
 			}
-			return std::tstring();
+			return tstring();
 		}
 
 		BOOL set_item_text(int nIndex, LPCTSTR lpszText) {
@@ -365,8 +365,8 @@ namespace wpp
 			return insert_item_with_image(get_item_count(), lpszText, iImage, nWidth);
 		}
 
-		std::vector<std::tstring> get_all_item_texts() const {
-			std::vector<std::tstring> texts;
+		std::vector<tstring> get_all_item_texts() const {
+			std::vector<tstring> texts;
 			int count = get_item_count();
 			for (int i = 0; i < count; i++) {
 				texts.push_back(get_item_text(i));
@@ -403,7 +403,7 @@ namespace wpp
 		int find_item_by_text(LPCTSTR lpszText, BOOL bExact = TRUE) const {
 			int count = get_item_count();
 			for (int i = 0; i < count; i++) {
-				std::tstring itemText = get_item_text(i);
+				tstring itemText = get_item_text(i);
 				if (bExact) {
 					if (lstrcmp(itemText.c_str(), lpszText) == 0) {
 						return i;
@@ -564,7 +564,7 @@ namespace wpp
 
 			HDC hdc = GetDC(m_handle);
 			if (hdc) {
-				std::tstring text = get_item_text(nIndex);
+				tstring text = get_item_text(nIndex);
 				SIZE size = { 0 };
 				GetTextExtentPoint32(hdc, text.c_str(), (int)text.length(), &size);
 				width = size.cx + 20;

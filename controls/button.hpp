@@ -9,7 +9,7 @@ namespace wpp
 
 		button& on_click(command_callback cb) { register_command_callback(BN_CLICKED, std::move(cb)); return *this; }
 		button& on_dbl_click(command_callback cb) { register_command_callback(BN_DBLCLK, std::move(cb)); return *this; }
-		button& on_mouseover(notify_callback cb) {register_notify_callback(BCN_HOTITEMCHANGE, std::move(cb)); return *this; }
+		button& on_mouseover(notify_callback cb) { register_notify_callback(BCN_HOTITEMCHANGE, std::move(cb)); return *this; }
 
 		int get_checked() const {
 			return Button_GetCheck(m_handle);
@@ -32,19 +32,19 @@ namespace wpp
 		}
 
 		HICON get_icon() const {
-			return (HICON)SendMessage(m_handle, BM_GETIMAGE, IMAGE_ICON, 0L);
+			return send_message<HICON>(BM_GETIMAGE, IMAGE_ICON, 0L);
 		}
 
 		HICON set_icon(HICON hIcon) const {
-			return (HICON)SendMessage(m_handle, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
+			return send_message<HICON>(BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
 		}
 
 		HBITMAP get_bitmap() const {
-			return (HBITMAP)SendMessage(m_handle, BM_GETIMAGE, IMAGE_BITMAP, 0L);
+			return send_message<HBITMAP>(BM_GETIMAGE, IMAGE_BITMAP, 0L);
 		}
 
 		HBITMAP set_bitmap(HBITMAP hBitmap) const {
-			return (HBITMAP)SendMessage(m_handle, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBitmap);
+			return send_message<HBITMAP>(BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBitmap);
 		}
 
 		void set_shield(BOOL shield_state) const {
@@ -54,7 +54,7 @@ namespace wpp
 		void emulate_click() const {
 			HWND current_focus = ::GetForegroundWindow();
 			::SetActiveWindow(get_parent());
-			SendMessage(m_handle, BM_CLICK, 0, 0L);
+			send_message(BM_CLICK, 0, 0L);
 			::SetActiveWindow(current_focus);
 		}
 
@@ -118,8 +118,8 @@ namespace wpp
 
 		BOOL is_checkbox_type() const {
 			UINT style = get_button_style();
-			return style == BS_CHECKBOX || style == BS_AUTOCHECKBOX || 
-			       style == BS_3STATE || style == BS_AUTO3STATE;
+			return style == BS_CHECKBOX || style == BS_AUTOCHECKBOX ||
+				style == BS_3STATE || style == BS_AUTO3STATE;
 		}
 
 		BOOL is_radiobutton_type() const {
@@ -180,7 +180,7 @@ namespace wpp
 
 		SIZE get_ideal_size() const {
 			SIZE size = { 0 };
-			SendMessage(m_handle, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+			Button_GetIdealSize(m_handle, &size);
 			return size;
 		}
 
@@ -281,24 +281,23 @@ namespace wpp
 		}
 
 		void select_in_group() {
-			HWND hParent = get_parent();
-			if (!hParent) return;
+			HWND parent_hwnd = get_parent();
+			if (!parent_hwnd) return;
 
-			HWND hCurrent = ::GetWindow(hParent, GW_CHILD);
-			while (hCurrent) {
-				if (hCurrent != m_handle) {
-					TCHAR className[256] = { 0 };
-					::GetClassName(hCurrent, className, 256);
-					if (lstrcmpi(className, TEXT("Button")) == 0) {
-						LONG_PTR style = ::GetWindowLongPtr(hCurrent, GWL_STYLE);
+			hwnd parent(parent_hwnd);
+			parent.for_each_child([this](HWND child_hwnd) {
+				hwnd child(child_hwnd);
+				if (child_hwnd != m_handle) {
+					auto class_name = child.get_class_name();
+					if (tstrcmpi(class_name, TEXT("Button"))) {
+						LONG_PTR style = child.get_style();
 						UINT btnStyle = (UINT)(style & BS_TYPEMASK);
 						if (btnStyle == BS_RADIOBUTTON || btnStyle == BS_AUTORADIOBUTTON) {
-							::SendMessage(hCurrent, BM_SETCHECK, BST_UNCHECKED, 0L);
+							child.send_message(BM_SETCHECK, BST_UNCHECKED, 0L);
 						}
 					}
 				}
-				hCurrent = ::GetWindow(hCurrent, GW_HWNDNEXT);
-			}
+			});
 			check();
 		}
 	};

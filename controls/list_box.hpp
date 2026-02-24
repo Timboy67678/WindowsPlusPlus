@@ -46,27 +46,27 @@ namespace wpp
 			return (DWORD)SendMessage(m_handle, LB_GETLISTBOXINFO, 0, 0L);
 		}
 
-		int get_selected() const {
+		int get_current_selected() const {
 			return ListBox_GetCurSel(m_handle);
 		}
 
-		int set_selected(int index) {
+		int set_current_selected(int index) {
 			return ListBox_SetCurSel(m_handle, index);
 		}
 
-		int get_multi_sel(int index) {
+		int get_selected(int index) {
 			return ListBox_GetSel(m_handle, index);
 		}
 
-		int set_multi_sel(int index, BOOL selected = TRUE) {
+		int set_selected(int index, BOOL selected = TRUE) {
 			return ListBox_SetSel(m_handle, selected, index);
 		}
 
-		int get_multi_sel_count() const {
+		int get_selected_count() const {
 			return ListBox_GetSelCount(m_handle);
 		}
 
-		int get_select_items(int max_count, int* return_indexs) const {
+		int get_selected_items(int max_count, int* return_indexs) const {
 			return ListBox_GetSelItems(m_handle, max_count, return_indexs);
 		}
 
@@ -208,37 +208,37 @@ namespace wpp
 			return get_count() - 1;
 		}
 
-		std::tstring get_item_text(int index) const {
+		tstring get_item_text(int index) const {
 			int len = ListBox_GetTextLen(m_handle, index);
-			if (len <= 0) return std::tstring();
+			if (len <= 0) return tstring();
 
 			std::vector<TCHAR> buffer(len + 1);
 			ListBox_GetText(m_handle, index, buffer.data());
 			return std::basic_string<TCHAR>(buffer.data());
 		}
 
-		std::tstring get_selected_text() const {
-			int sel = get_selected();
-			return sel >= 0 ? get_item_text(sel) : std::tstring();
+		tstring get_selected_text() const {
+			int sel = get_current_selected();
+			return sel >= 0 ? get_item_text(sel) : tstring();
 		}
 
 		DWORD_PTR get_selected_data() const {
-			int sel = get_selected();
+			int sel = get_current_selected();
 			return sel >= 0 ? get_item_data(sel) : 0;
 		}
 
 		template<typename T>
 		T* get_selected_data() const {
-			int sel = get_selected();
+			int sel = get_current_selected();
 			return sel >= 0 ? get_item_data_t<T>(sel) : nullptr;
 		}
 
 		std::vector<int> get_selected_items() const {
 			std::vector<int> items;
-			int count = get_multi_sel_count();
+			int count = get_selected_count();
 			if (count > 0) {
 				items.resize(count);
-				get_select_items(count, items.data());
+				get_selected_items(count, items.data());
 			}
 			return items;
 		}
@@ -263,19 +263,19 @@ namespace wpp
 
 		BOOL has_selection() const {
 			if (is_multi_select()) {
-				return get_multi_sel_count() > 0;
+				return get_selected_count() > 0;
 			}
-			return get_selected() >= 0;
+			return get_current_selected() >= 0;
 		}
 
 		void clear_selection() {
 			if (is_multi_select()) {
 				int count = get_count();
 				for (int i = 0; i < count; i++) {
-					set_multi_sel(i, FALSE);
+					set_selected(i, FALSE);
 				}
 			} else {
-				set_selected(-1);
+				set_current_selected(-1);
 			}
 		}
 
@@ -283,7 +283,7 @@ namespace wpp
 			if (is_multi_select()) {
 				int count = get_count();
 				for (int i = 0; i < count; i++) {
-					set_multi_sel(i, TRUE);
+					set_selected(i, TRUE);
 				}
 			}
 		}
@@ -292,8 +292,8 @@ namespace wpp
 			if (is_multi_select()) {
 				int count = get_count();
 				for (int i = 0; i < count; i++) {
-					BOOL selected = get_multi_sel(i);
-					set_multi_sel(i, !selected);
+					BOOL selected = get_selected(i);
+					set_selected(i, !selected);
 				}
 			}
 		}
@@ -332,7 +332,7 @@ namespace wpp
 		}
 
 		BOOL remove_selected() {
-			int sel = get_selected();
+			int sel = get_current_selected();
 			if (sel >= 0) {
 				return remove(sel) >= 0;
 			}
@@ -351,27 +351,27 @@ namespace wpp
 		}
 
 		BOOL select_first() {
-			return get_count() > 0 ? set_selected(0) >= 0 : FALSE;
+			return get_count() > 0 ? set_current_selected(0) >= 0 : FALSE;
 		}
 
 		BOOL select_last() {
 			int count = get_count();
-			return count > 0 ? set_selected(count - 1) >= 0 : FALSE;
+			return count > 0 ? set_current_selected(count - 1) >= 0 : FALSE;
 		}
 
 		BOOL select_next() {
-			int current = get_selected();
+			int current = get_current_selected();
 			int count = get_count();
 			if (current >= 0 && current < count - 1) {
-				return set_selected(current + 1) >= 0;
+				return set_current_selected(current + 1) >= 0;
 			}
 			return FALSE;
 		}
 
 		BOOL select_prev() {
-			int current = get_selected();
+			int current = get_current_selected();
 			if (current > 0) {
-				return set_selected(current - 1) >= 0;
+				return set_current_selected(current - 1) >= 0;
 			}
 			return FALSE;
 		}
@@ -438,8 +438,8 @@ namespace wpp
 				return FALSE;
 			}
 
-			std::tstring text1 = get_item_text(index1);
-			std::tstring text2 = get_item_text(index2);
+			tstring text1 = get_item_text(index1);
+			tstring text2 = get_item_text(index2);
 			DWORD_PTR data1 = get_item_data(index1);
 			DWORD_PTR data2 = get_item_data(index2);
 
@@ -508,7 +508,7 @@ namespace wpp
 		void replace_item(int index, LPCTSTR newText) {
 			if (is_valid_index(index)) {
 				DWORD_PTR data = get_item_data(index);
-				BOOL selected = is_multi_select() ? get_multi_sel(index) : (get_selected() == index);
+				BOOL selected = is_multi_select() ? get_selected(index) : (get_current_selected() == index);
 
 				remove(index);
 				insert(index, newText);
@@ -516,9 +516,9 @@ namespace wpp
 
 				if (selected) {
 					if (is_multi_select()) {
-						set_multi_sel(index, TRUE);
+						set_selected(index, TRUE);
 					} else {
-						set_selected(index);
+						set_current_selected(index);
 					}
 				}
 			}

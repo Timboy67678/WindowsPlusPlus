@@ -1,0 +1,241 @@
+#include "..\layout\stack_panel.hpp"
+
+namespace wpp::layout
+{
+    stack_panel::stack_panel(orientation orient, HWND parent)
+        : panel(type::stack, parent)
+        , m_orientation(orient)
+        , m_spacing(0)
+        , m_alignment(alignment::start) {
+    }
+
+    void stack_panel::add(control_ptr<> control) {
+        if (control && std::find(m_children.begin(), m_children.end(), control) == m_children.end()) {
+            m_children.push_back(control);
+
+            // For nested panels, we'll measure them later
+            // For regular controls, use their current size
+            if (is_panel(control)) {
+                m_child_sizes.push_back({ 0, 0 });
+            } else {
+                RECT rc = control->get_rect();
+                int original_width = rc.right - rc.left;
+                int original_height = rc.bottom - rc.top;
+                m_child_sizes.push_back({ original_width, original_height });
+            }
+        }
+    }
+
+    void stack_panel::measure(int available_width, int available_height) {
+        // Apply DPI scaling
+        int scaled_spacing = static_cast<int>(m_spacing * m_dpi_scale);
+        int padding_h = static_cast<int>((m_padding.left + m_padding.right) * m_dpi_scale);
+        int padding_v = static_cast<int>((m_padding.top + m_padding.bottom) * m_dpi_scale);
+        int margin_h = static_cast<int>((m_margin.left + m_margin.right) * m_dpi_scale);
+        int margin_v = static_cast<int>((m_margin.top + m_margin.bottom) * m_dpi_scale);
+
+        int content_width = available_width - padding_h - margin_h;
+        int content_height = available_height - padding_v - margin_v;
+
+        int total_width = 0;
+        int total_height = 0;
+        int max_cross_axis = 0;
+
+        for (size_t i = 0; i < m_children.size(); ++i) {
+            auto& child = m_children[i];
+            if (!child || !child->is_valid()) continue;
+
+            int child_width = 0;
+            int child_height = 0;
+
+            // If this child is a nested panel, recursively measure it
+            if (auto child_panel = as_panel(child)) {
+                child_panel->measure(content_width, content_height);
+                auto desired = child_panel->get_desired_size();
+                child_width = desired.width;
+                child_height = desired.height;
+            } else {
+                child_width = m_child_sizes[i].width;
+                child_height = m_child_sizes[i].height;
+            }
+
+            if (m_orientation == orientation::horizontal && m_alignment == alignment::stretch) {
+                child_height = content_height;
+            } else if (m_orientation == orientation::vertical && m_alignment == alignment::stretch) {
+                child_width = content_width;
+            }
+
+            m_child_sizes[i] = { child_width, child_height };
+
+            if (m_orientation == orientation::horizontal) {
+                total_width += child_width;
+                if (i > 0) total_width += scaled_spacing;
+                max_cross_axis = (std::max)(max_cross_axis, child_height);
+            } else {
+                total_height += child_height;
+                if (i > 0) total_height += scaled_spacing;
+                max_cross_axis = (std::max)(max_cross_axis, child_width);
+            }
+        }
+
+        if (m_orientation == orientation::horizontal) {
+            m_desired_size.width = total_width + padding_h + margin_h;
+            m_desired_size.height = max_cross_axis + padding_v + margin_v;
+        } else {
+            m_desired_size.width = max_cross_axis + padding_h + margin_h;
+            m_desired_size.height = total_height + padding_v + margin_v;
+        }
+    }
+
+    void stack_panel::arrange(int x, int y, int width, int height) {
+        m_actual_size = { width, height };
+
+        int scaled_spacing = static_cast<int>(m_spacing * m_dpi_scale);
+        int margin_left = static_cast<int>(m_margin.left * m_dpi_scale);
+        int margin_top = static_cast<int>(m_margin.top * m_dpi_scale);
+        int margin_right = static_cast<int>(m_margin.right * m_dpi_scale);
+        int margin_bottom = static_cast<int>(m_margin.bottom * m_dpi_scale);
+        int padding_left = static_cast<int>(m_padding.left * m_dpi_scale);
+        int padding_top = static_cast<int>(m_padding.top * m_dpi_scale);
+        int padding_right = static_cast<int>(m_padding.right * m_dpi_scale);
+        int padding_bottom = static_cast<int>(m_padding.bottom * m_dpi_scale);
+
+        int margin_x = x + margin_left;
+        int margin_y = y + margin_top;
+
+        int content_x = margin_x + padding_left;
+        int content_y = margin_y + padding_top;
+        int content_width = width - margin_left - margin_right - padding_left - padding_right;
+        int content_height = height - margin_top - margin_bottom - padding_top - padding_bottom;
+
+        int total_desired_size = 0;
+        int num_valid_children = 0;
+
+        for (size_t i = 0; i < m_children.size(); ++i) {
+            auto& child = m_children[i];
+            if (!child || !child->is_valid()) continue;
+
+            num_valid_children++;
+            if (m_orientation == orientation::horizontal) {
+                total_desired_size += m_child_sizes[i].width;
+            } else {
+                total_desired_size += m_child_sizes[i].height;
+            }
+        }
+
+        // Add spacing to total
+        if (num_valid_children > 1) {
+            total_desired_size += scaled_spacing * (num_valid_children - 1);
+        }
+
+        int available_size = (m_orientation == orientation::horizontal) ? content_width : content_height;
+        int extra_space = available_size - total_desired_size;
+
+        // Only distribute extra space equally if alignment is stretch
+        int per_child_extra = 0;
+        int remainder = 0;
+        if (m_alignment == alignment::stretch) {
+            per_child_extra = (num_valid_children > 0) ? extra_space / num_valid_children : 0;
+            remainder = (num_valid_children > 0) ? extra_space % num_valid_children : 0;
+        }
+
+        int current_pos = 0;
+
+        for (size_t i = 0; i < m_children.size(); ++i) {
+            auto& child = m_children[i];
+            if (!child || !child->is_valid()) continue;
+
+            auto& child_size = m_child_sizes[i];
+            int child_x = 0, child_y = 0, child_width = 0, child_height = 0;
+
+            if (m_orientation == orientation::horizontal) {
+                child_width = child_size.width + per_child_extra;
+                if (remainder != 0) {
+                    child_width += (remainder > 0) ? 1 : -1;
+                    remainder += (remainder > 0) ? -1 : 1;
+                }
+
+                if (child_width < 1) child_width = 1;
+
+                child_x = content_x + current_pos;
+
+                switch (m_alignment) {
+                case alignment::start:
+                    child_y = content_y;
+                    child_height = child_size.height;
+                    break;
+                case alignment::center:
+                    child_y = content_y + (content_height - child_size.height) / 2;
+                    child_height = child_size.height;
+                    break;
+                case alignment::end:
+                    child_y = content_y + content_height - child_size.height;
+                    child_height = child_size.height;
+                    break;
+                case alignment::stretch:
+                    child_y = content_y;
+                    child_height = content_height;
+                    break;
+                }
+
+                current_pos += child_width + scaled_spacing;
+            } else {
+                child_height = child_size.height + per_child_extra;
+                if (remainder != 0) {
+                    child_height += (remainder > 0) ? 1 : -1;
+                    remainder += (remainder > 0) ? -1 : 1;
+                }
+
+                if (child_height < 1) child_height = 1;
+
+                child_y = content_y + current_pos;
+
+                switch (m_alignment) {
+                case alignment::start:
+                    child_x = content_x;
+                    child_width = child_size.width;
+                    break;
+                case alignment::center:
+                    child_x = content_x + (content_width - child_size.width) / 2;
+                    child_width = child_size.width;
+                    break;
+                case alignment::end:
+                    child_x = content_x + content_width - child_size.width;
+                    child_width = child_size.width;
+                    break;
+                case alignment::stretch:
+                    child_x = content_x;
+                    child_width = content_width;
+                    break;
+                }
+
+                current_pos += child_height + scaled_spacing;
+            }
+
+            child->move(child_x, child_y, child_width, child_height);
+
+            // If this is a nested panel, arrange its children
+            if (auto child_panel = as_panel(child)) {
+                child_panel->arrange(child_x, child_y, child_width, child_height);
+                // Invalidate panel window to ensure it repaints
+                if (child_panel->get_handle()) {
+                    child_panel->invalidate();
+                }
+            }
+
+            // Invalidate control to prevent artifacts during resize
+            if (child->get_handle()) {
+				child->invalidate();
+            }
+        }
+
+        // Invalidate the panel window itself
+        if (m_handle) {
+            invalidate();
+        }
+    }
+
+    void stack_panel::paint(HDC hdc) {
+        // Currently no custom painting for stack panel itself, just return true to indicate handled
+    }
+}

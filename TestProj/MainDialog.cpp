@@ -23,7 +23,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     register_control(IDC_TAB_TEST, m_tab);
 
     register_menu_command(IDM_EXIT, [this](WPARAM, LPARAM) {
-        end_dialog();
+        end_dialog(EXIT_SUCCESS);
     });
 
     register_menu_command(IDM_ABOUT, [this](WPARAM, LPARAM) {
@@ -36,7 +36,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         m_tree->delete_all_items();
 
         if (m_tab->get_item_count() < MAX_TAB_ITEMS)
-            m_tab->add_item((TEXT("Tab ") + std::to_tstring(m_tab->get_item_count() + 1)).c_str());
+            m_tab->add_item((TEXT("Tab ") + to_tstring(m_tab->get_item_count() + 1)).c_str());
 
         m_list->add_dir(0, SYSTEM32_PATH);
         m_combo->add_dir(0, SYSTEM32_PATH);
@@ -68,8 +68,8 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
             m_progress->set_pos(new_val);
             m_track->set_pos(new_val);
             m_scroll->set_scroll_pos(new_val);
-            m_spinedit->set_text(std::to_tstring(new_val));
-            m_richedit->append_text((TEXT("Delta is ") + std::to_tstring(updn->iDelta) + TEXT("\n")).c_str());
+            m_spinedit->set_text(to_tstring(new_val));
+            m_richedit->append_text((TEXT("Delta is ") + to_tstring(updn->iDelta) + TEXT("\n")).c_str());
         }
     });
 
@@ -83,7 +83,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
             m_progress->set_pos(new_val);
             m_spin->set_pos(new_val);
             m_scroll->set_scroll_pos(new_val);
-            m_spinedit->set_text(std::to_tstring(new_val));
+            m_spinedit->set_text(to_tstring(new_val));
         }
     });
 
@@ -92,7 +92,7 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
         m_progress->set_pos(scroll_pos);
         m_spin->set_pos(scroll_pos);
         m_track->set_pos(scroll_pos);
-        m_spinedit->set_text(std::to_tstring(scroll_pos));
+        m_spinedit->set_text(to_tstring(scroll_pos));
     });
 
     m_combo->set_banner_text(L"ComboBox control item test");

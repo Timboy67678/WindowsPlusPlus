@@ -143,6 +143,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="dock_panel.cpp" />
+    <ClCompile Include="grid_panel.cpp" />
+    <ClCompile Include="panel.cpp" />
+    <ClCompile Include="stack_panel.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -171,9 +175,15 @@
     <ClInclude Include="..\controls\tree_view.hpp" />
     <ClInclude Include="..\controls\updown_control.hpp" />
     <ClInclude Include="..\dialog.hpp" />
+    <ClInclude Include="..\layout.hpp" />
+    <ClInclude Include="..\layout\dock_panel.hpp" />
+    <ClInclude Include="..\layout\grid_panel.hpp" />
+    <ClInclude Include="..\layout\panel.hpp" />
+    <ClInclude Include="..\layout\stack_panel.hpp" />
     <ClInclude Include="..\message_loop.hpp" />
     <ClInclude Include="..\thunk.hpp" />
     <ClInclude Include="..\window.hpp" />
+    <ClInclude Include="..\window_base.hpp" />
     <ClInclude Include="..\winplusplus.hpp" />
   </ItemGroup>
   <ItemGroup>

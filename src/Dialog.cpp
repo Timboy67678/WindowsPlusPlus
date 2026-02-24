@@ -4,18 +4,24 @@
 namespace wpp
 {
 	dialog::dialog(HINSTANCE instance, int resource_id, int menu_id)
-		: m_main_instance(instance), hwnd(resource_id, NULL), m_internal_timerid(0), m_menu_id(menu_id), m_menu(NULL) {
+		: window_base(resource_id, NULL), m_main_instance(instance), m_internal_timerid(0), m_menu_id(menu_id), m_menu(NULL) {
 		init_message_events();
 	}
 
 	dialog::dialog(HWND hWnd)
-		: hwnd(hWnd), m_internal_timerid(0), m_menu_id(-1), m_menu(NULL) {
+		: window_base(hWnd), m_internal_timerid(0), m_menu_id(-1), m_menu(NULL) {
 		m_main_instance = (HINSTANCE)::GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
 		init_message_events();
 	}
 
 	dialog::~dialog() {
-		cleanup();
+		if (m_handle && ::IsWindow(m_handle)) {
+			if (m_is_modeless) {
+				::DestroyWindow(m_handle);
+			} else {
+				cleanup();
+			}
+		}
 	}
 
 	void dialog::init_message_events() {
@@ -24,7 +30,6 @@ namespace wpp
 		m_message_events = {
 			{WM_INITDIALOG, std::bind(&dialog::on_init_dialog, this, _1, _2, _3)},
 			{WM_CLOSE, std::bind(&dialog::on_close, this, _1, _2, _3)},
-			{WM_QUIT, std::bind(&dialog::on_quit, this, _1, _2, _3)},
 			{WM_DESTROY, std::bind(&dialog::on_destroy, this, _1, _2, _3)},
 			{WM_DISPLAYCHANGE, std::bind(&dialog::on_display_change, this, _1, _2, _3)},
 			{WM_MOVE, std::bind(&dialog::on_move, this, _1, _2, _3)},
@@ -43,21 +48,23 @@ namespace wpp
 	}
 
 	void dialog::cleanup() {
-		for (auto& timer : m_timer_events)
-			::KillTimer(m_handle, timer.first);
+		if (!m_handle)
+			return;
 
 		for (auto& control_pair : m_controls)
 			control_pair.reset();
 
-		m_timer_events.clear();
 		m_menu_command_events.clear();
 		m_controls.clear();
 
-		::DestroyMenu(m_menu);
+		if (m_menu) {
+			::DestroyMenu(m_menu);
+			m_menu = NULL;
+		}
 	}
 
 	bool dialog::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
-		if(lParam == NULL)
+		if (lParam == NULL)
 			return false;
 
 		HWND hScrollBar = reinterpret_cast<HWND>(lParam);
@@ -96,23 +103,6 @@ namespace wpp
 		return false;
 	}
 
-	void dialog::show_dialog() {
-		::ShowWindow(m_handle, SW_SHOWNORMAL);
-	}
-
-	void dialog::hide_dialog() {
-		::ShowWindow(m_handle, SW_HIDE);
-	}
-
-	void dialog::end_dialog() {
-		cleanup();
-		if (m_is_modeless) {
-			::DestroyWindow(m_handle);
-		} else {
-			::EndDialog(m_handle, 0);
-		}
-	}
-
 	INT_PTR dialog::run_dlg(HWND parent, LPVOID param) {
 		m_parent_handle = parent;
 		m_is_modeless = false;
@@ -146,19 +136,23 @@ namespace wpp
 	}
 
 	INT_PTR dialog::on_close(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		end_dialog();
-		return FALSE;
+		if (m_is_modeless) {
+			::DestroyWindow(m_handle);
+		} else {
+			::EndDialog(m_handle, 0);
+		}
+		return TRUE;
 	}
 
-	INT_PTR dialog::on_quit(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+	INT_PTR dialog::on_destroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		if (m_is_modeless) {
+			cleanup();
+		}
 		return FALSE;
 	}
 
 	INT_PTR dialog::on_timer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		auto it = m_timer_events.find((UINT_PTR)wParam);
-		if (it != m_timer_events.end())
-			it->second();
-		return FALSE;
+		return handle_timer(static_cast<UINT_PTR>(wParam)) ? TRUE : FALSE;
 	}
 
 	INT_PTR dialog::on_notify(HWND hWnd, WPARAM wParam, LPARAM lParam) {
@@ -190,11 +184,6 @@ namespace wpp
 		}
 
 		return FALSE;
-	}
-
-	INT_PTR dialog::on_destroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		end_dialog();
-		return TRUE;
 	}
 
 	INT_PTR dialog::on_display_change(HWND hWnd, WPARAM wParam, LPARAM lParam) {
