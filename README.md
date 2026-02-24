@@ -143,8 +143,8 @@ INT_PTR MainDialog::on_init_dialog(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
 ## Credits
 
-- DarthTon's Xenos Injector for message mapping ideas and bound member thunking
-- WTL for dialog abstraction patterns
+- DarthTon's [Xenos Injector](https://github.com/DarthTon/Xenos) for message mapping ideas and bound member thunking
+- [WTL](https://wtl.sourceforge.io/) for dialog abstraction patterns
 
 ## License
 
