@@ -38,8 +38,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     auto layout = std::make_shared<layout::grid_panel>(window->get_handle());
 
     // Add controls to grid positions
-    auto btn1 = window->create_button(_T("Ok"));
-    auto btn2 = window->create_button(_T("Cancel"));
+    auto btn1 = window->create_button(_T("Ok"), /*width=*/200, /*height=*/20);
+    auto btn2 = window->create_button(_T("Cancel"), /*width=*/300, /*height=*/20);
 
     layout->add(btn1, /*row=*/0, /*column=*/0);
     layout->add(btn2, /*row=*/0, /*column=*/1);
