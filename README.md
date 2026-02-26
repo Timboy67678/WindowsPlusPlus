@@ -38,8 +38,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     auto layout = std::make_shared<layout::grid_panel>(window->get_handle());
 
     // Add controls to grid positions
-    auto btn1 = std::make_shared<button>("OK");
-    auto btn2 = std::make_shared<button>("Cancel");
+    auto btn1 = window->create_button(_T("Ok"));
+    auto btn2 = window->create_button(_T("Cancel"));
 
     layout->add(btn1, /*row=*/0, /*column=*/0);
     layout->add(btn2, /*row=*/0, /*column=*/1);
@@ -76,7 +76,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 
 ---
 
-## Example: Example Messaqge Loop implementation
+## Example: Example Message Loop implementation
 
 ```cpp
 #include "stdafx.h"
