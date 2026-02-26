@@ -136,6 +136,6 @@ This project benefits from frequent use of GitHub Copilot, including the Visual 
 
 ---
 
-For more code and usage, visit the [TestProj directory](https://github.com/Timboy67678/WindowsPlusPlus/tree/master/TestProj/TestProj/) and view individual classes for implementation details.
+For more code and usage, visit the [TestProj directory](https://github.com/Timboy67678/WindowsPlusPlus/tree/main/TestProj/TestProj/) and view individual classes for implementation details.
 
 ---
