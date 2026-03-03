@@ -13,9 +13,20 @@ INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
     auto grid_window = std::make_unique<WindowGridPanel>(TEXT("Grid Panel Demo"), 0, 0, hInstance);
     auto dialog = std::make_unique<MainDialog>(hInstance);
 
-    mainwindow->create_window();
-    grid_window->create_window();
-    dialog->create_modeless();
+    if (!mainwindow->create_window()) {
+        ::MessageBox(NULL, format_tstring(TEXT("Failed to create main window: 0x{:X}"), ::GetLastError()).c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);
+        return -1;
+    }
+
+    if (!grid_window->create_window()) {
+        ::MessageBox(NULL, format_tstring(TEXT("Failed to create grid window: 0x{:X}"), ::GetLastError()).c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);
+        return -1;
+    }
+
+    if (!dialog->create_modeless()) {
+        ::MessageBox(NULL, format_tstring(TEXT("Failed to create dialog: 0x{:X}"), ::GetLastError()).c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);
+        return -1;
+    }
 
     message_loop loop;
     loop.register_window(*mainwindow);

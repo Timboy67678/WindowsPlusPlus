@@ -4,7 +4,7 @@ constexpr auto DEFAULT_WINDOW_WIDTH = 1000;
 constexpr auto DEFAULT_WINDOW_HEIGHT = 700;
 
 MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
-    : window(window_class{ _T("MainWindowWPP"), instance },
+    : window(std::make_shared<window_class>(_T("MainWindowWPP"), instance),
              window_title, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT) {
     //set_keep_minimum_resize(true);
 }

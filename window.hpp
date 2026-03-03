@@ -42,14 +42,55 @@ namespace wpp
 			m_window_class.hCursor = cursor;
 			m_window_class.hbrBackground = background;
 			m_window_class.lpszMenuName = menu;
-			m_window_class.lpszClassName = name.c_str();
+			m_class_name = name;
+			m_window_class.lpszClassName = m_class_name.c_str();
 			m_window_class.hIconSm = icon;
-			m_window_class.lpfnWndProc = nullptr; // Will be set by the window class when registering
 		}
 
 		window_class(WNDCLASS window_class) {
 			ZeroMemory(&m_window_class, sizeof(WNDCLASSEX));
 			std::memcpy(&m_window_class, &window_class, sizeof(WNDCLASS));
+		}
+
+		window_class(const window_class& other) 
+			: m_class_name(other.m_class_name)
+			, m_window_class(other.m_window_class)
+			, m_class_atom(other.m_class_atom) {
+			m_window_class.lpszClassName = m_class_name.c_str();
+		}
+
+		window_class(window_class&& other) noexcept
+			: m_class_name(std::move(other.m_class_name))
+			, m_window_class(other.m_window_class)
+			, m_class_atom(other.m_class_atom) {
+			m_window_class.lpszClassName = m_class_name.c_str();
+		}
+
+		window_class& operator=(const window_class& other) {
+			if (this != &other) {
+				m_class_name = other.m_class_name;
+				m_window_class = other.m_window_class;
+				m_class_atom = other.m_class_atom;
+				m_window_class.lpszClassName = m_class_name.c_str();
+			}
+			return *this;
+		}
+
+		window_class& operator=(window_class&& other) noexcept {
+			if (this != &other) {
+				m_class_name = std::move(other.m_class_name);
+				m_window_class = other.m_window_class;
+				m_class_atom = other.m_class_atom;
+				m_window_class.lpszClassName = m_class_name.c_str();
+			}
+			return *this;
+		}
+
+		~window_class() {
+			if (m_class_atom != NULL) {
+				::UnregisterClass(m_window_class.lpszClassName, m_window_class.hInstance);
+				m_class_atom = NULL;
+			}
 		}
 
 	protected:
@@ -74,8 +115,17 @@ namespace wpp
 		/// <summary>
 		/// Registers the window class with the system.
 		/// </summary>
-		void Register() {
+		/// <returns>True if registration succeeded or class already exists; false otherwise.</returns>
+		bool Register() {
 			m_class_atom = ::RegisterClassEx(&m_window_class);
+
+			if (m_class_atom == 0) {
+				if (::GetLastError() == ERROR_CLASS_ALREADY_EXISTS) {
+					return true;
+				}
+				return false;
+			}
+			return true;
 		}
 
 		/// <summary>
@@ -99,6 +149,7 @@ namespace wpp
 		WNDCLASSEX& get() { return m_window_class; }
 
 	private:
+		tstring m_class_name; ///< The name of the window class.
 		WNDCLASSEX m_window_class; ///< Window class structure.
 		ATOM m_class_atom = NULL; ///< Class atom.
 	};
@@ -165,7 +216,7 @@ namespace wpp
 		/// <param name="menu">A handle to the window's menu. Defaults to NULL.</param>
 		/// <param name="font">A handle to the font used by the window. Defaults to NULL.</param>
 		/// <param name="style_ex">Extended window style flags. Defaults to 0.</param>
-		window(window_class wnd_class, const tstring& window_name, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
+		window(std::shared_ptr<window_class> wnd_class, const tstring& window_name, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
 			   int menu_id = -1, HMENU menu = NULL, HFONT font = NULL, DWORD style_ex = 0);
 
 		/// <summary>
@@ -499,13 +550,35 @@ namespace wpp
 		/// Gets a read-only reference to the controls collection.
 		/// </summary>
 		/// <returns>A const reference to the vector of controls.</returns>
-		inline const std::vector<control_ptr<>>& get_controls() const override { return m_controls; }
+		inline const controls_vec& get_controls() const override { return m_controls; }
 
 	private:
 		void init_message_events();
 		void cleanup();
 		void update_layout();
 		bool handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
+
+		template<typename CtrlType>
+		control_ptr<CtrlType> create_control_impl(LPCTSTR class_name, const tstring& text, int width, int height, DWORD style, DWORD style_ex) {
+			auto control_id = m_control_id++;
+
+			HWND control_handle = ::CreateWindowEx(style_ex, class_name, text.c_str(), style, 0, 0, width, height, m_handle,
+				reinterpret_cast<HMENU>(control_id), m_window_class->instance(), NULL);
+			if (!control_handle)
+				return nullptr;
+
+			auto control = std::make_shared<CtrlType>(control_id, m_handle);
+			if (!control) {
+				::DestroyWindow(control_handle);
+				return nullptr;
+			}
+
+			if (m_font)
+				control->set_font(m_font);
+
+			m_controls.emplace_back(control);
+			return control;
+		}
 		
 		std::shared_ptr<layout::panel> m_root_panel; ///< Layout panel for automatic control arrangement.
 
@@ -513,12 +586,14 @@ namespace wpp
 		auto& root_panel() { return m_root_panel; }
 
 		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for window procedure.
-		window_class m_window_class; ///< Window class.
+		std::shared_ptr<window_class> m_window_class; ///< Window class.
 		int m_x_pos, m_y_pos; ///< Initial startup position of the window
 		int m_original_width, m_original_height; ///< Window original size.
 		tstring m_window_name; ///< Window name.
 		HMENU m_menu_handle; ///< Menu handle.
 		HFONT m_font; ///< Font handle.
+		bool m_owns_menu = false; ///< Indicates if the menu handle should be destroyed by this window.
+		bool m_owns_font = false; ///< Indicates if the font handle should be destroyed by this window.
 		int m_menu_id; ///< Menu ID.
 		bool m_keep_minimum_size = false; ///< Flag to keep minimum size when window is resized.
 		DWORD m_style, m_style_ex; ///< Window styles.
@@ -527,7 +602,7 @@ namespace wpp
 		std::atomic_bool m_window_running = false; ///< Window running flag.
 		std::map<INT, window_message_callback> m_message_events; ///< Message events.
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
-		std::vector<control_ptr<>> m_controls; ///< Controls container.
+		controls_vec m_controls; ///< Controls container.
 	};
 }
 

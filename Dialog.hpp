@@ -65,7 +65,8 @@ namespace wpp
 		/// </summary>
 		/// <param name="parent">Handle to the parent window. If NULL, the dialog has no parent.</param>
 		/// <param name="param">Optional user-defined data to pass to the dialog during creation.</param>
-		virtual void create_modeless(HWND parent = NULL, LPVOID param = NULL);
+		/// <returns>True if the modeless dialog was successfully created; otherwise, false.</returns>
+		virtual bool create_modeless(HWND parent = NULL, LPVOID param = NULL);
 
 		/// <summary>
 		/// Processes messages for a dialog window.
@@ -153,7 +154,7 @@ namespace wpp
 		/// Gets a read-only reference to the controls collection.
 		/// </summary>
 		/// <returns>A const reference to the vector of controls.</returns>
-		inline const std::vector<control_ptr<>>& get_controls() const override { return m_controls; }
+		inline const controls_vec& get_controls() const override { return m_controls; }
 
 	private:
 		void init_message_events();
@@ -165,7 +166,7 @@ namespace wpp
 		
 		std::map<UINT_PTR, menu_callback> m_menu_command_events; ///< Menu command events.
 		std::map<INT, dialog_message_callback> m_message_events; ///< Message events.
-		std::vector<control_ptr<>> m_controls; ///< Controls container.
+		controls_vec m_controls; ///< Controls container.
 		
 		bool m_is_modeless = false; ///< Modeless flag.
 

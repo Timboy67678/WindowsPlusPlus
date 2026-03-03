@@ -11,6 +11,8 @@ namespace wpp
 	/// </summary>
 	class window_base : public hwnd {
 	public:
+		using controls_vec = std::vector<control_ptr<>>;
+
 		/// <summary>
 		/// Constructs a window_base object with the specified resource ID and optional parent window.
 		/// </summary>
@@ -156,8 +158,8 @@ namespace wpp
 		/// Gets a read-only reference to the controls collection.
 		/// </summary>
 		/// <returns>A const reference to the vector of controls.</returns>
-		virtual const std::vector<control_ptr<>>& get_controls() const {
-			static const std::vector<control_ptr<>> empty_controls{};
+		virtual const controls_vec& get_controls() const {
+			static const controls_vec empty_controls{};
 			return empty_controls;
 		}
 

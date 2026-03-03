@@ -4,7 +4,7 @@ constexpr auto DEFAULT_WINDOW_WIDTH = 900;
 constexpr auto DEFAULT_WINDOW_HEIGHT = 650;
 
 WindowGridPanel::WindowGridPanel(LPCTSTR window_title, int x, int y, HINSTANCE instance)
-    : window(window_class{ _T("WindowGridPanelWPP"), instance },
+    : window(std::make_shared<window_class>(_T("WindowGridPanelWPP"), instance),
              window_title, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT) {
     set_keep_minimum_resize(true);
 }
@@ -38,13 +38,13 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     auto btn_about = create_button(_T("About"), 100, 30);
     btn_about->on_click([this](WPARAM, LPARAM) {
-        message_box_info(_T("About"), 
-            _T("Grid Panel Demo\n\n")
-            _T("Features:\n")
-            _T(" Fixed & Star sizing\n")
-            _T(" Column/Row spanning\n")
-            _T(" Nested layouts\n")
-            _T(" Dynamic resizing"));
+        message_box_info(_T("About"),
+                         _T("Grid Panel Demo\n\n")
+                         _T("Features:\n")
+                         _T(" Fixed & Star sizing\n")
+                         _T(" Column/Row spanning\n")
+                         _T(" Nested layouts\n")
+                         _T(" Dynamic resizing"));
     });
     header->add(btn_about);
 

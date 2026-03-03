@@ -33,6 +33,7 @@
 #include <optional>
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
 #include <map>
 #include <format>
 #include <algorithm>
@@ -138,11 +139,11 @@ namespace wpp
 	}
 
 	template<typename... Args>
-	tstring format_tstring(tstring_view fmt, Args&&... args) {
+	tstring format_tstring(const tstring_view& fmt, Args&&... args) {
 #ifdef _UNICODE
-		return std::vformat(fmt, std::make_wformat_args(std::forward<Args>(args)...));
+		return std::vformat(fmt, std::make_wformat_args(args...)); 
 #else
-		return std::vformat(fmt, std::make_format_args(std::forward<Args>(args)...));
+		return std::vformat(fmt, std::make_format_args(args...));
 #endif
 	}
 
@@ -159,7 +160,8 @@ namespace wpp
 		}
 
 		~timer() {
-			if (m_hwnd) ::KillTimer(m_hwnd, m_id);
+			if (m_hwnd) 
+				::KillTimer(m_hwnd, m_id);
 		}
 
 		timer(const timer&) = delete;
