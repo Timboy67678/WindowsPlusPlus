@@ -79,6 +79,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 ## Example: Example Message Loop implementation
 
 ```cpp
+/*
+ This example is simple, check TestProj for more info
+*/
+
 #include "stdafx.h"
 #include "resource.h"
 #include "MainDialog.hpp"
@@ -89,10 +93,12 @@ INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
     if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL)
         ::LoadLibrary(TEXT("Riched20.dll"));
 
+    /// class inherits wpp::window, controls are created in the on_create handler for brevity
     auto mainwindow = std::make_unique<MainWindow>(TEXT("Test Window"), 0, 0, hInstance);
+    /// class inherits wpp::dialog, sets the resource id on constructor, same as window for control registration
     auto dialog = std::make_unique<MainDialog>(hInstance);
     mainwindow->create_window();
-    dialog->create_modeless();
+    dialog->create_modeless(); // we handle our message loop, create modeless for that
 
     message_loop loop;
     loop.register_window(*mainwindow);
@@ -130,6 +136,6 @@ This project benefits from frequent use of GitHub Copilot, including the Visual 
 
 ---
 
-For more code and usage, visit the [TestProj directory](https://github.com/Timboy67678/WindowsPlusPlus/tree/master/TestProj/TestProj/) and view individual classes for implementation details.
+For more code and usage, visit the [TestProj directory](https://github.com/Timboy67678/WindowsPlusPlus/tree/main/TestProj/TestProj/) and view individual classes for implementation details.
 
 ---
