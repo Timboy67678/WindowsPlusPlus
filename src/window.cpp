@@ -3,10 +3,10 @@
 
 namespace wpp
 {
-	window::window(std::shared_ptr<window_class> wnd_class, const tstring& window_name, int width, int height, DWORD style,
+	window::window(window_class wnd_class, const tstring& window_name, int width, int height, DWORD style,
 				   int menu_id, HMENU menu, HFONT font, DWORD style_ex)
 		: window_base(NULL)
-		, m_window_class(wnd_class)
+		, m_window_class(std::move(wnd_class))
 		, m_window_name(window_name)
 		, m_original_width(width)
 		, m_original_height(height)
@@ -68,9 +68,9 @@ namespace wpp
 	}
 
 	bool window::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
-		HWND hScrollBar = reinterpret_cast<HWND>(lParam);
+		HWND scrollbar_handle = reinterpret_cast<HWND>(lParam);
 
-		auto scrollbar = get_control_by_handle<scroll_bar>(hScrollBar);
+		auto scrollbar = get_control_by_handle<scroll_bar>(scrollbar_handle);
 		if (scrollbar) {
 			int action = LOWORD(wParam);
 
@@ -111,8 +111,8 @@ namespace wpp
 		m_x_pos = x_pos;
 		m_y_pos = y_pos;
 
-		if (m_window_class->atom() != NULL)
-			m_window_class->Unregister();
+		if (m_window_class.atom() != NULL)
+			m_window_class.Unregister();
 
 		m_root_panel = layout;
 
@@ -127,13 +127,13 @@ namespace wpp
 			return false;
 		}
 
-		m_window_class->get().lpfnWndProc = proc;
+		m_window_class.get().lpfnWndProc = proc;
 
-		if (!m_window_class->Register())
+		if (!m_window_class.Register())
 			return false;
 
-		m_handle = ::CreateWindowEx(m_style_ex, m_window_class->class_name(), m_window_name.c_str(), m_style,
-									m_x_pos, m_y_pos, m_original_width, m_original_height, m_parent_handle, m_menu_handle, m_window_class->instance(), param);
+		m_handle = ::CreateWindowEx(m_style_ex, m_window_class.class_name(), m_window_name.c_str(), m_style,
+									m_x_pos, m_y_pos, m_original_width, m_original_height, m_parent_handle, m_menu_handle, m_window_class.instance(), param);
 
 		if (!m_handle)
 			return false;
@@ -207,7 +207,6 @@ namespace wpp
 		return ret;
 	}
 
-#pragma region Window Control Creators
 #pragma warning(push)
 #pragma warning(disable: 4312)
 	control_ptr<radio_button> window::radio_button_group::create_button(const tstring& text, int width, int height, BOOL initial_state) {
@@ -217,7 +216,7 @@ namespace wpp
 		if (m_radio_buttons.empty())
 			style |= WS_GROUP;
 
-		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_AUTORADIOBUTTON | style, 0, 0, width, height, m_parent->m_handle, reinterpret_cast<HMENU>(control_id), m_parent->m_window_class->instance(), NULL);
+		HWND radiobutton_handle = ::CreateWindowEx(0, WC_BUTTON, text.c_str(), BS_AUTORADIOBUTTON | style, 0, 0, width, height, m_parent->m_handle, reinterpret_cast<HMENU>(control_id), m_parent->m_window_class.instance(), NULL);
 		if (!radiobutton_handle)
 			return nullptr;
 
@@ -308,7 +307,7 @@ namespace wpp
 			}
 		}
 
-		HWND richedit_handle = ::CreateWindowEx(style_ex, RICHEDIT_CLASS, initial_text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class->instance(), NULL);
+		HWND richedit_handle = ::CreateWindowEx(style_ex, RICHEDIT_CLASS, initial_text.c_str(), style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!richedit_handle) {
 			return nullptr;
 		}
@@ -334,7 +333,7 @@ namespace wpp
 	control_ptr<scroll_bar> window::create_scroll_bar(scroll_orientation orientation, int width, int height, DWORD style, DWORD style_ex) {
 		auto control_id = m_control_id++;
 		DWORD orientation_style = (orientation == scroll_orientation::horizontal) ? SBS_HORZ : SBS_VERT;
-		HWND scrollbar_handle = ::CreateWindowEx(style_ex, WC_SCROLLBAR, _T(""), orientation_style | style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class->instance(), NULL);
+		HWND scrollbar_handle = ::CreateWindowEx(style_ex, WC_SCROLLBAR, _T(""), orientation_style | style, 0, 0, width, height, m_handle, reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 		if (!scrollbar_handle)
 			return nullptr;
 		auto scrollbar = std::make_shared<scroll_bar>(control_id, m_handle);
@@ -349,14 +348,11 @@ namespace wpp
 	control_ptr<track_bar> window::create_track_bar(int width, int height, DWORD style, DWORD style_ex) {
 		return create_control_impl<track_bar>(TRACKBAR_CLASS, _T(""), width, height, style, style_ex);
 	}
-
 #pragma warning(pop)
-#pragma endregion
 
-#pragma region Window Message Handlers
 	LRESULT window::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		if (m_menu_id != -1 && m_menu_handle == NULL) {
-			m_menu_handle = ::LoadMenu(m_window_class->instance(), MAKEINTRESOURCE(m_menu_id));
+			m_menu_handle = ::LoadMenu(m_window_class.instance(), MAKEINTRESOURCE(m_menu_id));
 			m_owns_menu = (m_menu_handle != NULL);
 		}
 
@@ -503,7 +499,6 @@ namespace wpp
 
 		return FALSE;
 	}
-#pragma endregion
 
 	void window::quit_window(INT exit_code) {
 		::DestroyWindow(m_handle);

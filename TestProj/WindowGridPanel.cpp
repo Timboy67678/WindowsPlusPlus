@@ -1,214 +1,286 @@
 #include "WindowGridPanel.hpp"
 
-constexpr auto DEFAULT_WINDOW_WIDTH = 900;
-constexpr auto DEFAULT_WINDOW_HEIGHT = 650;
+constexpr auto DEFAULT_WINDOW_WIDTH = 1200;
+constexpr auto DEFAULT_WINDOW_HEIGHT = 780;
 
 WindowGridPanel::WindowGridPanel(LPCTSTR window_title, int x, int y, HINSTANCE instance)
-    : window(std::make_shared<window_class>(_T("WindowGridPanelWPP"), instance),
+    : window(window_class(_T("WindowGridPanelWPP"), instance),
              window_title, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT) {
     set_keep_minimum_resize(true);
 }
 
 LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     center_window();
-
-    // Create a cleaner, simpler grid demo with 4 rows and 3 columns
     auto main_grid = std::make_shared<layout::grid_panel>(hWnd);
-    main_grid->set_padding(15);
+    main_grid->set_padding(14);
     main_grid->set_spacing(10);
 
-    // Define rows: header (50px), content (1*), controls (1*), footer (40px)
-    main_grid->add_row_definition(layout::grid_length::pixels(50));
+    // Main dashboard layout: mixed fixed and star tracks
+    main_grid->add_row_definition(layout::grid_length::pixels(64));
     main_grid->add_row_definition(layout::grid_length::star(2.0));
-    main_grid->add_row_definition(layout::grid_length::star(1.0));
-    main_grid->add_row_definition(layout::grid_length::pixels(40));
+    main_grid->add_row_definition(layout::grid_length::pixels(210));
+    main_grid->add_row_definition(layout::grid_length::pixels(42));
 
-    // Define columns: 3 equal star-sized columns
-    main_grid->add_column_definition(layout::grid_length::star(1.0));
-    main_grid->add_column_definition(layout::grid_length::star(1.0));
-    main_grid->add_column_definition(layout::grid_length::star(1.0));
+    main_grid->add_column_definition(layout::grid_length::star(1.2));
+    main_grid->add_column_definition(layout::grid_length::star(2.2));
+    main_grid->add_column_definition(layout::grid_length::star(1.2));
 
-    // ===== ROW 0: Header (spans all 3 columns) =====
-    auto header = std::make_shared<layout::stack_panel>(layout::orientation::horizontal, hWnd);
-    header->set_spacing(15);
+    // Header (row span 1, column span 3)
+    auto header = std::make_shared<layout::grid_panel>(hWnd);
     header->set_padding(8);
+    header->set_spacing(8);
+    header->add_row_definition(layout::grid_length::star(1));
+    header->add_column_definition(layout::grid_length::star(1.0));
+    header->add_column_definition(layout::grid_length::pixels(140));
+    header->add_column_definition(layout::grid_length::pixels(140));
 
-    auto title = create_static_control(_T("Grid Panel Layout Demo"), 300, 30);
-    header->add(title);
+    auto title = create_static_control(_T("WindowsPlusPlus Grid Dashboard"), 450, 28);
+    header->add(title, 0, 0);
 
-    auto btn_about = create_button(_T("About"), 100, 30);
-    btn_about->on_click([this](WPARAM, LPARAM) {
-        message_box_info(_T("About"),
-                         _T("Grid Panel Demo\n\n")
-                         _T("Features:\n")
-                         _T(" Fixed & Star sizing\n")
-                         _T(" Column/Row spanning\n")
-                         _T(" Nested layouts\n")
-                         _T(" Dynamic resizing"));
+    auto btn_grid_lines = create_check_box(_T("Show Grid Lines"), 130, 28);
+    btn_grid_lines->on_click([this, btn_grid_lines, main_grid](WPARAM, LPARAM) {
+        main_grid->paint_grid_lines() = btn_grid_lines->is_checked();
+        invalidate();
+        update_window();
     });
-    header->add(btn_about);
+    header->add(btn_grid_lines, 0, 1);
+    header->set_alignment(btn_grid_lines, layout::alignment::center, layout::alignment::center);
+
+    auto btn_about = create_button(_T("About Demo"), 130, 30);
+    btn_about->on_click([this](WPARAM, LPARAM) {
+        message_box_info(
+            _T("Grid Features"),
+            _T("This demo highlights:\n")
+            _T(" - Mixed pixel and star row/column sizing\n")
+            _T(" - Row/column spanning\n")
+            _T(" - Nested grid and stack panels\n")
+            _T(" - Per-control alignment inside cells")
+        );
+    });
+    header->add(btn_about, 0, 2);
+    header->set_alignment(btn_about, layout::alignment::center, layout::alignment::center);
 
     main_grid->add_panel(header);
     main_grid->set_grid_position(header, 0, 0, 1, 3);
 
-    // ===== ROW 1, COL 0: Form inputs =====
-    auto form_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
-    form_panel->set_spacing(10);
-    form_panel->set_padding(10);
+    // Left card: form built with grid panel (labels + inputs)
+    auto form_grid = std::make_shared<layout::grid_panel>(hWnd);
+    form_grid->set_padding(10);
+    form_grid->set_spacing(8);
 
-    auto form_title = create_static_control(_T("User Information"), 250, 25);
-    form_panel->add(form_title);
+    form_grid->add_row_definition(layout::grid_length::pixels(28));
+    form_grid->add_row_definition(layout::grid_length::pixels(28));
+    form_grid->add_row_definition(layout::grid_length::pixels(28));
+    form_grid->add_row_definition(layout::grid_length::pixels(28));
+    form_grid->add_row_definition(layout::grid_length::pixels(28));
+    form_grid->add_row_definition(layout::grid_length::star(1));
+    form_grid->add_row_definition(layout::grid_length::pixels(34));
 
-    auto name_label = create_static_control(_T("Name:"), 250, 20);
-    form_panel->add(name_label);
+    form_grid->add_column_definition(layout::grid_length::pixels(80));
+    form_grid->add_column_definition(layout::grid_length::star(1));
 
-    m_EditOne = create_edit_text(_T(""), 250, 25);
-    form_panel->add(m_EditOne);
+    auto form_title = create_static_control(_T("Customer Profile"), 240, 26);
+    form_grid->add(form_title, 0, 0, 1, 2);
 
-    auto email_label = create_static_control(_T("Email:"), 250, 20);
-    form_panel->add(email_label);
+    auto name_label = create_static_control(_T("Name"), 75, 24);
+    form_grid->add(name_label, 1, 0);
+    form_grid->set_alignment(name_label, layout::alignment::end, layout::alignment::center);
+    m_EditOne = create_edit_text(_T("Ada Lovelace"), 220, 24);
+    form_grid->add(m_EditOne, 1, 1);
 
-    m_EditTwo = create_edit_text(_T(""), 250, 25);
-    form_panel->add(m_EditTwo);
+    auto email_label = create_static_control(_T("Email"), 75, 24);
+    form_grid->add(email_label, 2, 0);
+    form_grid->set_alignment(email_label, layout::alignment::end, layout::alignment::center);
+    m_EditTwo = create_edit_text(_T("ada@analytical.engine"), 220, 24);
+    form_grid->add(m_EditTwo, 2, 1);
 
-    auto phone_label = create_static_control(_T("Phone:"), 250, 20);
-    form_panel->add(phone_label);
+    auto phone_label = create_static_control(_T("Phone"), 75, 24);
+    form_grid->add(phone_label, 3, 0);
+    form_grid->set_alignment(phone_label, layout::alignment::end, layout::alignment::center);
+    m_EditThree = create_edit_text(_T("+44 20 7946 0958"), 220, 24);
+    form_grid->add(m_EditThree, 3, 1);
 
-    m_EditThree = create_edit_text(_T(""), 250, 25);
-    form_panel->add(m_EditThree);
+    auto notes_label = create_static_control(_T("Tier"), 75, 24);
+    form_grid->add(notes_label, 4, 0);
+    form_grid->set_alignment(notes_label, layout::alignment::end, layout::alignment::center);
+    auto tier_combo = create_combo_box(220, 120);
+    tier_combo->add(_T("Standard"));
+    tier_combo->add(_T("Premium"));
+    tier_combo->add(_T("Enterprise"));
+    form_grid->add(tier_combo, 4, 1);
 
-    main_grid->add_panel(form_panel);
-    main_grid->set_grid_position(form_panel, 1, 0);
+    auto save_profile = create_button(_T("Save Profile"), 140, 32);
+    form_grid->add(save_profile, 6, 0, 1, 2);
+    form_grid->set_alignment(save_profile, layout::alignment::center, layout::alignment::center);
 
-    // ===== ROW 1, COL 1-2: List View (spans 2 columns) =====
-    auto listview_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
-    listview_panel->set_spacing(5);
-    listview_panel->set_padding(10);
+    main_grid->add_panel(form_grid);
+    main_grid->set_grid_position(form_grid, 1, 0);
 
-    auto list_title = create_static_control(_T("Product List (spans 2 columns)"), 400, 25);
-    listview_panel->add(list_title);
+    // Center card: inventory list with toolbar, demonstrating span and nested layout
+    auto inventory_grid = std::make_shared<layout::grid_panel>(hWnd);
+    inventory_grid->set_padding(10);
+    inventory_grid->set_spacing(8);
+    inventory_grid->add_row_definition(layout::grid_length::pixels(30));
+    inventory_grid->add_row_definition(layout::grid_length::star(1));
+    inventory_grid->add_column_definition(layout::grid_length::star(1));
+    inventory_grid->add_column_definition(layout::grid_length::pixels(220));
 
-    m_ListViewOne = create_list_view(500, 200);
-    m_ListViewOne->add_column(_T("ID"), 60);
-    m_ListViewOne->add_column(_T("Product"), 180);
-    m_ListViewOne->add_column(_T("Category"), 120);
-    m_ListViewOne->add_column(_T("Price"), 80);
+    auto inventory_title = create_static_control(_T("Inventory Overview"), 260, 26);
+    inventory_grid->add(inventory_title, 0, 0);
+    inventory_grid->set_alignment(inventory_title, layout::alignment::start, layout::alignment::center);
 
-    m_ListViewOne->add_item(0, 0, _T("001"));
-    m_ListViewOne->add_item(0, 1, _T("Laptop"));
-    m_ListViewOne->add_item(0, 2, _T("Electronics"));
-    m_ListViewOne->add_item(0, 3, _T("$999"));
-
-    m_ListViewOne->add_item(1, 0, _T("002"));
-    m_ListViewOne->add_item(1, 1, _T("Mouse"));
-    m_ListViewOne->add_item(1, 2, _T("Accessories"));
-    m_ListViewOne->add_item(1, 3, _T("$29"));
-
-    m_ListViewOne->add_item(2, 0, _T("003"));
-    m_ListViewOne->add_item(2, 1, _T("Keyboard"));
-    m_ListViewOne->add_item(2, 2, _T("Accessories"));
-    m_ListViewOne->add_item(2, 3, _T("$79"));
-
-    m_ListViewOne->add_item(3, 0, _T("004"));
-    m_ListViewOne->add_item(3, 1, _T("Monitor"));
-    m_ListViewOne->add_item(3, 2, _T("Electronics"));
-    m_ListViewOne->add_item(3, 3, _T("$349"));
-
-    listview_panel->add(m_ListViewOne);
-
-    main_grid->add_panel(listview_panel);
-    main_grid->set_grid_position(listview_panel, 1, 1, 1, 2);
-
-    // ===== ROW 2, COL 0: Counter Demo =====
-    auto counter_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
-    counter_panel->set_spacing(10);
-    counter_panel->set_padding(10);
-
-    auto counter_title = create_static_control(_T("Counter Demo"), 250, 25);
-    counter_panel->add(counter_title);
-
-    m_CounterLabel = create_static_control(_T("Count: 0"), 250, 30);
-    counter_panel->add(m_CounterLabel);
-
-    m_IncrementBtn = create_button(_T("Increment"), 250, 35);
-    m_IncrementBtn->on_click([this](WPARAM, LPARAM) {
-        m_counter++;
-        m_CounterLabel->set_text(TEXT("Count: ") + to_tstring(m_counter));
+    auto toolbar = std::make_shared<layout::stack_panel>(layout::orientation::horizontal, hWnd);
+    toolbar->set_spacing(8);
+    auto btn_sync = create_button(_T("Sync"), 70, 26);
+    auto btn_export = create_button(_T("Export"), 70, 26);
+    auto btn_refresh = create_button(_T("Refresh"), 70, 26);
+    btn_refresh->on_click([this](WPARAM, LPARAM) {
+        message_box_info(_T("Refreshed"), _T("Inventory data refreshed."));
     });
-    counter_panel->add(m_IncrementBtn);
+    toolbar->add(btn_sync);
+    toolbar->add(btn_export);
+    toolbar->add(btn_refresh);
+    inventory_grid->add_panel(toolbar);
+    inventory_grid->set_grid_position(toolbar, 0, 1);
 
-    auto reset_btn = create_button(_T("Reset"), 250, 35);
+    m_ListViewOne = create_list_view(620, 250);
+    m_ListViewOne->add_column(_T("SKU"), 90);
+    m_ListViewOne->add_column(_T("Product"), 170);
+    m_ListViewOne->add_column(_T("Category"), 120);
+    m_ListViewOne->add_column(_T("Stock"), 80);
+    m_ListViewOne->add_column(_T("Price"), 90);
+
+    m_ListViewOne->add_item(0, 0, _T("LT-100"));
+    m_ListViewOne->add_item(0, 1, _T("Laptop Pro 14"));
+    m_ListViewOne->add_item(0, 2, _T("Computers"));
+    m_ListViewOne->add_item(0, 3, _T("42"));
+    m_ListViewOne->add_item(0, 4, _T("$1299"));
+
+    m_ListViewOne->add_item(1, 0, _T("MN-210"));
+    m_ListViewOne->add_item(1, 1, _T("32in Monitor"));
+    m_ListViewOne->add_item(1, 2, _T("Displays"));
+    m_ListViewOne->add_item(1, 3, _T("18"));
+    m_ListViewOne->add_item(1, 4, _T("$399"));
+
+    m_ListViewOne->add_item(2, 0, _T("KB-451"));
+    m_ListViewOne->add_item(2, 1, _T("Mechanical Keyboard"));
+    m_ListViewOne->add_item(2, 2, _T("Accessories"));
+    m_ListViewOne->add_item(2, 3, _T("76"));
+    m_ListViewOne->add_item(2, 4, _T("$119"));
+
+    m_ListViewOne->add_item(3, 0, _T("MS-307"));
+    m_ListViewOne->add_item(3, 1, _T("Wireless Mouse"));
+    m_ListViewOne->add_item(3, 2, _T("Accessories"));
+    m_ListViewOne->add_item(3, 3, _T("134"));
+    m_ListViewOne->add_item(3, 4, _T("$39"));
+
+    inventory_grid->add(m_ListViewOne, 1, 0, 1, 2);
+
+    main_grid->add_panel(inventory_grid);
+    main_grid->set_grid_position(inventory_grid, 1, 1);
+
+    // Right card: activity and counters
+    auto activity_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
+    activity_panel->set_spacing(8);
+    activity_panel->set_padding(10);
+
+    auto activity_title = create_static_control(_T("Live Activity"), 220, 24);
+    activity_panel->add(activity_title);
+
+    m_CounterLabel = create_static_control(_T("Events processed: 0"), 220, 24);
+    activity_panel->add(m_CounterLabel);
+
+    m_IncrementBtn = create_button(_T("Process Event"), 220, 30);
+    m_IncrementBtn->on_click([this](WPARAM, LPARAM) {
+        ++m_counter;
+        m_CounterLabel->set_text(TEXT("Events processed: ") + to_tstring(m_counter));
+    });
+    activity_panel->add(m_IncrementBtn);
+
+    auto reset_btn = create_button(_T("Reset Counter"), 220, 30);
     reset_btn->on_click([this](WPARAM, LPARAM) {
         m_counter = 0;
-        m_CounterLabel->set_text(_T("Count: 0"));
+        m_CounterLabel->set_text(_T("Events processed: 0"));
     });
-    counter_panel->add(reset_btn);
+    activity_panel->add(reset_btn);
 
-    main_grid->add_panel(counter_panel);
-    main_grid->set_grid_position(counter_panel, 2, 0);
+    auto progress_label = create_static_control(_T("Pipeline Health"), 220, 20);
+    activity_panel->add(progress_label);
+    auto health_bar = create_progress_bar(220, 20);
+    health_bar->set_range(0, 100);
+    health_bar->set_pos(82);
+    activity_panel->add(health_bar);
 
-    // ===== ROW 2, COL 1: Action Buttons =====
-    auto button_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
-    button_panel->set_spacing(10);
-    button_panel->set_padding(10);
+    auto nav_tree = create_tree_view(220, 170);
+    auto dashboards = nav_tree->insert_item(_T("Dashboards"), TVI_ROOT, TVI_LAST);
+    nav_tree->insert_item(_T("Sales"), dashboards, TVI_LAST);
+    nav_tree->insert_item(_T("Inventory"), dashboards, TVI_LAST);
+    nav_tree->insert_item(_T("Operations"), dashboards, TVI_LAST);
+    nav_tree->expand(dashboards);
+    activity_panel->add(nav_tree);
 
-    auto btn_title = create_static_control(_T("Actions"), 250, 25);
-    button_panel->add(btn_title);
+    main_grid->add_panel(activity_panel);
+    main_grid->set_grid_position(activity_panel, 1, 2);
 
-    auto btn_save = create_button(_T("Save"), 250, 35);
-    button_panel->add(btn_save);
+    // Bottom showcase row: three equal sections
+    auto showcase_grid = std::make_shared<layout::grid_panel>(hWnd);
+    showcase_grid->set_padding(6);
+    showcase_grid->set_spacing(8);
+    showcase_grid->add_row_definition(layout::grid_length::star(1));
+    showcase_grid->add_column_definition(layout::grid_length::star(1));
+    showcase_grid->add_column_definition(layout::grid_length::star(1));
+    showcase_grid->add_column_definition(layout::grid_length::star(1));
 
-    auto btn_load = create_button(_T("Load"), 250, 35);
-    button_panel->add(btn_load);
+    auto tab_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
+    auto tab_title = create_static_control(_T("Tabs"), 180, 22);
+    tab_panel->add(tab_title);
+    auto tabs = create_tab_control(280, 150);
+    tabs->add_item(_T("Overview"));
+    tabs->add_item(_T("Metrics"));
+    tabs->add_item(_T("Settings"));
+    tab_panel->add(tabs);
+    showcase_grid->add_panel(tab_panel);
+    showcase_grid->set_grid_position(tab_panel, 0, 0);
 
-    auto btn_refresh = create_button(_T("Refresh"), 250, 35);
-    btn_refresh->on_click([this](WPARAM, LPARAM) {
-        message_box_info(_T("Info"), _T("Data refreshed!"));
-    });
-    button_panel->add(btn_refresh);
+    auto notes_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
+    auto notes_title = create_static_control(_T("Rich Edit"), 180, 22);
+    notes_panel->add(notes_title);
+    auto notes = create_rich_edit(_T("Use nested layouts to compose complex UIs quickly.\n")
+                                  _T("Grid rows/columns + spans make responsive designs straightforward."),
+                                  280,
+                                  150);
+    notes_panel->add(notes);
+    showcase_grid->add_panel(notes_panel);
+    showcase_grid->set_grid_position(notes_panel, 0, 1);
 
-    main_grid->add_panel(button_panel);
-    main_grid->set_grid_position(button_panel, 2, 1);
+    auto queue_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
+    auto queue_title = create_static_control(_T("Queue"), 180, 22);
+    queue_panel->add(queue_title);
+    auto queue = create_list_box(280, 150);
+    queue->add(_T("Render dashboard"));
+    queue->add(_T("Sync product catalog"));
+    queue->add(_T("Send usage report"));
+    queue->add(_T("Backup workspace"));
+    queue_panel->add(queue);
+    showcase_grid->add_panel(queue_panel);
+    showcase_grid->set_grid_position(queue_panel, 0, 2);
 
-    // ===== ROW 2, COL 2: Options =====
-    auto options_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
-    options_panel->set_spacing(10);
-    options_panel->set_padding(10);
+    main_grid->add_panel(showcase_grid);
+    main_grid->set_grid_position(showcase_grid, 2, 0, 1, 3);
 
-    auto options_title = create_static_control(_T("Options"), 250, 25);
-    options_panel->add(options_title);
-
-    auto check1 = create_check_box(_T("Enable grid lines drawing"), 250, 25);
-    check1->on_click([this, check1, main_grid](WPARAM, LPARAM) {
-        main_grid->paint_grid_lines() = check1->is_checked();
-        invalidate();
-        update_window();
-    });
-    options_panel->add(check1);
-
-    auto check2 = create_check_box(_T("Enable feature B"), 250, 25);
-    options_panel->add(check2);
-
-    auto check3 = create_check_box(_T("Auto-save"), 250, 25);
-    options_panel->add(check3);
-
-    main_grid->add_panel(options_panel);
-    main_grid->set_grid_position(options_panel, 2, 2);
-
-    // ===== ROW 3: Footer (spans all 3 columns) =====
+    // Footer
     auto footer = std::make_shared<layout::stack_panel>(layout::orientation::horizontal, hWnd);
-    footer->set_spacing(10);
+    footer->set_spacing(12);
     footer->set_padding(5);
 
-    auto status = create_static_control(_T("Ready | Grid Layout Demo"), 300, 30);
+    auto status = create_static_control(_T("Ready | Grid layout demo powered by WindowsPlusPlus"), 460, 24);
     footer->add(status);
 
-    auto link = create_link_control(_T("<a href=\"https://github.com/Timboy67678/WindowsPlusPlus\">WindowsPlusPlus on GitHub</a>"), 350, 30);
+    auto link = create_link_control(_T("<a href=\"https://github.com/Timboy67678/WindowsPlusPlus\">GitHub</a>"), 140, 24);
     link->on_click([this](LPNMHDR nm) {
         auto item = reinterpret_cast<PNMLINK>(nm)->item;
         ShellExecuteW(NULL, L"open", item.szUrl, NULL, NULL, SW_SHOWNORMAL);
     });
-    footer->set_margin(15, 15, 0, 0);
     footer->add(link);
 
     main_grid->add_panel(footer);

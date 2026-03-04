@@ -241,6 +241,11 @@ namespace wpp::layout
 
             // Arrange child - panels are arranged, controls are moved
             if (auto child_panel = as_panel(child)) {
+                // Re-measure nested panels against the actual cell size.
+                // During parent measure pass, nested panels are measured before
+                // final star track sizes are known, which can make their cached
+                // track sizes too large for the arranged cell.
+                child_panel->measure(cell_width, cell_height);
                 child_panel->arrange(cell_x, cell_y, cell_width, cell_height);
             } else {
                 // Get alignment for this control

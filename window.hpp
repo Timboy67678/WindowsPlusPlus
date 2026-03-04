@@ -216,7 +216,7 @@ namespace wpp
 		/// <param name="menu">A handle to the window's menu. Defaults to NULL.</param>
 		/// <param name="font">A handle to the font used by the window. Defaults to NULL.</param>
 		/// <param name="style_ex">Extended window style flags. Defaults to 0.</param>
-		window(std::shared_ptr<window_class> wnd_class, const tstring& window_name, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
+		window(window_class wnd_class, const tstring& window_name, int width, int height, DWORD style = WS_OVERLAPPEDWINDOW,
 			   int menu_id = -1, HMENU menu = NULL, HFONT font = NULL, DWORD style_ex = 0);
 
 		/// <summary>
@@ -563,7 +563,7 @@ namespace wpp
 			auto control_id = m_control_id++;
 
 			HWND control_handle = ::CreateWindowEx(style_ex, class_name, text.c_str(), style, 0, 0, width, height, m_handle,
-				reinterpret_cast<HMENU>(control_id), m_window_class->instance(), NULL);
+				reinterpret_cast<HMENU>(control_id), m_window_class.instance(), NULL);
 			if (!control_handle)
 				return nullptr;
 
@@ -586,7 +586,7 @@ namespace wpp
 		auto& root_panel() { return m_root_panel; }
 
 		std::unique_ptr<void, void(*)(void*)> m_thunk_storage{ nullptr, +[](void* p) {} }; ///< Thunk storage for window procedure.
-		std::shared_ptr<window_class> m_window_class; ///< Window class.
+		window_class m_window_class; ///< Window class.
 		int m_x_pos, m_y_pos; ///< Initial startup position of the window
 		int m_original_width, m_original_height; ///< Window original size.
 		tstring m_window_name; ///< Window name.

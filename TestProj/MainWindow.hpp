@@ -9,6 +9,12 @@ public:
     message_handler on_create;
 
 private:
+    std::shared_ptr<layout::stack_panel> create_top_panel(HWND hWnd);
+    std::shared_ptr<layout::stack_panel> create_bottom_panel(HWND hWnd);
+    std::shared_ptr<layout::stack_panel> create_left_panel(HWND hWnd);
+    std::shared_ptr<layout::stack_panel> create_right_panel(HWND hWnd);
+    std::shared_ptr<layout::stack_panel> create_center_panel(HWND hWnd);
+
     control_ptr<button> m_ButtonOne;
     control_ptr<check_box> m_CheckBoxOne;
     control_ptr<combo_box> m_ComboBoxOne;

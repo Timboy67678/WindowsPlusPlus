@@ -4,9 +4,9 @@ constexpr auto DEFAULT_WINDOW_WIDTH = 1000;
 constexpr auto DEFAULT_WINDOW_HEIGHT = 700;
 
 MainWindow::MainWindow(LPCTSTR window_title, int x, int y, HINSTANCE instance)
-    : window(std::make_shared<window_class>(_T("MainWindowWPP"), instance),
+    : window(window_class(_T("MainWindowWPP"), instance),
              window_title, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT) {
-    //set_keep_minimum_resize(true);
+    set_keep_minimum_resize(true);
 }
 
 LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
@@ -14,9 +14,36 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     auto main_dock = std::make_shared<layout::dock_panel>(hWnd);
     main_dock->set_padding(10);
-   
-    // top panel with title and buttons
+    auto top_panel = create_top_panel(hWnd);
+    main_dock->add_panel(top_panel);
+    main_dock->set_dock_position(top_panel, layout::dock_position::top);
 
+    auto bottom_panel = create_bottom_panel(hWnd);
+    main_dock->add_panel(bottom_panel);
+    main_dock->set_dock_position(bottom_panel, layout::dock_position::bottom);
+
+    auto left_panel = create_left_panel(hWnd);
+    main_dock->add_panel(left_panel);
+    main_dock->set_dock_position(left_panel, layout::dock_position::left);
+
+    auto right_panel = create_right_panel(hWnd);
+    main_dock->add_panel(right_panel);
+    main_dock->set_dock_position(right_panel, layout::dock_position::right);
+
+    auto center_panel = create_center_panel(hWnd);
+    main_dock->add_panel(center_panel);
+    main_dock->set_dock_position(center_panel, layout::dock_position::fill);
+
+    RECT client_rect = get_client_rect();
+    main_dock->measure(client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
+    main_dock->arrange(0, 0, client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
+
+    root_panel() = main_dock;
+
+    return window::on_create(hWnd, wParam, lParam);
+}
+
+std::shared_ptr<layout::stack_panel> MainWindow::create_top_panel(HWND hWnd) {
     auto top_panel = std::make_shared<layout::stack_panel>(layout::orientation::horizontal, hWnd);
     top_panel->set_spacing(10);
     top_panel->set_padding(5);
@@ -39,11 +66,10 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     });
     top_panel->add(btn_about);
 
-    main_dock->add_panel(top_panel);
-    main_dock->set_dock_position(top_panel, layout::dock_position::top);
+    return top_panel;
+}
 
-    // bottom panel with status and link
-
+std::shared_ptr<layout::stack_panel> MainWindow::create_bottom_panel(HWND hWnd) {
     auto bottom_panel = std::make_shared<layout::stack_panel>(layout::orientation::horizontal, hWnd);
     bottom_panel->set_spacing(10);
     bottom_panel->set_padding(5);
@@ -58,11 +84,10 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     });
     bottom_panel->add(m_LinkControl);
 
-    main_dock->add_panel(bottom_panel);
-    main_dock->set_dock_position(bottom_panel, layout::dock_position::bottom);
+    return bottom_panel;
+}
 
-    // left panel with various controls
-
+std::shared_ptr<layout::stack_panel> MainWindow::create_left_panel(HWND hWnd) {
     auto left_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
     left_panel->set_spacing(8);
     left_panel->set_padding(10);
@@ -91,27 +116,17 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     left_panel->add(radio_label);
 
     m_RadioButtonGroup = create_radio_button_group();
-    auto radiobuttonone = m_RadioButtonGroup->create_button(_T("Option A"), 200, 25, TRUE);
-    left_panel->add(radiobuttonone);
-
-    auto radiobuttontwo = m_RadioButtonGroup->create_button(_T("Option B"), 200, 25);
-    left_panel->add(radiobuttontwo);
-
-    auto radiobuttonthree = m_RadioButtonGroup->create_button(_T("Option C"), 200, 25);
-    left_panel->add(radiobuttonthree);
+    left_panel->add(m_RadioButtonGroup->create_button(_T("Option A"), 200, 25, TRUE));
+    left_panel->add(m_RadioButtonGroup->create_button(_T("Option B"), 200, 25));
+    left_panel->add(m_RadioButtonGroup->create_button(_T("Option C"), 200, 25));
 
     auto radio2_label = create_static_control(_T("Radio Group 2:"), 200, 20);
     left_panel->add(radio2_label);
 
     auto radio_grptwo = create_radio_button_group();
-    auto radio_one = radio_grptwo->create_button(_T("Choice 1"), 200, 25, TRUE);
-    left_panel->add(radio_one);
-
-    auto radio_two = radio_grptwo->create_button(_T("Choice 2"), 200, 25);
-    left_panel->add(radio_two);
-
-    auto radio_three = radio_grptwo->create_button(_T("Choice 3"), 200, 25);
-    left_panel->add(radio_three);
+    left_panel->add(radio_grptwo->create_button(_T("Choice 1"), 200, 25, TRUE));
+    left_panel->add(radio_grptwo->create_button(_T("Choice 2"), 200, 25));
+    left_panel->add(radio_grptwo->create_button(_T("Choice 3"), 200, 25));
 
     auto combo_label = create_static_control(_T("Combo Box:"), 200, 20);
     left_panel->add(combo_label);
@@ -137,16 +152,14 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     progress_bar->set_pos(65);
     left_panel->add(progress_bar);
 
-    main_dock->add_panel(left_panel);
-    main_dock->set_dock_position(left_panel, layout::dock_position::left);
+    return left_panel;
+}
 
-    // right-side panel with list view and tree view
-
+std::shared_ptr<layout::stack_panel> MainWindow::create_right_panel(HWND hWnd) {
     auto right_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
     right_panel->set_spacing(8);
     right_panel->set_padding(10);
 
-    // List View
     auto listview_label = create_static_control(_T("List View:"), 250, 20);
     right_panel->add(listview_label);
 
@@ -166,7 +179,6 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     m_ListViewOne->add_item(2, 0, _T("Video.mp4"));
     m_ListViewOne->add_item(2, 1, _T("Video"));
     m_ListViewOne->add_item(2, 2, _T("45 MB"));
-
     m_ListViewOne->auto_size_columns();
 
     right_panel->add(m_ListViewOne);
@@ -185,13 +197,14 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     tree_view->expand(root);
     right_panel->add(tree_view);
 
-    main_dock->add_panel(right_panel);
-    main_dock->set_dock_position(right_panel, layout::dock_position::right);
+    return right_panel;
+}
 
-    // center panel with tab control, list box, and rich edit
+std::shared_ptr<layout::stack_panel> MainWindow::create_center_panel(HWND hWnd) {
     auto center_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
     center_panel->set_spacing(10);
     center_panel->set_padding(15);
+    center_panel->set_alignment(layout::alignment::center);
 
     auto tab_label = create_static_control(_T("Tab Control:"), 400, 25);
     center_panel->add(tab_label);
@@ -219,14 +232,5 @@ LRESULT MainWindow::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto rich_edit = create_rich_edit(_T("This is a rich edit control.\nYou can type multiple lines here.\nTry editing this text!"), 400, 100);
     center_panel->add(rich_edit);
 
-    main_dock->add_panel(center_panel);
-    main_dock->set_dock_position(center_panel, layout::dock_position::fill);
-
-    RECT client_rect = get_client_rect();
-    main_dock->measure(client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
-    main_dock->arrange(0, 0, client_rect.right - client_rect.left, client_rect.bottom - client_rect.top);
-
-    root_panel() = main_dock;
-
-    return window::on_create(hWnd, wParam, lParam);
+    return center_panel;
 }
