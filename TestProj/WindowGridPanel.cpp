@@ -183,6 +183,7 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     auto activity_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
     activity_panel->set_spacing(8);
     activity_panel->set_padding(10);
+    activity_panel->set_alignment(layout::alignment::stretch);
 
     auto activity_title = create_static_control(_T("Live Activity"), 220, 24);
     activity_panel->add(activity_title);
@@ -232,17 +233,19 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     showcase_grid->add_column_definition(layout::grid_length::star(1));
 
     auto tab_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
+    tab_panel->set_alignment(layout::alignment::stretch);
     auto tab_title = create_static_control(_T("Tabs"), 180, 22);
     tab_panel->add(tab_title);
-    auto tabs = create_tab_control(280, 150);
-    tabs->add_item(_T("Overview"));
-    tabs->add_item(_T("Metrics"));
-    tabs->add_item(_T("Settings"));
-    tab_panel->add(tabs);
+    m_TabControl = create_tab_control(280, 150);
+    m_TabControl->add_item(_T("Overview"));
+    m_TabControl->add_item(_T("Metrics"));
+    m_TabControl->add_item(_T("Settings"));
+    tab_panel->add(m_TabControl);
     showcase_grid->add_panel(tab_panel);
     showcase_grid->set_grid_position(tab_panel, 0, 0);
 
     auto notes_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
+    notes_panel->set_alignment(layout::alignment::stretch);
     auto notes_title = create_static_control(_T("Rich Edit"), 180, 22);
     notes_panel->add(notes_title);
     auto notes = create_rich_edit(_T("Use nested layouts to compose complex UIs quickly.\n")
@@ -254,6 +257,7 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
     showcase_grid->set_grid_position(notes_panel, 0, 1);
 
     auto queue_panel = std::make_shared<layout::stack_panel>(layout::orientation::vertical, hWnd);
+    queue_panel->set_alignment(layout::alignment::stretch);
     auto queue_title = create_static_control(_T("Queue"), 180, 22);
     queue_panel->add(queue_title);
     auto queue = create_list_box(280, 150);
@@ -293,6 +297,23 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     root_panel() = main_grid;
 
+    if (m_TabControl && m_TabControl->is_valid()) {
+        m_TabControl->set_top();
+        m_TabControl->invalidate();
+        m_TabControl->update_window();
+    }
+
     return window::on_create(hWnd, wParam, lParam);
+}
+
+LRESULT WindowGridPanel::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+    auto result = window::on_size(hWnd, wParam, lParam);
+
+    if (m_TabControl && m_TabControl->is_valid()) {
+        m_TabControl->set_top();
+        m_TabControl->invalidate();
+    }
+
+    return result;
 }
 

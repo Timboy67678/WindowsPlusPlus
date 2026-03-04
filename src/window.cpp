@@ -287,6 +287,9 @@ namespace wpp
 	}
 
 	control_ptr<tab_control> window::create_tab_control(int width, int height, DWORD style, DWORD style_ex) {
+		INITCOMMONCONTROLSEX iccex = { sizeof(INITCOMMONCONTROLSEX), ICC_TAB_CLASSES };
+		::InitCommonControlsEx(&iccex);
+
 		return create_control_impl<tab_control>(WC_TABCONTROL, _T(""), width, height, style, style_ex);
 	}
 

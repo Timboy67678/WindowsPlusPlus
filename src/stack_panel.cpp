@@ -162,15 +162,15 @@ namespace wpp::layout
                 switch (m_alignment) {
                 case alignment::start:
                     child_y = content_y;
-                    child_height = child_size.height;
+                    child_height = (std::min)(child_size.height, content_height);
                     break;
                 case alignment::center:
-                    child_y = content_y + (content_height - child_size.height) / 2;
-                    child_height = child_size.height;
+                    child_height = (std::min)(child_size.height, content_height);
+                    child_y = content_y + (content_height - child_height) / 2;
                     break;
                 case alignment::end:
-                    child_y = content_y + content_height - child_size.height;
-                    child_height = child_size.height;
+                    child_height = (std::min)(child_size.height, content_height);
+                    child_y = content_y + content_height - child_height;
                     break;
                 case alignment::stretch:
                     child_y = content_y;
@@ -193,15 +193,15 @@ namespace wpp::layout
                 switch (m_alignment) {
                 case alignment::start:
                     child_x = content_x;
-                    child_width = child_size.width;
+                    child_width = (std::min)(child_size.width, content_width);
                     break;
                 case alignment::center:
-                    child_x = content_x + (content_width - child_size.width) / 2;
-                    child_width = child_size.width;
+                    child_width = (std::min)(child_size.width, content_width);
+                    child_x = content_x + (content_width - child_width) / 2;
                     break;
                 case alignment::end:
-                    child_x = content_x + content_width - child_size.width;
-                    child_width = child_size.width;
+                    child_width = (std::min)(child_size.width, content_width);
+                    child_x = content_x + content_width - child_width;
                     break;
                 case alignment::stretch:
                     child_x = content_x;
@@ -212,7 +212,7 @@ namespace wpp::layout
                 current_pos += child_height + scaled_spacing;
             }
 
-            child->move(child_x, child_y, child_width, child_height);
+			child->move(child_x, child_y, child_width, child_height);
 
             // If this is a nested panel, arrange its children
             if (auto child_panel = as_panel(child)) {

@@ -333,17 +333,31 @@ namespace wpp
 		explicit operator bool() const { return is_valid(); }
 
 		virtual HWND get_handle() const { return m_handle; }
-		virtual void set_handle(HWND handle) { m_handle = handle; }
-		virtual HWND get_parent() const { return m_parent_handle; }
+		virtual void set_handle(HWND handle) {
+			m_handle = handle;
+			m_parent_handle = handle ? ::GetParent(handle) : NULL;
+		}
+		virtual HWND get_parent() const {
+			return m_handle ? ::GetParent(m_handle) : NULL;
+		}
 		virtual HWND set_parent(HWND parent) {
+			if (!m_handle) return NULL;
+
+			::SetLastError(0);
 			HWND oldParent = ::SetParent(m_handle, parent);
+			if (!oldParent && ::GetLastError() != 0)
+				return NULL;
+
 			m_parent_handle = parent;
 
 			if (parent == NULL) {
-				modify_style(WS_CHILD, WS_POPUP);
+				modify_style(WS_CHILD, WS_POPUP, SWP_FRAMECHANGED);
 			} else {
-				modify_style(WS_POPUP, WS_CHILD);
+				modify_style(WS_POPUP, WS_CHILD, SWP_FRAMECHANGED);
 			}
+
+			::SetWindowPos(m_handle, NULL, 0, 0, 0, 0,
+				SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 
 			return oldParent;
 		}
@@ -423,6 +437,10 @@ namespace wpp
 
 		virtual BOOL set_enabled(BOOL enabled = TRUE) {
 			return ::EnableWindow(m_handle, enabled);
+		}
+
+		virtual void set_top() const {
+			::SetWindowPos(m_handle, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 		}
 
 		virtual void set_topmost(BOOL topmost = TRUE) const {
