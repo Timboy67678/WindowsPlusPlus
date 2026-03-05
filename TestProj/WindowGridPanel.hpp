@@ -9,7 +9,6 @@ public:
 
 protected:
     message_handler on_create;
-    message_handler on_size;
 
 private:
     // Control references for demo

@@ -297,23 +297,7 @@ LRESULT WindowGridPanel::on_create(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 
     root_panel() = main_grid;
 
-    if (m_TabControl && m_TabControl->is_valid()) {
-        m_TabControl->set_top();
-        m_TabControl->invalidate();
-        m_TabControl->update_window();
-    }
-
     return window::on_create(hWnd, wParam, lParam);
 }
 
-LRESULT WindowGridPanel::on_size(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-    auto result = window::on_size(hWnd, wParam, lParam);
-
-    if (m_TabControl && m_TabControl->is_valid()) {
-        m_TabControl->set_top();
-        m_TabControl->invalidate();
-    }
-
-    return result;
-}
 

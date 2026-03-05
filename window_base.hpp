@@ -53,6 +53,17 @@ namespace wpp
 		}
 
 		/// <summary>
+		/// Redraws the specified region of the window.
+		/// </summary>
+		/// <param name="rect">A pointer to a RECT structure containing the coordinates of the update rectangle. If nullptr, the entire client area is redrawn.</param>
+		/// <param name="update_region">A handle to the update region. If nullptr and rect is also nullptr, the entire client area is redrawn.</param>
+		/// <param name="flags">Redraw flags that control the invalidation and painting behavior. Defaults to RDW_INVALIDATE | RDW_UPDATENOW.</param>
+		/// <returns>true if the function succeeds; otherwise, false.</returns>
+		virtual bool redraw(const LPRECT rect = nullptr, HRGN update_region = nullptr, UINT flags = RDW_INVALIDATE | RDW_UPDATENOW) {
+			return ::RedrawWindow(m_handle, rect, update_region, flags);
+		}
+
+		/// <summary>
 		/// Centers the window relative to another window.
 		/// </summary>
 		/// <param name="hWndCenter">Handle to the window to center relative to. Defaults to the desktop window.</param>

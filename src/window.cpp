@@ -64,7 +64,23 @@ namespace wpp
 			RECT rc = get_client_rect();
 			m_root_panel->measure(rc.right, rc.bottom);
 			m_root_panel->arrange(0, 0, rc.right, rc.bottom);
+			refresh_layout_visuals();
 		}
+	}
+
+	void window::refresh_layout_visuals() {
+		if (!m_handle)
+			return;
+
+		for (auto& control : m_controls) {
+			if (!control || !control->is_valid())
+				continue;
+
+			if (std::dynamic_pointer_cast<tab_control>(control) && control->is_visible()) //tab controls must be kept above other controls to prevent occlusion issues in complex nested layouts
+				control->set_top();
+		}
+
+		redraw(nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
 
 	bool window::handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam) {
@@ -414,7 +430,7 @@ namespace wpp
 			int newHeight = HIWORD(lParam);
 			m_root_panel->measure(newWidth, newHeight);
 			m_root_panel->arrange(0, 0, newWidth, newHeight);
-			update_window();
+			refresh_layout_visuals();
 		}
 		return FALSE;
 	}

@@ -390,10 +390,10 @@ namespace wpp
 		/// </summary>
 		/// <param name="width">The width of the tab control in pixels. Default is 300.</param>
 		/// <param name="height">The height of the tab control in pixels. Default is 200.</param>
-		/// <param name="style">The window style flags for the tab control. Default is TCS_MULTILINE | WS_CHILD | WS_VISIBLE.</param>
+		/// <param name="style">The window style flags for the tab control. Default is TCS_MULTILINE | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS.</param>
 		/// <param name="style_ex">The extended window style flags for the tab control. Default is 0.</param>
 		/// <returns>A smart pointer to the created tab control.</returns>
-		control_ptr<tab_control> create_tab_control(int width = 300, int height = 200, DWORD style = TCS_MULTILINE | WS_CHILD | WS_VISIBLE, DWORD style_ex = 0);
+		control_ptr<tab_control> create_tab_control(int width = 300, int height = 200, DWORD style = TCS_MULTILINE | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, DWORD style_ex = 0);
 
 		/// <summary>
 		/// Creates a progress bar control.
@@ -556,6 +556,7 @@ namespace wpp
 		void init_message_events();
 		void cleanup();
 		void update_layout();
+		void refresh_layout_visuals();
 		bool handle_scroll_message(scroll_orientation orientation, WPARAM wParam, LPARAM lParam);
 
 		template<typename CtrlType>

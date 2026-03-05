@@ -116,7 +116,7 @@ namespace wpp::layout
 		inline HWND create_panel_window(HWND parent) {
 			if (!parent) return nullptr;
 			return ::CreateWindowEx(0, TEXT("STATIC"),
-									TEXT(""), WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN,
+									TEXT(""), WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
 									0, 0, 0, 0, parent, nullptr, ::GetModuleHandle(nullptr), nullptr);
 		}
 
