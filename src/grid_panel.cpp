@@ -298,7 +298,7 @@ namespace wpp::layout
                 }
 
                 // Position the control using deferred positioning
-                if (child->get_handle()) {
+                if (child->is_valid()) {
                     if (dwp.is_valid()) {
                         dwp.defer(child->get_handle(), final_x, final_y, final_width, final_height);
                     } else {
@@ -309,13 +309,11 @@ namespace wpp::layout
             }
         }
 
-        // Apply deferred moves before issuing repaints.
         dwp.end();
 
-        // Invalidate children after arrangement so controls that do not
-        // repaint immediately after deferred positioning are refreshed.
+		// Invalidate children to trigger repaint after arranging (e.g., for panels that need to redraw backgrounds)
         for (auto& child : m_children) {
-            if (child && child->is_valid() && child->get_handle()) {
+            if (child && child->is_valid()) {
                 child->invalidate();
             }
         }
