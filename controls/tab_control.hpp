@@ -1,8 +1,6 @@
 #ifndef __TAB_CONTROL_H__
 #define __TAB_CONTROL_H__
 
-#include <string>
-
 namespace wpp
 {
 	class tab_control : public control {
@@ -55,7 +53,9 @@ namespace wpp
 		}
 
 		int set_cur_sel(int nItem) {
-			return send_message<int>(TCM_SETCURSEL, nItem, 0L);
+			int previous = send_message<int>(TCM_SETCURSEL, nItem, 0L);
+			sync_managed_pages();
+			return previous;
 		}
 
 		SIZE set_item_size(SIZE size) {
@@ -117,7 +117,12 @@ namespace wpp
 		}
 
 		int insert_item(int nItem, LPTCITEM pTabCtrlItem) {
-			return send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)pTabCtrlItem);
+			int insertedIndex = send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)pTabCtrlItem);
+			if (insertedIndex >= 0) {
+				on_tab_inserted(insertedIndex);
+				sync_managed_pages();
+			}
+			return insertedIndex;
 		}
 
 		int insert_item(int nItem, UINT mask, LPCTSTR lpszItem, int iImage, LPARAM lParam) {
@@ -126,14 +131,24 @@ namespace wpp
 			tci.pszText = (LPTSTR)lpszItem;
 			tci.iImage = iImage;
 			tci.lParam = lParam;
-			return send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)&tci);
+			int insertedIndex = send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)&tci);
+			if (insertedIndex >= 0) {
+				on_tab_inserted(insertedIndex);
+				sync_managed_pages();
+			}
+			return insertedIndex;
 		}
 
 		int insert_item(int nItem, LPCTSTR lpszItem) {
 			TCITEM tci = { 0 };
 			tci.mask = TCIF_TEXT;
 			tci.pszText = (LPTSTR)lpszItem;
-			return send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)&tci);
+			int insertedIndex = send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)&tci);
+			if (insertedIndex >= 0) {
+				on_tab_inserted(insertedIndex);
+				sync_managed_pages();
+			}
+			return insertedIndex;
 		}
 
 		int add_item(LPTCITEM pTabCtrlItem) {
@@ -149,11 +164,20 @@ namespace wpp
 		}
 
 		BOOL delete_item(int nItem) {
-			return send_message<BOOL>(TCM_DELETEITEM, nItem, 0L);
+			BOOL result = send_message<BOOL>(TCM_DELETEITEM, nItem, 0L);
+			if (result) {
+				on_tab_deleted(nItem);
+				sync_managed_pages();
+			}
+			return result;
 		}
 
 		BOOL delete_all_items() {
-			return send_message<BOOL>(TCM_DELETEALLITEMS, 0, 0L);
+			BOOL result = send_message<BOOL>(TCM_DELETEALLITEMS, 0, 0L);
+			if (result) {
+				m_page_controls.clear();
+			}
+			return result;
 		}
 
 		void adjust_rect(BOOL bLarger, LPRECT lpRect) {
@@ -243,7 +267,12 @@ namespace wpp
 			tci.mask = TCIF_TEXT | TCIF_IMAGE;
 			tci.pszText = (LPTSTR)lpszText;
 			tci.iImage = iImage;
-			return send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)&tci);
+			int insertedIndex = send_message<int>(TCM_INSERTITEM, nItem, (LPARAM)&tci);
+			if (insertedIndex >= 0) {
+				on_tab_inserted(insertedIndex);
+				sync_managed_pages();
+			}
+			return insertedIndex;
 		}
 
 		int add_item(LPCTSTR lpszText, int iImage) {
@@ -257,6 +286,108 @@ namespace wpp
 			tci.iImage = iImage;
 			tci.lParam = lParam;
 			return insert_item(get_item_count(), &tci);
+		}
+
+		tab_control& add_page_control(int tabIndex, HWND controlHandle, BOOL fitToDisplayRect = TRUE) {
+			if (!::IsWindow(controlHandle) || !is_valid_index(tabIndex)) {
+				return *this;
+			}
+
+			auto& controls = m_page_controls[tabIndex];
+			if (std::find(controls.begin(), controls.end(), controlHandle) == controls.end()) {
+				controls.push_back(controlHandle);
+			}
+
+			if (fitToDisplayRect) {
+				fit_control_to_display_rect(controlHandle);
+			}
+
+			sync_managed_pages();
+			return *this;
+		}
+
+		tab_control& add_page_control(int tabIndex, const control& pageControl, BOOL fitToDisplayRect = TRUE) {
+			return add_page_control(tabIndex, pageControl.get_handle(), fitToDisplayRect);
+		}
+
+		BOOL remove_page_control(int tabIndex, HWND controlHandle) {
+			auto pageIt = m_page_controls.find(tabIndex);
+			if (pageIt == m_page_controls.end()) {
+				return FALSE;
+			}
+
+			auto& controls = pageIt->second;
+			auto controlIt = std::find(controls.begin(), controls.end(), controlHandle);
+			if (controlIt == controls.end()) {
+				return FALSE;
+			}
+
+			controls.erase(controlIt);
+			if (controls.empty()) {
+				m_page_controls.erase(pageIt);
+			}
+
+			sync_managed_pages();
+			return TRUE;
+		}
+
+		BOOL remove_page_control(int tabIndex, const control& pageControl) {
+			return remove_page_control(tabIndex, pageControl.get_handle());
+		}
+
+		void clear_page_controls(int tabIndex) {
+			m_page_controls.erase(tabIndex);
+			sync_managed_pages();
+		}
+
+		void clear_all_page_controls() {
+			m_page_controls.clear();
+		}
+
+		const std::vector<HWND>& get_page_controls(int tabIndex) const {
+			auto it = m_page_controls.find(tabIndex);
+			if (it != m_page_controls.end()) {
+				return it->second;
+			}
+
+			static const std::vector<HWND> empty;
+			return empty;
+		}
+
+		void fit_page_to_display_rect(int tabIndex) {
+			auto it = m_page_controls.find(tabIndex);
+			if (it == m_page_controls.end()) {
+				return;
+			}
+
+			for (HWND handle : it->second) {
+				fit_control_to_display_rect(handle);
+			}
+		}
+
+		void fit_selected_page_to_display_rect() {
+			int selected = get_cur_sel();
+			if (selected >= 0) {
+				fit_page_to_display_rect(selected);
+			}
+		}
+
+		void sync_managed_pages() {
+			int selected = get_cur_sel();
+			for (auto& [tabIndex, controls] : m_page_controls) {
+				bool show = (tabIndex == selected);
+				for (HWND handle : controls) {
+					if (!::IsWindow(handle)) {
+						continue;
+					}
+
+					if (show) {
+						fit_control_to_display_rect(handle);
+					}
+
+					::ShowWindow(handle, show ? SW_SHOW : SW_HIDE);
+				}
+			}
 		}
 
 		tstring get_selected_text() const {
@@ -346,6 +477,61 @@ namespace wpp
 				}
 			}
 		}
+
+	private:
+		void fit_control_to_display_rect(HWND controlHandle) {
+			if (!::IsWindow(controlHandle)) {
+				return;
+			}
+
+			RECT rcDisplay = get_display_rect();
+			HWND controlParent = ::GetParent(controlHandle);
+
+			if (controlParent != nullptr && controlParent != m_handle) {
+				POINT points[2] = {
+					{ rcDisplay.left, rcDisplay.top },
+					{ rcDisplay.right, rcDisplay.bottom }
+				};
+				::MapWindowPoints(m_handle, controlParent, points, 2);
+				rcDisplay.left = points[0].x;
+				rcDisplay.top = points[0].y;
+				rcDisplay.right = points[1].x;
+				rcDisplay.bottom = points[1].y;
+			}
+
+			::SetWindowPos(
+				controlHandle,
+				nullptr,
+				rcDisplay.left,
+				rcDisplay.top,
+				rcDisplay.right - rcDisplay.left,
+				rcDisplay.bottom - rcDisplay.top,
+				SWP_NOZORDER | SWP_NOACTIVATE
+			);
+		}
+
+		void on_tab_deleted(int deletedIndex) {
+			auto erased = m_page_controls.find(deletedIndex);
+			if (erased != m_page_controls.end()) {
+				m_page_controls.erase(erased);
+			}
+
+			std::unordered_map<int, std::vector<HWND>> shifted;
+			for (auto& [index, controls] : m_page_controls) {
+				shifted[index > deletedIndex ? index - 1 : index] = std::move(controls);
+			}
+			m_page_controls = std::move(shifted);
+		}
+
+		void on_tab_inserted(int insertedIndex) {
+			std::unordered_map<int, std::vector<HWND>> shifted;
+			for (auto& [index, controls] : m_page_controls) {
+				shifted[index >= insertedIndex ? index + 1 : index] = std::move(controls);
+			}
+			m_page_controls = std::move(shifted);
+		}
+
+		std::unordered_map<int, std::vector<HWND>> m_page_controls;
 	};
 }
 

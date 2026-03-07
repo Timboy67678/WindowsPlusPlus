@@ -23,6 +23,7 @@ INT APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
         ICC_NATIVEFNTCTL_CLASS 
     };
     InitCommonControlsEx(&iccex);
+
     if (::GetModuleHandle(TEXT("Riched20.dll")) == NULL) //control's only works with richedit2.0 dll loaded
         ::LoadLibrary(TEXT("Riched20.dll"));
 
